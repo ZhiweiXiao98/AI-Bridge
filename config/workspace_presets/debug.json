@@ -1,0 +1,9 @@
+{
+  "name": "debug",
+  "description": "沙盒监控 + AI日志在底部",
+  "layout": {
+    "name": "调试",
+    "description": "沙盒监控 + AI日志在底部",
+    "panels": {}
+  }
+}

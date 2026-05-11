@@ -1,0 +1,9 @@
+# 手机客户端依赖已合并到项目根目录 requirements.txt
+# 运行以下命令安装所有依赖：
+#   c:\Data-Bridge\.venv\Scripts\python.exe -m pip install -r requirements.txt
+#
+# 依赖清单（均已在全局 requirements.txt 中）：
+#   flet>=0.27.0        — Flet UI 框架 (Flutter)
+#   websockets>=12.0    — WebSocket 客户端
+#   httpx>=0.27.0       — 异步 HTTP 客户端
+#   pygments>=2.18.0    — 代码语法高亮

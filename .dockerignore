@@ -1,0 +1,104 @@
+# 基于 .gitignore 的排除规则
+# 以下内容从 .gitignore 同步
+
+# filename: .gitignore
+# === Python 编译垃圾 ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.manifest
+*.spec
+
+# === 虚拟环境 ===
+venv/
+.venv/
+env/
+
+# === Chrome 用户数据 (巨大) ===
+Chrome_143_Clean_Data/
+chrome_user_data/
+
+# === IDE 配置 ===
+.vscode/
+.idea/
+*.sln
+*.suo
+*.user
+*.swp
+*.swo
+
+# === C# / Rhino 编译产物 ===
+**/bin/
+**/obj/
+*.pdb
+*.rhp
+*.dll
+*.exe
+
+# === Python 打包产物 (PyInstaller) ===
+build/
+dist/
+*.spec
+*_Dist/
+AI_Bridge_Client_Dist/
+*.egg-info/
+
+# === 运行时临时文件 (务必忽略) ===
+# 核心数据导出目录（保留目录结构，忽略内容）
+export/code/*
+!export/code/.gitkeep
+export/images/*
+!export/images/.gitkeep
+
+update_cache/
+backup/
+temp_uploads/
+临时上传/
+crash_log.txt
+pip-log.txt
+nohup.out
+FULL_PROJECT_CONTEXT.txt
+docs/PROJECT_STRUCTURE_DUMP.md
+
+# === 用户数据 & 敏感配置 (本地独有) ===
+*.db
+*.sqlite
+user_data.db
+config.json
+server_config.json
+session_states.json
+.secret.key
+*.ini
+layout.ini
+layout copy.ini
+
+# === 截图与素材 (非代码资源) ===
+对话截图/
+覆盖截图/
+素材/图标/
+ai对话截图/
+custom/
+
+# === 测试报告 ===
+.coverage
+coverage.json
+htmlcov/
+.pytest_cache/
+
+# === 废弃文件 ===
+app/core/browser_driver.py
+launcher.py
+app/ui/pages/chat_page.py
+
+# === Docker & AI Sensor Artifacts ===
+_docker_env/
+test_report.json
+tools/install_*.py
+
+
+# Docker 特定排除（不在 .gitignore 中）
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+.git/
+.github/

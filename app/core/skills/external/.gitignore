@@ -1,0 +1,4 @@
+# 忽略外部导入的 Skills
+*
+!.gitignore
+!README.md

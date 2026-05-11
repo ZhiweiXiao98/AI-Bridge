@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "description": "默认面板布局",
+  "panels": {
+    "sandbox_monitor": {
+      "id": "sandbox_monitor",
+      "title": "沙盒监控",
+      "visible": true,
+      "floating": false,
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 300,
+        "height": 400
+      },
+      "state": "docked"
+    },
+    "ai_activity": {
+      "id": "ai_activity",
+      "title": "AI日志",
+      "visible": true,
+      "floating": false,
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 300,
+        "height": 300
+      },
+      "state": "docked"
+    },
+    "file_explorer": {
+      "id": "file_explorer",
+      "title": "文件浏览器",
+      "visible": true,
+      "floating": false,
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 250,
+        "height": 600
+      },
+      "state": "docked"
+    }
+  },
+  "icon_bar": {
+    "visible": true,
+    "icons": []
+  }
+}

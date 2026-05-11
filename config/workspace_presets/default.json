@@ -1,0 +1,9 @@
+{
+  "name": "default",
+  "description": "显示所有面板的默认布局",
+  "layout": {
+    "name": "默认",
+    "description": "显示所有面板的默认布局",
+    "panels": {}
+  }
+}

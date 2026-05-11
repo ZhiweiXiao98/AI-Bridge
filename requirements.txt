@@ -1,0 +1,52 @@
+# === 核心驱动与界面 ===
+selenium
+webdriver-manager
+beautifulsoup4
+PySide6
+requests
+flet>=0.27.0           # 手机客户端 (Android APK 构建)
+pygments>=2.18.0       # 手机客户端代码高亮
+certifi                # httpx SSL 证书 (APK 打包需要显式声明)
+httpcore               # httpx 底层 HTTP 引擎
+idna                   # httpx 国际化域名
+anyio                  # httpx 异步 I/O
+
+# === Server 端核心组件 (SaaS 架构) ===
+fastapi
+uvicorn
+websockets
+python-multipart
+
+# === 安全与鉴权 (JWT/Hash) ===
+python-jose[cryptography]
+passlib[bcrypt]
+sqlalchemy
+
+# === 测试框架 ===
+pytest>=7.0
+pytest-cov>=4.0
+pytest-mock>=3.10
+pytest-asyncio>=0.20
+httpx
+
+# === 开发辅助与可视化 ===
+pyvis
+networkx
+streamlit          # benchmark UI (开发期工具，上线前移除)
+
+# === 商业级增强 ===
+pydantic>=2.0
+psutil
+docker>=7.0.0
+
+# === RAG 检索引擎 V2 ===
+chromadb>=1.0.0
+fastembed>=0.2.0
+# langchain 已移除 — V2 自研实现，更轻量可控
+# === 网络搜索 (Web Search Skill) ===
+ddgs>=6.0                 # 免费搜索，零配置（原 duckduckgo-search 已更名）
+# tavily-python           # 可选：AI 优化搜索结果，需 API key
+# 上下文管理系统依赖
+openai>=1.0
+google-genai>=0.3.0
+tiktoken>=0.5

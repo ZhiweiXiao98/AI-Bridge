@@ -1,0 +1,60 @@
+{
+  "panels": {
+    "task_schedule": {
+      "id": "task_schedule",
+      "title": "任务调度",
+      "visible": true,
+      "floating": false,
+      "geometry": {
+        "x": 1644,
+        "y": 21,
+        "width": 276,
+        "height": 198
+      },
+      "state": "docked"
+    },
+    "code_review": {
+      "id": "code_review",
+      "title": "代码审查",
+      "visible": true,
+      "floating": false,
+      "geometry": {
+        "x": 1644,
+        "y": 223,
+        "width": 276,
+        "height": 191
+      },
+      "state": "docked"
+    },
+    "git_control": {
+      "id": "git_control",
+      "title": "Git 版本控制",
+      "visible": true,
+      "floating": false,
+      "geometry": {
+        "x": 1644,
+        "y": 418,
+        "width": 276,
+        "height": 187
+      },
+      "state": "docked"
+    },
+    "runtime_log": {
+      "id": "runtime_log",
+      "title": "运行日志",
+      "visible": true,
+      "floating": false,
+      "geometry": {
+        "x": 1644,
+        "y": 609,
+        "width": 276,
+        "height": 408
+      },
+      "state": "docked"
+    }
+  },
+  "icon_bar": {
+    "visible": false,
+    "icons": []
+  }
+}

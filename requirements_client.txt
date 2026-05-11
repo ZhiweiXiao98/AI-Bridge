@@ -1,0 +1,12 @@
+# filename: requirements_client.txt
+PyQt6
+requests
+selenium
+beautifulsoup4
+
+# [Tools] 架构可视化支持
+pyvis
+networkx
+
+# 上下文管理与 Token 计数
+tiktoken>=0.5

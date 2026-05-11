@@ -1,0 +1,41 @@
+services:
+  test:
+    build:
+      context: ../../../
+      dockerfile: app/core/sandbox/Dockerfile.test
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../../../:/workspace
+    working_dir: /workspace
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    command: pytest tests/ -v --tb=short -m "not ui"
+
+  ui-test:
+    build:
+      context: ../../../
+      dockerfile: app/core/sandbox/Dockerfile.ui
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../../../:/workspace
+    working_dir: /workspace
+    ports:
+      - "5900:5900"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DISPLAY=:99
+    command: pytest tests/ -v --tb=short -m ui
+
+  client:
+    build:
+      context: ../../../
+      dockerfile: app/core/sandbox/Dockerfile.ui
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../../../:/workspace
+    working_dir: /workspace
+    ports:
+      - "5900:5900"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DISPLAY=:99

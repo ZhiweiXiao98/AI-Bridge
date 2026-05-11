@@ -1,0 +1,170 @@
+/* 全局样式 */
+QMainWindow {
+    background-color: #111827; /* 深色背景 */
+}
+
+/* 侧边栏 (Sidebar) */
+#Sidebar {
+    background-color: #0F172A; /* 比背景稍深 */
+    border-right: 1px solid #1E293B;
+}
+
+/* === Sidebar 按钮样式 (新) === */
+QToolButton.SidebarBtn {
+    background-color: transparent;
+    color: #9CA3AF;
+    border-radius: 12px;
+    font-family: "Segoe UI", "Microsoft YaHei";
+    font-size: 11px;
+    font-weight: 600;
+    border: none;
+    padding: 5px; /* 内部留白，防止文字贴边 */
+}
+QToolButton.SidebarBtn:hover {
+    background-color: #1E293B;
+    color: white;
+}
+QToolButton.SidebarBtn[checked="true"] {
+    background-color: #6366F1; /* 选中后的紫色 */
+    color: white;
+}
+
+/* 历史记录栏 */
+#HistoryPanel {
+    background-color: #111827;
+    border-right: 1px solid #1E293B;
+}
+QLineEdit#SearchBar {
+    background-color: #1F2937;
+    color: white;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 8px;
+    margin: 10px;
+}
+QListWidget {
+    background-color: transparent;
+    border: none;
+    outline: none;
+}
+QListWidget::item {
+    color: #D1D5DB;
+    padding: 12px;
+    margin: 4px 10px;
+    border-radius: 6px;
+}
+QListWidget::item:selected {
+    background-color: #374151;
+    color: white;
+}
+QListWidget::item:hover {
+    background-color: #1F2937;
+}
+
+/* 聊天区域 */
+#ChatHeader {
+    background-color: #111827;
+    border-bottom: 1px solid #1E293B;
+}
+#HeaderTitle {
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+}
+QScrollArea {
+    border: none;
+    background-color: #111827;
+}
+
+/* 底部输入框 */
+#InputContainer {
+    background-color: #111827;
+    border-top: 1px solid #1E293B;
+}
+QTextEdit#MsgInput {
+    background-color: #1F2937;
+    color: white;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+}
+QPushButton#SendBtn {
+    background-color: #6366F1;
+    color: white;
+    border-radius: 8px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+QPushButton#SendBtn:hover {
+    background-color: #4F46E5;
+}
+
+
+
+
+QDockWidget::title {
+    background: #2D2D30;
+    color: #FFFFFF;
+    padding: 6px;
+    border: 1px solid #3E3E42;
+    font-weight: bold;
+}
+
+QDockWidget::close-button, QDockWidget::float-button {
+    background: transparent;
+    border: none;
+    padding: 2px;
+}
+
+QDockWidget::close-button:hover, QDockWidget::float-button:hover {
+    background: #3E3E42;
+}
+
+
+
+
+
+QDockWidget[floating="true"] {
+    background: #1E1E1E;
+    border: 1px solid #3E3E42;
+}
+
+/* ============ DockWidget 样式 ============ */
+
+QDockWidget::title {
+    background: #2D2D30;
+    color: #FFFFFF;
+    padding: 6px;
+    border: 1px solid #3E3E42;
+    font-weight: bold;
+    /* 防止选中时出现黑色底纹 */
+    selection-background-color: transparent;
+    selection-color: #FFFFFF;
+}
+
+QDockWidget::close-button, QDockWidget::float-button {
+    background: transparent;
+    border: none;
+    padding: 2px;
+}
+
+QDockWidget::close-button:hover, QDockWidget::float-button:hover {
+    background: #3E3E42;
+}
+
+/* 浮窗特殊样式 */
+QDockWidget[floating="true"]::title {
+    background: #2D2D30;
+    color: #FFFFFF;
+    padding: 6px;
+    border: 1px solid #3E3E42;
+    font-weight: bold;
+    selection-background-color: transparent;
+    selection-color: #FFFFFF;
+}
+
+QDockWidget[floating="true"] {
+    background: #1E1E1E;
+    border: 1px solid #3E3E42;
+}

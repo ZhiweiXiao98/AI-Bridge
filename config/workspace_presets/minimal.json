@@ -1,0 +1,9 @@
+{
+  "name": "minimal",
+  "description": "隐藏所有面板",
+  "layout": {
+    "name": "极简",
+    "description": "隐藏所有面板",
+    "panels": {}
+  }
+}

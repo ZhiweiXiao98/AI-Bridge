@@ -1,0 +1,15 @@
+{
+  "id": "example_panel",
+  "name": "示例面板",
+  "version": "1.0.0",
+  "author": "AI Bridge Team",
+  "description": "这是一个示例面板插件，展示如何开发自定义面板",
+  "icon": "🎨",
+  "entry": "plugin.py",
+  "class": "ExamplePanelPlugin",
+  "default_area": "right",
+  "dependencies": [],
+  "min_app_version": "1.0.0",
+  "enabled": true,
+  "builtin": false
+}

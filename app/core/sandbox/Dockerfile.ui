@@ -1,0 +1,30 @@
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y \
+    xvfb x11vnc fluxbox \
+    libxcb-xinerama0 libxcb-icccm4 libxcb-image0 \
+    libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+    libxcb-shape0 libxkbcommon-x11-0 libdbus-1-3 \
+    libgl1 libglib2.0-0 \
+    ca-certificates curl gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && apt-get install -y docker-ce-cli && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+ENV PYTHONPATH=/workspace
+ENV DISPLAY=:99
+ENV QT_QPA_PLATFORM=offscreen
+
+RUN printf '#!/bin/bash\nXvfb :99 -screen 0 1024x768x24 &\nsleep 2\nx11vnc -display :99 -forever -nopw -listen 0.0.0.0 -xkb &\nsleep 2\nfluxbox &\nsleep 2\nexec "$@"' > /start.sh && chmod +x /start.sh
+
+EXPOSE 5900
+ENTRYPOINT ["/start.sh"]
+CMD ["python", "boot_remote.py"]

@@ -1,0 +1,80 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.manifest
+*.spec
+*.egg-info/
+
+# === 虚拟环境 ===
+venv/
+.venv/
+env/
+
+# === IDE 配置 ===
+.vscode/
+.idea/
+*.suo
+*.user
+*.swp
+*.swo
+
+# === C# / Rhino 编译产物 ===
+**/bin/
+**/obj/
+*.pdb
+*.rhp
+*.dll
+*.exe
+
+# === Python 打包产物 ===
+build/
+dist/
+*_Dist/
+
+# === 运行时临时文件 ===
+logs/
+log_noise_config.json
+export/code/*
+!export/code/.gitkeep
+export/images/*
+!export/images/.gitkeep
+update_cache/
+backup/
+temp_uploads/
+crash_log.txt
+pip-log.txt
+nohup.out
+
+# === RAG 知识库（向量数据库，本地生成） ===
+_knowledge_base/
+_knowledge_base_v2/
+
+# === 用户数据 & 敏感配置 ===
+*.db
+*.sqlite
+user_data.db
+config.json
+server_config.json
+session_states.json
+.secret.key
+*.ini
+layout.ini
+config/api_mode.json
+config/conversations/
+.sandbox_history.json
+
+# === Chrome 用户数据 ===
+chrome_user_data/
+
+# === 环境变量 ===
+.env
+
+# === 测试报告 ===
+.coverage
+coverage.json
+htmlcov/
+.pytest_cache/
+
+# === Docker ===
+_docker_env/

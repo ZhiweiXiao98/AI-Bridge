@@ -1,0 +1,13 @@
+{
+  "id": "skills_panel",
+  "name": "Skills 管理面板",
+  "version": "1.0.0",
+  "author": "AI Assistant",
+  "description": "显示和管理所有可用的 Skills",
+  "icon": "🎯",
+  "entry": "plugin.py",
+  "class": "SkillsPanelPlugin",
+  "default_area": "right",
+  "dependencies": [],
+  "min_app_version": "1.0.0"
+}

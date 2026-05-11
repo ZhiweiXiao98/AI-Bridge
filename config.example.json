@@ -1,0 +1,39 @@
+{
+    "export_code_path": "export/code",
+    "export_image_path": "export/images",
+    "chrome_port": 9527,
+    "chromedriver_path": "",
+    "auto_export": true,
+    "fix_limit": 5,
+    "ignored_files": "",
+    "chat_message_load_turns": 20,
+    "chat_message_load_step_turns": 10,
+    "knowledge_reindex_enabled": true,
+    "knowledge_reindex_after_git_push": true,
+    "knowledge_reindex_target_exts": ".py\n.md\n.txt\n.json\n.yaml\n.yml\n.toml\n.ini\n.cfg\n.cs",
+    "knowledge_reindex_skip_dirs": ".git\n__pycache__\n.venv\nvenv\nnode_modules\n_docker_env\n_knowledge_base\nbackup\ndist\nhtmlcov\nexport\ntemp_uploads",
+    "knowledge_reindex_include_prefixes": "app/\ntests/\ndocs/\nserver.py\nstart_client.py\nstart_server.py\nboot_remote.py\nREADME.md",
+    "knowledge_reindex_only_non_empty": true,
+    "knowledge_reindex_delete_stale": true,
+    "api_mode_usage": {
+        "type": "profile",
+        "ref": "default"
+    },
+    "daemon": {
+        "enabled": true,
+        "core": {
+            "type": "profile",
+            "ref": "default"
+        },
+        "lite": {
+            "type": "profile",
+            "ref": "default"
+        },
+        "tasks": {
+            "suggest": {
+                "enabled": true,
+                "max_suggestions": 3
+            }
+        }
+    }
+}
