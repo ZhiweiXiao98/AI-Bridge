@@ -1,0 +1,32 @@
+# Pin the selected test dependency closure with the repository's existing lock.
+# Full desktop/mobile packaging and real embedding models are outside quick CI.
+-c requirements.lock
+beautifulsoup4
+chromadb
+docker
+fastapi
+google-genai
+httpx
+networkx
+openai
+psutil
+PySide6
+pytest
+pytest-asyncio
+pytest-cov
+pytest-mock
+python-jose
+python-multipart
+pyvis
+requests
+selenium
+tiktoken
+uvicorn
+webdriver-manager
+websockets
+pytest-socket==0.7.0
+ruff==0.15.6
+# The Windows-origin lock omits these POSIX dependencies.
+pexpect==4.9.0; sys_platform != "win32"
+ptyprocess==0.7.0; sys_platform != "win32"
+uvloop==0.22.1; sys_platform != "win32" and platform_python_implementation == "CPython"

@@ -16,6 +16,7 @@ from PySide6.QtNetwork import QNetworkProxy
 from app.core.config import ConfigManager
 from app.core.app_constants import SERVER_PORT, LOCAL_SERVER_HOST
 from app.core.logging import get_logger
+from app.core.remote_protocol import REMOTE_MESSAGE_ROUTES
 
 logger = get_logger("app.core.remote_worker", side="worker")
 
@@ -116,11 +117,11 @@ class RemoteWorker(QThread):
     # === 信号定义 (与 WorkerThread 保持一致以便 UI 对接) ===
     status_signal = Signal(str)
     messages_signal = Signal(list)
-    context_health_signal = Signal(int, int) 
+    context_health_signal = Signal(int, int)
     sessions_signal = Signal(list)
-    state_sync_signal = Signal(int, int)     
+    state_sync_signal = Signal(int, int)
     restart_needed_signal = Signal(bool)
-    snapshot_ready_signal = Signal(str) 
+    snapshot_ready_signal = Signal(str)
     batch_complete_signal = Signal()
     update_list_signal = Signal(list)
     git_detail_signal = Signal(str)
@@ -131,9 +132,9 @@ class RemoteWorker(QThread):
     ota_sync_signal = Signal(object)
     ai_state_signal = Signal(object)
     occupancy_signal = Signal(object)
-    file_preview_signal = Signal(object) 
+    file_preview_signal = Signal(object)
     latency_signal = Signal(int)
-    
+
     # [New] 测试结果与任务队列监控信号
     test_result_signal = Signal(object)
     skills_list_signal = Signal(list)
@@ -146,42 +147,47 @@ class RemoteWorker(QThread):
     context_workspace_signal = Signal(object)  # 上下文工作台完整负载
     api_conversations_signal = Signal(object)  # API 对话列表
     api_messages_deleted_signal = Signal(object)  # API 历史消息删除结果
+    api_manual_compact_signal = Signal(object)  # API 手动压缩结果
     context_snapshot_signal = Signal(object)  # 上下文快照（调试浮窗）
     mode_changed_signal = Signal(str)       # 模式切换通知
     code_execution_completed = Signal()     # 代码执行完成
+    pending_message_consumed_signal = Signal()  # 浏览器模式: 待发消息被工具回流消费
 
+    agent_runtime_options_signal = Signal(object)
+    agent_runtime_approval_signal = Signal(object)
     api_stream_chunk_signal = Signal(object)   # 流式文本块信号
     api_stream_status_signal = Signal(object)  # 流式状态信号
     api_round_state_signal = Signal(object)    # API 单回合状态信号
     knowledge_health_signal = Signal(object)   # 知识检索健康状态
-    daemon_suggestion_signal = Signal(object)  # 守护进程回复建议
+    subagent_suggestion_signal = Signal(object)  # Subagent回复建议
+    daemon_suggestion_signal = Signal(object)
     _request_send = Signal(str)
-    _request_reset = Signal() 
+    _request_reset = Signal()
 
     def __init__(self, token="admin"):
         super().__init__()
-        self.token = token 
+        self.token = token
         self.config = ConfigManager.load()
-        host = self.config.get("server_ip", LOCAL_SERVER_HOST) 
+        host = self.config.get("server_ip", LOCAL_SERVER_HOST)
         port = self.config.get("server_port", SERVER_PORT)
-        
+
         # 生成唯一 Client ID
         unique_id = str(uuid.uuid4())[:8]
         self.client_id = f"Client_{unique_id}"
-        
+
         self.target_url = f"ws://{host}:{port}/ws/{token}/{self.client_id}"
         self.api_url = f"http://{host}:{port}/api"
         self._agent = None
         self._is_shutting_down = False
-        
+
         # 健康检查定时器 (心跳包)
         self.ping_timer = QTimer(self)
         self.ping_timer.timeout.connect(self.check_health)
         self.ping_timer.start(5000)
-        
+
         self.last_pong_time = time.time()
         self.missed_pongs = 0
-        
+
         self._is_pulling_msg = False
         self._msg_pull_pending = False
         self._is_pulling_sessions = False
@@ -200,28 +206,30 @@ class RemoteWorker(QThread):
         self._http_session.mount("http://", adapter)
         self._http_session.mount("https://", adapter)
         self._http_session.proxies = self.no_proxy
+        self._rpc_waiters = {}
+        self._rpc_waiters_lock = threading.Lock()
 
     def check_health(self):
         if self._is_shutting_down:
             return
         ts = int(time.time() * 1000)
         self._request_send.emit(json.dumps({"action": "ping", "timestamp": ts}))
-        
+
         # 简单的网络健康度监测
         now = time.time()
-        if now - self.last_pong_time > 30: 
+        if now - self.last_pong_time > 30:
             self.missed_pongs += 1
-            threshold = 12 
+            threshold = 12
             if self.missed_pongs % 2 == 0:
                 self.status_signal.emit(f"⚠️ 网络拥堵 ({self.missed_pongs}/{threshold})")
             if self.missed_pongs >= threshold:
                 self.status_signal.emit("🔥 连接假死，正在重置...")
-                self._request_reset.emit() 
+                self._request_reset.emit()
                 self.missed_pongs = 0
                 self.last_pong_time = now
 
     # === 公共接口 (UI 调用入口) ===
-    
+
     def request_latest_code(self):
         if getattr(sys, "frozen", False):
             self.status_signal.emit("Packaged client: replace the full application to update.")
@@ -314,7 +322,7 @@ class RemoteWorker(QThread):
         self.wait(3000)
 
     # === 消息拉取逻辑 ===
-    
+
     def _trigger_msg_pull(self):
         if self._is_pulling_msg:
             self._msg_pull_pending = True
@@ -363,7 +371,7 @@ class RemoteWorker(QThread):
             if resp.status_code == 200:
                 data = resp.json()
                 if "messages" in endpoint and not isinstance(data, list):
-                    data = [] 
+                    data = []
                 if "messages" in endpoint:
                     logger.debug("[RemoteWorker] 拉取到 %s 条消息，发射信号", len(data))
                 callback_signal.emit(data)
@@ -375,16 +383,16 @@ class RemoteWorker(QThread):
     # === 消息处理核心 ===
     @Slot(str)
     def on_agent_msg(self, message):
-        mtype = "unknown" 
+        mtype = "unknown"
         try:
             data = json.loads(message)
             mtype = data.get("type")
             payload = data.get("payload")
-            
+
             # 日志：记录收到的消息类型
             self.last_pong_time = time.time()
             self.missed_pongs = 0
-            
+
             # --- 信号分发 ---
             if mtype == "notify_messages":
                 self._trigger_msg_pull()
@@ -393,67 +401,48 @@ class RemoteWorker(QThread):
             elif mtype == "notify_ota_sync":
                 self.status_signal.emit("📦 检测到代码更新，正在下载...")
                 threading.Thread(target=self._process_ota_pull, daemon=True).start()
-            
-            elif mtype == "status":
-                self.status_signal.emit(payload)
-                if isinstance(payload, str) and "🔧 工具执行完成" in payload:
-                    self.code_execution_completed.emit()
-            elif mtype == "git_detail":
-                self.git_detail_signal.emit(payload)
-            elif mtype == "context_health": self.context_health_signal.emit(payload.get("total", 0), payload.get("gap", 0))
-            elif mtype == "sessions":
-                self.sessions_signal.emit(payload)
-            elif mtype == "state_sync": self.state_sync_signal.emit(payload.get("max_idx", 0), payload.get("snap_idx", 0))
-            elif mtype == "restart_needed": self.restart_needed_signal.emit(payload)
-            elif mtype == "snapshot_ready": self.snapshot_ready_signal.emit(payload)
-            elif mtype == "batch_complete": self.batch_complete_signal.emit()
-            elif mtype == "update_list": self.update_list_signal.emit(payload)
-            elif mtype == "server_log": 
-                if isinstance(payload, dict): self.server_log_signal.emit(payload.get("text", ""))
-            elif mtype == "git_workbench": self.git_workbench_signal.emit(payload)
-            elif mtype == "git_diff_preview": self.git_diff_preview_signal.emit(payload)
-            elif mtype == "git_config": self.git_config_signal.emit(payload)
-            elif mtype == "ai_state": self.ai_state_signal.emit(payload)
-            elif mtype == "occupancy": self.occupancy_signal.emit(payload)
-            elif mtype == "file_preview": self.file_preview_signal.emit(payload)
-            elif mtype == "test_result": self.test_result_signal.emit(payload)
-            elif mtype == "queue_monitor": self.queue_monitor_signal.emit(payload) # [New] 队列监控
-            elif mtype == "knowledge_health": self.knowledge_health_signal.emit(payload)
-            elif mtype == "daemon_suggestion":
-                try:
-                    count = len(payload or []) if isinstance(payload, (list, tuple)) else 1
-                    logger.info("[RemoteWorker] 收到守护建议: count=%s", count)
-                except Exception:
-                    pass
-                self.daemon_suggestion_signal.emit(payload)
-            elif mtype == "skills_list": self.skills_list_signal.emit(payload)
-            elif mtype == "skills_toggle_result": self.skills_toggle_result_signal.emit(payload)
-            elif mtype == "skills_prompt": self.skills_prompt_signal.emit(payload)
-            elif mtype == "context_workspace": self.context_workspace_signal.emit(payload)
-            elif mtype == "context_snapshot": self.context_snapshot_signal.emit(payload)
-            elif mtype == "api_conversations": self.api_conversations_signal.emit(payload)
-            elif mtype == "api_messages_deleted": self.api_messages_deleted_signal.emit(payload)
-            elif mtype == "api_stream_chunk":
-                try:
-                    print(f"[DBG][RemoteWorker] recv api_stream_chunk status={payload.get('status') if isinstance(payload, dict) else type(payload)}")
-                except Exception as e:
-                    logger.warning(e)
-                self.api_stream_chunk_signal.emit(payload)
-            elif mtype == "api_stream_status":
-                try:
-                    print(f"[DBG][RemoteWorker] recv api_stream_status status={payload.get('status') if isinstance(payload, dict) else type(payload)}")
-                except Exception as e:
-                    logger.warning(e)
-                self.api_stream_status_signal.emit(payload)
-            elif mtype == "api_round_state":
-                self.api_round_state_signal.emit(payload)
-            elif mtype == "pong":
-                now = int(time.time() * 1000)
-                sent_time = int(payload)
-                self.latency_signal.emit(now - sent_time)
-                
+            elif mtype == "rpc_result":
+                self._handle_rpc_result(payload)
+            else:
+                self._emit_protocol_message(mtype, payload)
+
         except Exception as e:
             print(f"[Remote] Signal Error ({mtype}): {e}")
+
+    def _handle_rpc_result(self, payload):
+        payload = payload or {}
+        request_id = str(payload.get("request_id") or "")
+        if not request_id:
+            return
+        with self._rpc_waiters_lock:
+            waiter = self._rpc_waiters.pop(request_id, None)
+        if not waiter:
+            logger.debug("[RemoteWorker] 收到未知 rpc_result: %s", request_id)
+            return
+        waiter["response"] = payload
+        waiter["event"].set()
+
+    def _emit_protocol_message(self, mtype, payload):
+        route = REMOTE_MESSAGE_ROUTES.get(mtype)
+        if not route:
+            logger.debug("[RemoteWorker] 未注册的消息类型: %s", mtype)
+            return
+
+        if mtype in ("subagent_suggestion", "daemon_suggestion"):
+            try:
+                count = len(payload or []) if isinstance(payload, (list, tuple)) else 1
+                logger.info("[RemoteWorker] 收到Subagent 建议: count=%s", count)
+            except Exception:
+                pass
+
+        signal = getattr(self, route.signal_name, None)
+        if signal is None:
+            logger.debug("[RemoteWorker] 缺失信号: %s for message=%s", route.signal_name, mtype)
+            return
+
+        signal.emit(*route.args_builder(payload))
+        if mtype == "status" and isinstance(payload, str) and "🔧 工具执行完成" in payload:
+            self.code_execution_completed.emit()
 
     # === OTA (热更新) 逻辑 ===
     def _process_ota_pull(self):
@@ -482,9 +471,9 @@ class RemoteWorker(QThread):
         real_update_count = 0
         updated_files = []
         all_safe = True
-        
+
         for rel_path, content in payload.items():
-            local_path = rel_path 
+            local_path = rel_path
             is_different = True
             if os.path.exists(local_path):
                 try:
@@ -501,19 +490,19 @@ class RemoteWorker(QThread):
                 except Exception as e:
                     print(f"⚠️ Hash Check Failed for {local_path}: {e}")
                     is_different = True
-            
+
             if is_different:
                 full_cache_path = os.path.join(cache_root, rel_path)
                 dir_name = os.path.dirname(full_cache_path)
                 if not os.path.exists(dir_name): os.makedirs(dir_name)
-                
-                with open(full_cache_path, 'w', encoding='utf-8', newline='\n') as f: 
+
+                with open(full_cache_path, 'w', encoding='utf-8', newline='\n') as f:
                     f.write(content.replace('\r\n', '\n'))
-                
+
                 real_update_count += 1
                 updated_files.append(rel_path)
                 if not self._is_safe_to_hot_swap(rel_path): all_safe = False
-        
+
         if real_update_count > 0:
             if all_safe:
                 # 尝试热应用非关键文件
@@ -522,7 +511,7 @@ class RemoteWorker(QThread):
                 else: self.status_signal.emit("⚠️ 热更新失败，请手动重启")
             else:
                 print(f"📦 [OTA] 捕获到 {real_update_count} 个核心更新，准备重启...")
-                self.restart_needed_signal.emit(True) 
+                self.restart_needed_signal.emit(True)
         else: self.status_signal.emit("✅ 代码已是最新")
 
     def _calculate_str_hash(self, content):
@@ -595,6 +584,14 @@ class RemoteWorker(QThread):
         """显式 RPC 包装：删除 API 模式指定历史消息。"""
         self.run_driver_action("delete_api_messages", indexes, conversation_id=conversation_id, **kwargs)
 
+    def api_probe_tool_support(self, **kwargs):
+        """同步 RPC：探测结果需要返回给设置页渲染。"""
+        return self.run_driver_action_sync("api_probe_tool_support", timeout=120, **kwargs)
+
+    def api_probe_models(self, **kwargs):
+        """同步 RPC：模型列表需要返回给设置页渲染。"""
+        return self.run_driver_action_sync("api_probe_models", timeout=120, **kwargs)
+
 
     def _send_compound_bg(self, text, file_paths):
         server_paths = []
@@ -608,11 +605,11 @@ class RemoteWorker(QThread):
                     resp = self._http_session.post(f"{self.api_url}/upload", files=files, timeout=120)
                 if resp.status_code == 200: server_paths.append(resp.json().get("path"))
                 else: self.status_signal.emit(f"⚠️ 上传失败: {os.path.basename(local_path)}")
-            
+
             if server_paths:
                 self.status_signal.emit("✅ 文件就绪，正在投送...")
                 self.run_driver_action("handle_compound_send", text, server_paths)
-            elif text: 
+            elif text:
                 self.run_driver_action("send_text", "div.aa-chat-input textarea", text)
         except Exception as e: self.status_signal.emit(f"❌ 发送异常: {e}")
 
@@ -628,6 +625,32 @@ class RemoteWorker(QThread):
     def run_driver_action(self, method, *args, **kwargs):
         payload = {"action": "rpc_call", "method": method, "args": args, "kwargs": kwargs}
         self._request_send.emit(json.dumps(payload))
+
+    def run_driver_action_sync(self, method, *args, timeout=60, **kwargs):
+        request_id = str(uuid.uuid4())
+        waiter = {
+            "event": threading.Event(),
+            "response": None,
+        }
+        with self._rpc_waiters_lock:
+            self._rpc_waiters[request_id] = waiter
+        payload = {
+            "action": "rpc_call",
+            "method": method,
+            "args": args,
+            "kwargs": kwargs,
+            "request_id": request_id,
+            "expect_response": True,
+        }
+        self._request_send.emit(json.dumps(payload))
+        if not waiter["event"].wait(timeout):
+            with self._rpc_waiters_lock:
+                self._rpc_waiters.pop(request_id, None)
+            raise TimeoutError(f"RPC 调用超时: {method}")
+        response = waiter.get("response") or {}
+        if not response.get("ok", False):
+            raise RuntimeError(str(response.get("error") or f"RPC 调用失败: {method}"))
+        return response.get("result")
 
     # === 动态 RPC 代理 (兜底) ===
     # 已知数据属性：这些属性在 WorkerThread 上是普通值而非方法，
@@ -647,11 +670,11 @@ class RemoteWorker(QThread):
         if name.startswith("_"): raise AttributeError(name)
         if name.endswith("_signal"): raise AttributeError(name)
         if name in self._NON_RPC_ATTRS: raise AttributeError(name)
-        
+
         def dynamic_method(*args, **kwargs):
             payload = { "action": "rpc_call", "method": name, "args": args, "kwargs": kwargs }
             self._request_send.emit(json.dumps(payload))
-        
+
         return dynamic_method
 
     def get_context_workspace_payload(self, conversation_id=None):
@@ -697,12 +720,12 @@ class RemoteWorker(QThread):
         """获取 Skills 列表"""
         payload = {"action": "rpc_call", "method": "skills_list", "kwargs": {"category": category}}
         self._request_send.emit(json.dumps(payload))
-    
+
     def skills_toggle(self, skill_name, enabled):
         """切换 Skill 状态"""
         payload = {"action": "rpc_call", "method": "skills_toggle", "kwargs": {"skill_name": skill_name, "enabled": enabled}}
         self._request_send.emit(json.dumps(payload))
-    
+
     def skills_refresh(self):
         """刷新 Skills"""
         payload = {"action": "rpc_call", "method": "skills_refresh", "kwargs": {}}
@@ -712,8 +735,21 @@ class RemoteWorker(QThread):
         """重载单个 Skill"""
         payload = {"action": "rpc_call", "method": "reload_skill", "kwargs": {"skill_name": skill_name}}
         self._request_send.emit(json.dumps(payload))
-    
+
     def skills_generate_prompt(self):
         """生成系统提示词"""
         payload = {"action": "rpc_call", "method": "skills_generate_prompt", "kwargs": {}}
         self._request_send.emit(json.dumps(payload))
+
+    def skills_get_detail(self, skill_name: str):
+        """获取单个 Skill 完整文档（AI 按需查询）"""
+        payload = {"action": "rpc_call", "method": "skills_get_detail", "kwargs": {"skill_name": skill_name}}
+        self._request_send.emit(json.dumps(payload))
+
+
+
+    def switch_project(self, project_path: str):
+        """通知服务端切换项目（走标准 _request_send 信号，与其他 RPC 一致）"""
+        payload = {"action": "rpc_call", "method": "switch_project", "kwargs": {"path": project_path}}
+        self._request_send.emit(json.dumps(payload))
+        logger.info("[RPC] 已发送项目切换请求: %s", project_path)

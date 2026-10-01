@@ -62,6 +62,24 @@ GEMINI_MODELS = [
     "gemini-1.5-pro",
 ]
 
+MIMO_MODELS = [
+    "mimo-v2.5-pro",
+    "mimo-v2.5",
+    "mimo-v2-pro",
+    "mimo-v2-omni",
+    "mimo-v2-flash",
+]
+
+MIMO_DEFAULT_BASE_URL = "https://api.xiaomimimo.com/v1"
+
+PROVIDER_DISPLAY_NAMES = {
+    "openai_compatible": "OpenAI 兼容",
+    "mimo": "Xiaomi MiMo",
+    "gemini": "Google Gemini",
+    "web_ai": "网页 AI",
+    "api": "OpenAI 兼容",
+}
+
 MAX_WORKERS = 4
 DEFAULT_SYSTEM_BUDGET = 8000
 DEFAULT_MAX_OUTPUT_TOKENS = 4096
@@ -91,9 +109,9 @@ UI_COLORS = {
 }
 
 UI_SIZES = {
-    "sidebar_width": 70,
-    "sidebar_button": (60, 60),
-    "sidebar_icon": (28, 28),
-    "default_window": (1200, 800),
-    "default_sidebar_width": 260,
+    "sidebar_width": 54,
+    "sidebar_button": (46, 46),
+    "sidebar_icon": (22, 22),
+    "default_window": (1360, 860),
+    "default_sidebar_width": 180,
 }

@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
+    QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
@@ -183,14 +184,22 @@ class TestRunnerThread(QThread):
 class StatCard(QFrame):
     def __init__(self, title, value="--", color_key="TEXT_SUCCESS", parent=None):
         super().__init__(parent)
-        self.setFixedSize(140, 80)
+        self.setMinimumSize(74, 54)
+        self.setMaximumHeight(64)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.color_key = color_key
         self.title_text = title
         self.value_text = str(value)
 
         self.layout_box = QVBoxLayout(self)
+        self.layout_box.setContentsMargins(8, 6, 8, 6)
+        self.layout_box.setSpacing(2)
         self.lbl_title = QLabel(self.title_text)
         self.lbl_value = QLabel(self.value_text)
+        self.lbl_title.setMinimumWidth(0)
+        self.lbl_value.setMinimumWidth(0)
+        self.lbl_title.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        self.lbl_value.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.layout_box.addWidget(self.lbl_title)
         self.layout_box.addWidget(self.lbl_value)
 
@@ -199,9 +208,13 @@ class StatCard(QFrame):
 
     def apply_theme(self):
         self.setStyleSheet(Theme.stat_card())
-        self.lbl_title.setStyleSheet(Theme.card_title())
         c = getattr(theme_manager.get_palette(), self.color_key, "#FFFFFF")
-        self.lbl_value.setStyleSheet(Theme.card_value(c))
+        self.lbl_title.setStyleSheet(
+            Theme.card_title().replace("font-size: 11px", "font-size: 10px")
+        )
+        self.lbl_value.setStyleSheet(
+            Theme.card_value(c).replace("font-size: 24px", "font-size: 18px")
+        )
 
     def set_value(self, val, color_key=None):
         self.value_text = str(val)
@@ -213,6 +226,7 @@ class StatCard(QFrame):
 
 class TestDashboard(QWidget):
     request_auto_report = Signal(str)
+    request_focus_chat = Signal()
 
     def _is_test_log(self, text):
         return is_test_log(text)
@@ -235,10 +249,16 @@ class TestDashboard(QWidget):
                 self.worker.test_result_signal.connect(self.on_test_finished)
 
     def init_ui(self):
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setSpacing(15)
+        self.main_layout.setContentsMargins(10, 8, 10, 10)
+        self.main_layout.setSpacing(6)
 
         stats_layout = QHBoxLayout()
+        stats_layout.setSpacing(6)
+        stats_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.card_total = StatCard("TOTAL TESTS", "0", "TEXT_PRIMARY")
         self.card_pass = StatCard("PASSED", "0", "TEXT_SUCCESS")
         self.card_fail = StatCard("FAILED", "0", "TEXT_DANGER")
@@ -250,65 +270,87 @@ class TestDashboard(QWidget):
         stats_layout.addStretch()
 
         self.control_panel = QFrame()
-        cp_layout = QVBoxLayout(self.control_panel)
-        cp_layout.setContentsMargins(15, 15, 15, 15)
+        self.control_panel.setMinimumWidth(0)
+        self.control_panel.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+        cp_layout = QHBoxLayout(self.control_panel)
+        cp_layout.setContentsMargins(8, 8, 8, 8)
+        cp_layout.setSpacing(8)
 
-        self.btn_run = QPushButton("🚀 运行全量测试 (Server)")
-        self.btn_run.setFixedSize(220, 40)
+        self.btn_run = QPushButton("运行测试")
+        self.btn_run.setMinimumWidth(0)
+        self.btn_run.setFixedWidth(124)
+        self.btn_run.setFixedHeight(32)
+        self.btn_run.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         self.btn_run.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_run.clicked.connect(self.start_test)
 
-        self.sidecar_group = QGroupBox("🚑 侧车维修站 (Agent Sidecar)")
+        self.sidecar_group = QGroupBox("侧车维修")
+        self.sidecar_group.setMinimumWidth(0)
+        self.sidecar_group.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         sg_layout = QHBoxLayout(self.sidecar_group)
+        sg_layout.setContentsMargins(8, 4, 8, 6)
+        sg_layout.setSpacing(6)
 
-        self.lbl_sidecar = QLabel("指派会话:")
+        self.lbl_sidecar = QLabel("会话")
+        self.lbl_sidecar.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
         self.combo_sessions = QComboBox()
-        self.combo_sessions.setMinimumWidth(200)
+        self.combo_sessions.setMinimumWidth(120)
+        self.combo_sessions.setMaximumWidth(260)
+        self.combo_sessions.setMinimumContentsLength(10)
+        self.combo_sessions.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.combo_sessions.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
 
-        self.btn_set_mechanic = QPushButton("🔗 设为维修工")
+        self.btn_set_mechanic = QPushButton("设维修")
+        self.btn_set_mechanic.setFixedWidth(64)
+        self.btn_set_mechanic.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         self.btn_set_mechanic.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_set_mechanic.clicked.connect(self.set_current_mechanic)
 
-        self.btn_new_mechanic = QPushButton("➕ 新建侧车")
+        self.btn_new_mechanic = QPushButton("新建")
+        self.btn_new_mechanic.setFixedWidth(52)
+        self.btn_new_mechanic.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         self.btn_new_mechanic.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_new_mechanic.clicked.connect(self.create_new_mechanic)
 
         sg_layout.addWidget(self.lbl_sidecar)
-        sg_layout.addWidget(self.combo_sessions)
+        sg_layout.addWidget(self.combo_sessions, 1)
         sg_layout.addWidget(self.btn_set_mechanic)
         sg_layout.addWidget(self.btn_new_mechanic)
-        sg_layout.addStretch()
 
-        self.btn_report = QPushButton("🚑 自动修复 (发送报错到侧车)")
-        self.btn_report.setFixedHeight(40)
+        self.btn_report = QPushButton("自动修复")
+        self.btn_report.setMinimumWidth(0)
+        self.btn_report.setMaximumWidth(160)
+        self.btn_report.setFixedHeight(30)
+        self.btn_report.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         self.btn_report.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_report.clicked.connect(self.send_ai_report)
         self.btn_report.hide()
 
         cp_layout.addWidget(self.btn_run)
-        cp_layout.addWidget(self.sidecar_group)
+        cp_layout.addWidget(self.sidecar_group, 1)
         cp_layout.addWidget(self.btn_report)
 
-        right_panel = QVBoxLayout()
-        right_panel.addWidget(self.control_panel)
-        right_panel.addStretch()
-
-        top_split = QHBoxLayout()
-        top_split.addLayout(stats_layout, 2)
-        top_split.addLayout(right_panel, 1)
-        self.main_layout.addLayout(top_split)
+        top_stack = QVBoxLayout()
+        top_stack.setSpacing(6)
+        top_stack.addLayout(stats_layout)
+        top_stack.addWidget(self.control_panel)
+        self.main_layout.addLayout(top_stack, 0)
 
         self.progress = QProgressBar()
         self.progress.setTextVisible(False)
         self.progress.setFixedHeight(4)
         self.main_layout.addWidget(self.progress)
 
-        self.log_header = QLabel("🖥️ Test Console Output (Remote Stream)")
+        self.log_header = QLabel("Test Console")
         self.main_layout.addWidget(self.log_header)
 
         self.log_area = QPlainTextEdit()
+        self.log_area.setMinimumWidth(0)
+        self.log_area.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.log_area.setReadOnly(True)
-        self.main_layout.addWidget(self.log_area)
+        self.main_layout.addWidget(self.log_area, 1)
 
     def apply_theme(self):
         self.control_panel.setStyleSheet(Theme.panel_container())
@@ -324,7 +366,7 @@ class TestDashboard(QWidget):
         self.btn_report.setStyleSheet(Theme.button_danger())
         self.progress.setStyleSheet(Theme.progress_bar())
         self.log_header.setStyleSheet(
-            f"color: {p.TEXT_SECONDARY}; font-weight: bold; margin-top: 10px;"
+            f"color: {p.TEXT_SECONDARY}; font-weight: bold; margin-top: 6px;"
         )
         self.log_area.setStyleSheet(Theme.log_editor())
         self.lbl_sidecar.setStyleSheet(f"color: {p.TEXT_PRIMARY};")
@@ -362,7 +404,7 @@ class TestDashboard(QWidget):
         self.log_area.clear()
         self.log_area.appendPlainText("⏳ 正在请求云端运行测试...")
         self.btn_run.setEnabled(False)
-        self.btn_run.setText("测试运行中...")
+        self.btn_run.setText("运行中...")
         self.btn_report.hide()
 
         self.progress.setRange(0, 0)
@@ -403,7 +445,7 @@ class TestDashboard(QWidget):
         self.progress.setRange(0, 100)
         self.progress.setValue(100)
         self.btn_run.setEnabled(True)
-        self.btn_run.setText("🚀 运行全量测试 (Server)")
+        self.btn_run.setText("运行测试")
 
         raw_log = data.get("full_log", "") or self.last_full_log
         if raw_log:
@@ -437,8 +479,9 @@ class TestDashboard(QWidget):
     def send_ai_report(self):
         report = ErrorReporter.generate_report(self.last_full_log)
         self.request_auto_report.emit(report)
-        self.btn_report.setText("🔄 修复指令已发送")
-        self.btn_report.setEnabled(False)
+        self.request_focus_chat.emit()
+        self.btn_report.setText("修复中...")
+        self.btn_report.setEnabled(True)
 
 
 class UserDialog(QDialog):
@@ -500,8 +543,13 @@ class UserManagerTab(QWidget):
         self.apply_theme()
 
     def init_ui(self):
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         toolbar = QHBoxLayout()
+        toolbar.setSpacing(6)
 
         self.refresh_btn = QPushButton("🔄 刷新")
         self.refresh_btn.clicked.connect(self.load_users)
@@ -514,6 +562,8 @@ class UserManagerTab(QWidget):
         layout.addLayout(toolbar)
 
         self.table = QTableWidget()
+        self.table.setMinimumWidth(0)
+        self.table.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels(
             ["账号", "状态", "昵称", "角色", "设备 IP", "创建时间", "操作"]
@@ -610,6 +660,8 @@ class UserManagerTab(QWidget):
 
 
 class ConsolePage(QWidget):
+    request_focus_chat = Signal()
+
     def _is_test_log(self, text):
         return is_test_log(text)
 
@@ -625,17 +677,28 @@ class ConsolePage(QWidget):
         self.apply_theme()
 
     def init_ui(self):
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.tabs = QTabWidget()
+        self.tabs.setMinimumWidth(0)
+        self.tabs.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
 
         self.log_tab = QWidget()
+        self.log_tab.setMinimumWidth(0)
+        self.log_tab.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         l_layout = QVBoxLayout(self.log_tab)
+        l_layout.setContentsMargins(8, 8, 8, 8)
+        l_layout.setSpacing(6)
         self.header = QLabel("🖥️ 云端日志流 (Server Logs)")
         l_layout.addWidget(self.header)
 
         self.console_log = QPlainTextEdit()
+        self.console_log.setMinimumWidth(0)
+        self.console_log.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.console_log.setReadOnly(True)
         l_layout.addWidget(self.console_log)
 
@@ -643,6 +706,7 @@ class ConsolePage(QWidget):
         self.test_tab = TestDashboard(self.worker)
         if hasattr(self.worker, "request_auto_fix"):
             self.test_tab.request_auto_report.connect(self.worker.request_auto_fix)
+        self.test_tab.request_focus_chat.connect(self.request_focus_chat.emit)
 
         QTimer.singleShot(1000, self.inject_token)
 
@@ -660,9 +724,10 @@ class ConsolePage(QWidget):
             QTabBar::tab {{
                 background: {p.BG_SECONDARY};
                 color: {p.TEXT_SECONDARY};
-                padding: 10px 20px;
+                padding: 5px 10px;
                 border-top-left-radius: 4px;
                 border-top-right-radius: 4px;
+                font-size: 11px;
             }}
             QTabBar::tab:selected {{
                 background: {p.ACCENT_PRIMARY};

@@ -3,8 +3,8 @@ import os
 import ast
 import math
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTreeWidget, QTreeWidgetItem, 
-    QLabel, QPushButton, QSplitter, QFrame, QTextEdit, 
+    QWidget, QVBoxLayout, QHBoxLayout, QTreeWidget, QTreeWidgetItem,
+    QLabel, QPushButton, QSplitter, QFrame, QTextEdit,
     QCheckBox, QTreeWidgetItemIterator, QApplication, QScrollArea,
     QComboBox, QTabWidget, QProgressBar
 )
@@ -31,14 +31,14 @@ class ScannerThread(QThread):
         file_list, info_cache, _, _, stats = self.scanner.scan(
             progress_callback=lambda msg: self.progress_signal.emit(msg)
         )
-        
+
         # 2. 后处理依赖关系 (CPU密集型)
         self.progress_signal.emit("正在构建依赖图谱...")
         dep_graph, rev_dep_graph = self.scanner.post_process_dependencies(file_list, info_cache)
-        
+
         # 3. 统计最终关系数
         stats["total_relations"] = sum(len(v) for v in dep_graph.values())
-        
+
         # 4. 打包结果
         result = {
             "file_list": file_list,
@@ -58,8 +58,8 @@ class DependencyRadar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.center_node = None
-        self.parents = []   
-        self.children = []  
+        self.parents = []
+        self.children = []
         self.setMinimumHeight(350)
         self.setStyleSheet("background-color: #1E1E1E;")
         self.hit_list = []
@@ -69,7 +69,7 @@ class DependencyRadar(QWidget):
         self.center_node = center
         self.parents = sorted(list(parents))
         self.children = sorted(list(children))
-        self.update() 
+        self.update()
 
     def mouseMoveEvent(self, event):
         pos = event.pos()
@@ -93,16 +93,16 @@ class DependencyRadar(QWidget):
     def paintEvent(self, event):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        self.hit_list = [] 
-        
+        self.hit_list = []
+
         if not self.center_node:
             self._draw_placeholder(p)
             return
-        
+
         w, h = self.width(), self.height()
         cx, cy = w / 2, h / 2
-        node_w, gap_x = 220, 280 
-        
+        node_w, gap_x = 220, 280
+
         self._draw_links(p, self.parents, cx - gap_x, cy, cx, cy, node_w, True)
         self._draw_links(p, self.children, cx, cy, cx + gap_x, cy, node_w, False)
 
@@ -166,51 +166,51 @@ class DependencyRadar(QWidget):
 # Page: ContextPage (主界面)
 # =============================================================================
 class ContextPage(QWidget):
-    request_push_pack = Signal(str, str) 
+    request_push_pack = Signal(str, str)
 
     def __init__(self, worker):
         super().__init__()
         self.worker = worker
         self.project_root = ProjectContext.get().get_project_root()
-        
+
         self.file_list = []
         self.dep_graph = {}
         self.rev_dep_graph = {}
         self.file_info_cache = {}
-        self.file_nodes_map = {} 
+        self.file_nodes_map = {}
         self.scan_thread = None
-        
+
         self.init_ui()
         theme_manager.theme_changed.connect(self.apply_theme)
         self.apply_theme()
-        
+
         QTimer.singleShot(500, self.start_scanning)
 
     def init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        
+
         # 1. Dashboard
         self.dashboard = QFrame()
         self.dashboard.setFixedHeight(60)
         d_layout = QHBoxLayout(self.dashboard)
-        
+
         self.lbl_title = QLabel("🛸 架构全景")
         self.lbl_loading = QLabel("准备就绪")
-        self.progress_bar = QProgressBar() 
-        self.progress_bar.setRange(0, 0)   
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 0)
         self.progress_bar.setFixedWidth(150)
         self.progress_bar.hide()
-        
+
         self.stats_files = QLabel("📁 --")
         self.stats_tokens = QLabel("🔤 --")
         self.stats_graph = QLabel("🕸️ --")
-        
+
         self.btn_rescan = QPushButton("🔄 全局扫描")
         self.btn_rescan.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_rescan.clicked.connect(self.start_scanning)
-        
+
         d_layout.addWidget(self.lbl_title)
         d_layout.addSpacing(20)
         d_layout.addWidget(self.progress_bar)
@@ -223,18 +223,18 @@ class ContextPage(QWidget):
         d_layout.addWidget(self.stats_graph)
         d_layout.addSpacing(20)
         d_layout.addWidget(self.btn_rescan)
-        
+
         layout.addWidget(self.dashboard)
-        
+
         # 2. Splitter
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
         self.splitter.setHandleWidth(1)
-        
+
         # --- Left ---
         left_widget = QWidget()
         l_layout = QVBoxLayout(left_widget)
         l_layout.setContentsMargins(10, 10, 5, 10)
-        
+
         filter_row = QHBoxLayout()
         self.combo_view = QComboBox()
         self.combo_view.addItems(["📂 物理视图", "🧠 逻辑视图", "🔒 安全视图"])
@@ -242,7 +242,7 @@ class ContextPage(QWidget):
         filter_row.addWidget(QLabel("视图模式:"))
         filter_row.addWidget(self.combo_view, 1)
         l_layout.addLayout(filter_row)
-        
+
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels(["组件名称", "功能描述", "大小", "安全级"])
         self.tree.setColumnWidth(0, 250)
@@ -252,14 +252,14 @@ class ContextPage(QWidget):
         self.tree.itemChanged.connect(self.on_item_changed)
         self.tree.itemClicked.connect(self.on_item_clicked)
         l_layout.addWidget(self.tree)
-        
+
         sel_bar = QHBoxLayout()
         self.chk_auto_dep = QCheckBox("🔗 自动关联依赖")
         self.chk_auto_dep.setChecked(True)
         self.btn_sel_core = QPushButton("Core"); self.btn_sel_core.clicked.connect(lambda: self.select_by_keyword("app/core"))
         self.btn_sel_ui = QPushButton("UI"); self.btn_sel_ui.clicked.connect(lambda: self.select_by_keyword("app/ui"))
         self.btn_sel_all = QPushButton("全选/反选"); self.btn_sel_all.clicked.connect(self.toggle_select_all)
-        
+
         sel_bar.addWidget(self.chk_auto_dep)
         sel_bar.addWidget(self.btn_sel_all)
         sel_bar.addStretch()
@@ -267,35 +267,35 @@ class ContextPage(QWidget):
         sel_bar.addWidget(self.btn_sel_core)
         sel_bar.addWidget(self.btn_sel_ui)
         l_layout.addLayout(sel_bar)
-        
+
         self.splitter.addWidget(left_widget)
-        
+
         # --- Right ---
         right_widget = QWidget()
         r_layout = QVBoxLayout(right_widget)
         r_layout.setContentsMargins(5, 10, 10, 10)
-        
+
         self.radar = DependencyRadar()
         self.radar.node_clicked.connect(self.jump_to_file)
-        r_layout.addWidget(self.radar, 3) 
-        
+        r_layout.addWidget(self.radar, 3)
+
         self.detail_tabs = QTabWidget()
-        
+
         # 1. 结构
         self.txt_structure = QTextEdit(); self.txt_structure.setReadOnly(True)
         self.detail_tabs.addTab(self.txt_structure, "📐 代码骨架")
-        
+
         # 2. 预览
         self.txt_preview = QTextEdit(); self.txt_preview.setReadOnly(True)
         self.txt_preview.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
         self.detail_tabs.addTab(self.txt_preview, "📝 源码预览")
-        
+
         # 3. [Fix] 动态读取导航图
         self.txt_map = QTextEdit(); self.txt_map.setReadOnly(True)
         self.detail_tabs.addTab(self.txt_map, "🗺️ 导航图")
-        
+
         # 尝试读取文档
-        doc_path = os.path.join(self.project_root, "docs", "PROJECT_STRUCTURE.md")
+        doc_path = os.path.join(self.project_root, "docs", "项目结构导航.md")
         if os.path.exists(doc_path):
             try:
                 with open(doc_path, "r", encoding="utf-8") as f:
@@ -304,9 +304,9 @@ class ContextPage(QWidget):
                 self.txt_map.setPlainText(f"⚠️ 读取文档失败: {e}")
         else:
             self.txt_map.setHtml(f"<h3 style='color:gray'>⚠️ 未找到文档</h3><p>请确保文件存在: {doc_path}</p>")
-        
+
         r_layout.addWidget(self.detail_tabs, 4)
-        
+
         send_group = QFrame(); send_group.setObjectName("SendGroup")
         s_layout = QVBoxLayout(send_group); s_layout.setContentsMargins(10, 10, 10, 10)
         s_layout.addWidget(QLabel("🎯 任务目标 (Goal):"))
@@ -314,14 +314,14 @@ class ContextPage(QWidget):
         self.goal_input.setPlaceholderText("描述任务（如：修复 worker.py 死锁）...")
         self.goal_input.setFixedHeight(50)
         s_layout.addWidget(self.goal_input)
-        
+
         self.btn_pack = QPushButton("📦 生成快照并发送")
         self.btn_pack.setFixedHeight(45)
         self.btn_pack.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_pack.clicked.connect(self.send_to_ai)
         s_layout.addWidget(self.btn_pack)
         r_layout.addWidget(send_group, 3)
-        
+
         self.splitter.addWidget(right_widget)
         self.splitter.setSizes([450, 800])
         layout.addWidget(self.splitter)
@@ -335,7 +335,7 @@ class ContextPage(QWidget):
         stats_style = f"color: {p.ACCENT_PRIMARY}; font-weight: bold; background: {p.BG_TERTIARY}; padding: 4px 10px; border-radius: 4px; border: 1px solid {p.BORDER};"
         self.stats_files.setStyleSheet(stats_style); self.stats_tokens.setStyleSheet(stats_style); self.stats_graph.setStyleSheet(stats_style)
         self.btn_rescan.setStyleSheet(Theme.button_primary().replace("padding: 4px", "padding: 6px"))
-        self.tree.setStyleSheet(Theme.table_widget()) 
+        self.tree.setStyleSheet(Theme.table_widget())
         self.radar.setStyleSheet(f"background-color: {p.BG_SECONDARY}; border: 1px solid {p.BORDER}; border-radius: 8px;")
         self.detail_tabs.setStyleSheet(f"QTabWidget::pane {{ border: 1px solid {p.BORDER}; background: {p.BG_SECONDARY}; }} QTabBar::tab {{ background: {p.BG_TERTIARY}; color: {p.TEXT_SECONDARY}; padding: 6px 15px; }} QTabBar::tab:selected {{ background: {p.ACCENT_PRIMARY}; color: white; }}")
         editor_style = Theme.log_editor()
@@ -385,13 +385,13 @@ class ContextPage(QWidget):
         root_item.setExpanded(True)
         groups_cache = {}
         sorted_files = sorted(self.file_list, key=lambda x: x[0])
-        
+
         for rel_path, full_path in sorted_files:
             info = self.file_info_cache.get(rel_path, {})
             filename = os.path.basename(rel_path)
             parent_node = root_item
-            
-            if mode == 0: 
+
+            if mode == 0:
                 parts = rel_path.split("/")
                 current_level = root_item
                 for part in parts[:-1]:
@@ -406,8 +406,8 @@ class ContextPage(QWidget):
                         found.setCheckState(0, Qt.CheckState.Unchecked)
                     current_level = found
                 parent_node = current_level
-            
-            elif mode == 1: 
+
+            elif mode == 1:
                 group_name = "🧩 Misc"
                 if "app/core" in rel_path: group_name = "🧠 Core (Brain)"
                 elif "app/ui" in rel_path: group_name = "🎨 UI (Face)"
@@ -422,7 +422,7 @@ class ContextPage(QWidget):
                     groups_cache[group_name] = g_node
                 parent_node = groups_cache[group_name]
 
-            elif mode == 2: 
+            elif mode == 2:
                 cat = info.get("category", "UNKNOWN")
                 if cat == "CRITICAL": group_name = "🔴 核心架构 (需重启)"
                 elif cat == "CLIENT_ONLY": group_name = "🔵 客户端逻辑 (热更)"
@@ -440,16 +440,16 @@ class ContextPage(QWidget):
             safe_icon = "🔒" if safe_lvl == "CRITICAL" else "🛡️" if safe_lvl == "CLIENT_ONLY" else "✅"
             doc = info.get("doc", "")
             if not doc and "test" in filename: doc = "Unit Test"
-            
+
             item = QTreeWidgetItem(parent_node, [filename, doc, size_str, safe_icon])
             item.setData(0, Qt.ItemDataRole.UserRole, rel_path)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(0, Qt.CheckState.Unchecked)
-            
+
             p = theme_manager.get_palette()
             if safe_lvl == "CRITICAL": item.setForeground(0, QBrush(QColor(p.TEXT_DANGER)))
             elif safe_lvl == "CLIENT_ONLY": item.setForeground(0, QBrush(QColor(p.ACCENT_PRIMARY)))
-            
+
             self.file_nodes_map[rel_path] = item
 
     def switch_tree_view(self, index): self._build_tree_view()
@@ -463,37 +463,37 @@ class ContextPage(QWidget):
 
     def on_item_clicked(self, item, col):
         path = item.data(0, Qt.ItemDataRole.UserRole)
-        if not path: 
+        if not path:
             self.radar.set_data(None, [], [])
             self.txt_structure.setHtml(f"<h3 style='color:gray'>📂 {item.text(0)}</h3>")
             return
-        
+
         parents = self.rev_dep_graph.get(path, set())
         children = self.dep_graph.get(path, set())
         self.radar.set_data(path, parents, children)
-        
+
         info = self.file_info_cache.get(path, {})
         p = theme_manager.get_palette()
-        
+
         struct_html = f"<h2 style='color:{p.ACCENT_PRIMARY}'>{os.path.basename(path)}</h2>"
         struct_html += f"<p style='color:{p.TEXT_SECONDARY}'>{path}</p>"
-        
+
         if info.get('doc'):
             struct_html += f"<div style='background-color:{p.BG_TERTIARY}; padding:5px; border-radius:4px;'><i>{info['doc']}</i></div><hr>"
-        
+
         if info.get('classes'):
             struct_html += f"<h4 style='color:{p.TEXT_SUCCESS}'>📦 Classes ({len(info['classes'])}):</h4><ul>"
             for c in info['classes']: struct_html += f"<li>{c}</li>"
             struct_html += "</ul>"
-            
+
         if info.get('funcs'):
             struct_html += f"<h4 style='color:{p.BTN_WARNING}'>ƒ Functions ({len(info['funcs'])}):</h4>"
             shown = info['funcs'][:10]
             struct_html += ", ".join(shown)
             if len(info['funcs']) > 10: struct_html += "..."
-        
+
         self.txt_structure.setHtml(struct_html)
-        
+
         try:
             full = os.path.join(self.project_root, path)
             with open(full, 'r', encoding='utf-8', errors='ignore') as f:
@@ -506,7 +506,7 @@ class ContextPage(QWidget):
             path = item.data(0, Qt.ItemDataRole.UserRole)
             if path and path in self.dep_graph:
                 deps = self.dep_graph[path]
-                self.tree.blockSignals(True) 
+                self.tree.blockSignals(True)
                 for dep in deps:
                     node = self.file_nodes_map.get(dep)
                     if node:
@@ -524,7 +524,7 @@ class ContextPage(QWidget):
         while iterator.value():
             item = iterator.value()
             path = item.data(0, Qt.ItemDataRole.UserRole)
-            if path: 
+            if path:
                 count += 1
                 info = self.file_info_cache.get(path, {})
                 tokens += info.get('token', 0)

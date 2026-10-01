@@ -8,6 +8,8 @@ from .git_control_panel import GitControlPanel
 from .runtime_log_panel import RuntimeLogPanel
 from .sandbox_monitor_panel import SandboxMonitorPanel
 from .context_workspace_panel import ContextWorkspacePanel
+from .doc_organizer_panel import DocOrganizerPanel
+from .browser_panel import BrowserPanel
 
 __all__ = [
     'TaskSchedulePanel',
@@ -16,4 +18,6 @@ __all__ = [
     'RuntimeLogPanel',
     'SandboxMonitorPanel',
     'ContextWorkspacePanel',
+    'DocOrganizerPanel',
+    'BrowserPanel',
 ]

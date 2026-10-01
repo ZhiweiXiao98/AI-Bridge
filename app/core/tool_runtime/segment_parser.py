@@ -11,13 +11,23 @@ logger = get_logger("app.core.tool_runtime.segment_parser", side="worker")
 
 class ToolSegmentParser:
     @staticmethod
-    def parse_messages(messages: list, conversation_id: str = '', source: str = '') -> List[ToolIntent]:
+    def parse_messages(
+        messages: list,
+        conversation_id: str = '',
+        source: str = '',
+        write_back_tool_call_id: bool = False,
+    ) -> List[ToolIntent]:
         intents: List[ToolIntent] = []
         for msg in reversed(messages or []):
             if msg.get('role') != 'AI':
                 continue
             segments = msg.get('segments', []) or []
-            intents.extend(ToolSegmentParser.parse_segments(segments, conversation_id=conversation_id, source=source))
+            intents.extend(ToolSegmentParser.parse_segments(
+                segments,
+                conversation_id=conversation_id,
+                source=source,
+                write_back_tool_call_id=write_back_tool_call_id,
+            ))
             if intents:
                 break
         return intents
@@ -111,5 +121,9 @@ class ToolSegmentParser:
 
     @staticmethod
     def _make_tool_call_id(block_key: str, code: str) -> str:
-        seed = f"{block_key or ''}|{code or ''}"
+        stable_block_key = str(block_key or '').strip()
+        if stable_block_key:
+            seed = f"block:{stable_block_key}"
+        else:
+            seed = f"code:{code or ''}"
         return f"toolcall_{hashlib.md5(seed.encode('utf-8')).hexdigest()[:8]}"

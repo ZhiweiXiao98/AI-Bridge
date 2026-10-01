@@ -11,7 +11,7 @@ from app.core.driver.interaction import InteractionManager, STATE_EXPANDED, STAT
 from app.core.app_constants import UPSTREAM_AI_URL
 
 class TestInteractionManager:
-    
+
     @pytest.fixture
     def mock_driver(self):
         """模拟 Selenium WebDriver"""
@@ -147,7 +147,7 @@ class TestInteractionManager:
         msg = MagicMock()
         msg.get_attribute.return_value = "Target Code Snippet"
         mock_driver.find_elements.return_value = [msg]
-        
+
         # 为了让函数跑通，Mock 掉后续的 JS 执行
         def side_effect(script, *args):
             if "monaco-editor" in script: return 2000 # 模拟高度
@@ -158,7 +158,7 @@ class TestInteractionManager:
 
         # 执行：查找指纹
         manager.manual_toggle_block(0, 0, 1, fingerprint="Target Code")
-        
+
         # 验证：必须调用 get_attribute("textContent")
         msg.get_attribute.assert_called_with("textContent")
 
@@ -169,7 +169,7 @@ class TestInteractionManager:
         """
         mock_driver.find_elements.return_value = [MagicMock()]
         manager._get_valid_code_blocks = MagicMock(return_value=[{'toggle': MagicMock()}])
-        
+
         # 模拟 execute_script 的返回值序列
         # 1. scrollIntoView (None)
         # 2. click (None)
@@ -192,14 +192,14 @@ class TestInteractionManager:
         ]
         # 填充足够多的 None 防止 StopIteration
         mock_driver.execute_script.side_effect = side_effects + [None]*50
-        
+
         manager.manual_toggle_block(0, 0, 1)
-        
+
         # 验证 execute_script 被调用的次数
         # 包含 "monaco-editor" 的脚本即为测量高度的脚本
-        measure_calls = [c for c in mock_driver.execute_script.call_args_list 
+        measure_calls = [c for c in mock_driver.execute_script.call_args_list
                          if "monaco-editor" in str(c)]
-        
+
         # 应该至少调用了 3 次（前两次 500，第三次 2000）
         assert len(measure_calls) >= 3, "未执行足够次数的高度轮询"
 
@@ -286,6 +286,6 @@ class TestInteractionManager:
         found = manager._wait_for_file_input(timeout=0.3)
 
         assert found is file_input
-        
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

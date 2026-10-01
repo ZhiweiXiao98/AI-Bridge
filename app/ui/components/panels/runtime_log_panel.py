@@ -236,26 +236,34 @@ class RuntimeLogPanel(DockablePanel):
         toolbar_layout.setContentsMargins(6, 4, 6, 4)
         toolbar_layout.setSpacing(4)
 
+        _tool_btn_font = "font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 14px;"
+
         # 暂停/继续
-        self.btn_pause = QPushButton("⏸ 暂停")
+        self.btn_pause = QPushButton("⏸")
         self.btn_pause.setObjectName("logToolBtn")
-        self.btn_pause.setFixedHeight(26)
+        self.btn_pause.setFixedSize(30, 28)
+        self.btn_pause.setToolTip("暂停")
+        self.btn_pause.setStyleSheet(_tool_btn_font)
         self.btn_pause.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_pause.clicked.connect(self._toggle_pause)
         toolbar_layout.addWidget(self.btn_pause)
 
         # 清空
-        self.btn_clear = QPushButton("🗑 清空")
+        self.btn_clear = QPushButton("🗑")
         self.btn_clear.setObjectName("logToolBtn")
-        self.btn_clear.setFixedHeight(26)
+        self.btn_clear.setFixedSize(30, 28)
+        self.btn_clear.setToolTip("清空")
+        self.btn_clear.setStyleSheet(_tool_btn_font)
         self.btn_clear.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_clear.clicked.connect(self._clear)
         toolbar_layout.addWidget(self.btn_clear)
 
         # 自动滚动
-        self.btn_scroll = QPushButton("📌 滚动:开")
+        self.btn_scroll = QPushButton("📌")
         self.btn_scroll.setObjectName("logToolBtn")
-        self.btn_scroll.setFixedHeight(26)
+        self.btn_scroll.setFixedSize(30, 28)
+        self.btn_scroll.setToolTip("自动滚动: 开")
+        self.btn_scroll.setStyleSheet(_tool_btn_font)
         self.btn_scroll.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_scroll.clicked.connect(self._toggle_scroll)
         toolbar_layout.addWidget(self.btn_scroll)
@@ -267,28 +275,25 @@ class RuntimeLogPanel(DockablePanel):
         toolbar_layout.addWidget(sep1)
 
         # 级别筛选
-        lbl_level = QLabel("级别:")
-        lbl_level.setObjectName("logToolLabel")
-        toolbar_layout.addWidget(lbl_level)
 
         self.combo_level = QComboBox()
         self.combo_level.setObjectName("logCombo")
         self.combo_level.setFixedHeight(26)
-        self.combo_level.setMinimumWidth(70)
+        self.combo_level.setMinimumWidth(72)
+        self.combo_level.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self.combo_level.addItems(["全部", "严重", "错误", "警告", "成功", "信息", "调试"])
+        self.combo_level.setToolTip("级别筛选")
         self.combo_level.currentIndexChanged.connect(self._on_level_filter_changed)
         toolbar_layout.addWidget(self.combo_level)
 
         # 来源筛选
-        lbl_side = QLabel("来源:")
-        lbl_side.setObjectName("logToolLabel")
-        toolbar_layout.addWidget(lbl_side)
-
         self.combo_side = QComboBox()
         self.combo_side.setObjectName("logCombo")
         self.combo_side.setFixedHeight(26)
-        self.combo_side.setMinimumWidth(70)
+        self.combo_side.setMinimumWidth(72)
+        self.combo_side.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self.combo_side.addItems(["全部", "核心", "界面", "工作", "远程", "服务", "安装", "更新", "系统", "调试"])
+        self.combo_side.setToolTip("来源筛选")
         self.combo_side.currentIndexChanged.connect(self._on_side_filter_changed)
         toolbar_layout.addWidget(self.combo_side)
 
@@ -302,8 +307,9 @@ class RuntimeLogPanel(DockablePanel):
         self.search_input = QLineEdit()
         self.search_input.setObjectName("logSearch")
         self.search_input.setFixedHeight(26)
-        self.search_input.setMinimumWidth(120)
-        self.search_input.setPlaceholderText("🔍 搜索日志...")
+        self.search_input.setMinimumWidth(40)
+        self.search_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.search_input.setPlaceholderText("🔍 搜索...")
         self.search_input.textChanged.connect(self._on_search_changed)
         toolbar_layout.addWidget(self.search_input)
 
@@ -386,9 +392,9 @@ class RuntimeLogPanel(DockablePanel):
                 color: #d4d4d8;
                 border: 1px solid #52525b;
                 border-radius: 3px;
-                padding: 2px 10px;
-                font-size: 11px;
-                font-family: "Microsoft YaHei", sans-serif;
+                padding: 2px 6px;
+                font-size: 14px;
+                font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Microsoft YaHei", sans-serif;
             }}
             QPushButton#logToolBtn:hover {{
                 background-color: {btn_hover};
@@ -413,7 +419,13 @@ class RuntimeLogPanel(DockablePanel):
             }}
             QComboBox#logCombo::drop-down {{
                 border: none;
-                width: 16px;
+                width: 18px;
+                subcontrol-position: right center;
+            }}
+            QComboBox#logCombo::down-arrow {{
+                image: none;
+                border: none;
+                width: 0px;
             }}
             QComboBox#logCombo QAbstractItemView {{
                 background-color: #27272a;
@@ -455,20 +467,22 @@ class RuntimeLogPanel(DockablePanel):
     def _toggle_pause(self):
         self._paused = not self._paused
         if self._paused:
-            self.btn_pause.setText("▶ 继续")
+            self.btn_pause.setText("▶")
+            self.btn_pause.setToolTip("继续")
             self.btn_pause.setStyleSheet(
                 "background-color: #166534; color: #4ade80; border: 1px solid #22c55e; "
-                "border-radius: 3px; padding: 2px 10px; font-size: 11px;"
+                "border-radius: 3px; font-size: 13px;"
             )
         else:
-            self.btn_pause.setText("⏸ 暂停")
+            self.btn_pause.setText("⏸")
+            self.btn_pause.setToolTip("暂停")
             self.btn_pause.setStyleSheet("")
             self._flush_pending()
 
     def _toggle_scroll(self):
         self._auto_scroll = not self._auto_scroll
         state = "开" if self._auto_scroll else "关"
-        self.btn_scroll.setText(f"📌 滚动:{state}")
+        self.btn_scroll.setToolTip(f"自动滚动: {state}")
 
     def _clear(self):
         self._entries.clear()

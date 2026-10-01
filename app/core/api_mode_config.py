@@ -12,6 +12,19 @@ logger = get_logger("app.core.api_mode_config", side="worker")
 API_MODE_CONFIG_PATH = os.path.join(APP_ROOT, "config", "api_mode.json")
 LEGACY_EXPERIMENTAL_PATH = os.path.join(APP_ROOT, "experimental", "config.json")
 
+TOOL_CAPABILITY_UNKNOWN = "unknown"
+TOOL_CAPABILITY_SUPPORTED = "supported"
+TOOL_CAPABILITY_UNSUPPORTED = "unsupported"
+TOOL_CAPABILITY_PARTIAL = "partial"
+
+TOOL_PROTOCOL_NATIVE = "native_tools"
+TOOL_PROTOCOL_MARKDOWN = "markdown_fallback"
+TOOL_PROTOCOL_MARKDOWN_ONLY = "markdown_fallback_only"
+
+TOOL_CALLING_MODE_AUTO = "auto"
+TOOL_CALLING_MODE_NATIVE = "native_tools"
+TOOL_CALLING_MODE_MARKDOWN = "markdown_fallback"
+
 
 class APIModeConfigManager:
     @staticmethod
@@ -31,8 +44,16 @@ class APIModeConfigManager:
                     "max_output_tokens": 4096,
                     "timeout": 60,
                     "proxy_url": "",
+                    "system_prompt_role": "system",
                     "supports_stream": True,
                     "supports_tools": False,
+                    "tool_calling_mode": TOOL_CALLING_MODE_AUTO,
+                    "tool_capability": {
+                        "status": TOOL_CAPABILITY_UNKNOWN,
+                        "checked_at": "",
+                        "reason": "",
+                        "protocol": TOOL_PROTOCOL_MARKDOWN,
+                    },
                     "supports_reasoning": False,
                     "reasoning": {
                         "enabled": False,
@@ -105,11 +126,51 @@ class APIModeConfigManager:
             cfg["active_profile"] = next(iter(profiles.keys()))
         for profile in cfg["profiles"].values():
             profile.setdefault("kind", "api")
+            profile.setdefault("supports_tools", False)
+            mode = str(profile.get("tool_calling_mode", TOOL_CALLING_MODE_AUTO) or TOOL_CALLING_MODE_AUTO).strip()
+            if mode not in (TOOL_CALLING_MODE_AUTO, TOOL_CALLING_MODE_NATIVE, TOOL_CALLING_MODE_MARKDOWN):
+                mode = TOOL_CALLING_MODE_AUTO
+            profile["tool_calling_mode"] = mode
+            capability = profile.get("tool_capability") if isinstance(profile.get("tool_capability"), dict) else {}
+            capability.setdefault("status", TOOL_CAPABILITY_SUPPORTED if profile.get("supports_tools") else TOOL_CAPABILITY_UNKNOWN)
+            capability.setdefault("checked_at", "")
+            capability.setdefault("reason", "")
+            capability.setdefault("protocol", TOOL_PROTOCOL_NATIVE if capability.get("status") == TOOL_CAPABILITY_SUPPORTED else TOOL_PROTOCOL_MARKDOWN)
+            if str(profile.get("kind", "") or "").strip() == "browser_stateless":
+                profile["supports_tools"] = False
+                profile["tool_calling_mode"] = TOOL_CALLING_MODE_MARKDOWN
+                capability["status"] = TOOL_CAPABILITY_UNSUPPORTED
+                capability["reason"] = capability.get("reason") or "browser_stateless_profile"
+                capability["protocol"] = TOOL_PROTOCOL_MARKDOWN_ONLY
+            profile["tool_capability"] = capability
             profile.setdefault("reasoning", {"enabled": False, "effort": "medium"})
+            role = str(profile.get("system_prompt_role", "system") or "system").strip().lower()
+            profile["system_prompt_role"] = role if role in ("system", "developer") else "system"
             profile["temperature"] = float(profile.get("temperature", 0.7))
             profile["max_output_tokens"] = int(profile.get("max_output_tokens", 4096))
             profile["timeout"] = int(profile.get("timeout", 60))
         return cfg
+
+    @staticmethod
+    def resolve_tool_protocol(profile: dict) -> str:
+        """Return the preferred tool protocol for an API-mode profile."""
+        if not isinstance(profile, dict):
+            return TOOL_PROTOCOL_MARKDOWN
+        kind = str(profile.get("kind", "api") or "api").strip()
+        if kind == "browser_stateless":
+            return TOOL_PROTOCOL_MARKDOWN_ONLY
+
+        mode = str(profile.get("tool_calling_mode", TOOL_CALLING_MODE_AUTO) or TOOL_CALLING_MODE_AUTO).strip()
+        capability = profile.get("tool_capability") if isinstance(profile.get("tool_capability"), dict) else {}
+        status = str(capability.get("status", "") or "").strip()
+
+        if mode == TOOL_CALLING_MODE_MARKDOWN:
+            return TOOL_PROTOCOL_MARKDOWN
+        if mode == TOOL_CALLING_MODE_NATIVE:
+            return TOOL_PROTOCOL_NATIVE if status in (TOOL_CAPABILITY_SUPPORTED, TOOL_CAPABILITY_PARTIAL, "") else TOOL_PROTOCOL_MARKDOWN
+        if status == TOOL_CAPABILITY_SUPPORTED or bool(profile.get("supports_tools")):
+            return TOOL_PROTOCOL_NATIVE
+        return TOOL_PROTOCOL_MARKDOWN
 
     @staticmethod
     def get_active_profile_key(config=None, usage_override=None):
@@ -207,7 +268,7 @@ class APIModeConfigManager:
     @staticmethod
     def get_active_profile(config=None):
         """获取 API 模式对话使用的活跃 Profile
-        
+
         优先从 api_mode_usage 配置读取，支持 Profile 和 Chain 两种引用方式。
         如果 api_mode_usage 不存在或引用无效，回退到 active_profile。
         """
@@ -229,6 +290,27 @@ class APIModeConfigManager:
         cfg = APIModeConfigManager.load()
         active = cfg["active_profile"]
         cfg["profiles"][active] = APIModeConfigManager._deep_merge(cfg["profiles"][active], updates or {})
+        APIModeConfigManager.save(cfg)
+        return APIModeConfigManager.load()
+
+    @staticmethod
+    def update_profile_tool_capability(profile_key: str, capability: dict):
+        cfg = APIModeConfigManager.load()
+        profiles = cfg.get("profiles", {})
+        if profile_key not in profiles:
+            raise ValueError(f"Profile 不存在: {profile_key}")
+        profile = profiles[profile_key]
+        merged_capability = APIModeConfigManager._deep_merge(
+            profile.get("tool_capability") if isinstance(profile.get("tool_capability"), dict) else {},
+            capability or {},
+        )
+        status = str(merged_capability.get("status", "") or "").strip()
+        profile["tool_capability"] = merged_capability
+        profile["supports_tools"] = status == TOOL_CAPABILITY_SUPPORTED
+        if status == TOOL_CAPABILITY_SUPPORTED:
+            merged_capability["protocol"] = TOOL_PROTOCOL_NATIVE
+        elif status in (TOOL_CAPABILITY_UNSUPPORTED, TOOL_CAPABILITY_PARTIAL):
+            merged_capability.setdefault("protocol", TOOL_PROTOCOL_MARKDOWN)
         APIModeConfigManager.save(cfg)
         return APIModeConfigManager.load()
 
@@ -417,4 +499,3 @@ class APIModeConfigManager:
         chains[new_name] = chains.pop(old_name)
         APIModeConfigManager.save(cfg)
         return APIModeConfigManager.load()
-        return safe

@@ -19,6 +19,9 @@ class StreamChunk:
     content: str
     status: StreamStatus
     accumulated: str = ""
+    thinking_content: str = ""
+    accumulated_thinking: str = ""
+    delta_type: str = "content"
     error_message: str = ""
     timestamp: float = field(default_factory=time.time)
     conversation_id: str = ""

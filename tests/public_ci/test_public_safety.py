@@ -50,7 +50,7 @@ class FakeManager:
         self.connected = False
         self.identity = None
 
-    async def connect(self, *args):
+    async def connect(self, *args, **kwargs):
         self.connected = True
         self.identity = args
         raise Connected()

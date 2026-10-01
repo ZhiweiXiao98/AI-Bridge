@@ -1,6 +1,6 @@
 # filename: app/ui/components/input.py
 import os, time, tempfile
-from PySide6.QtWidgets import QTextEdit
+from PySide6.QtWidgets import QTextEdit, QSizePolicy
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QImage
 
@@ -10,7 +10,9 @@ class ChatInput(QTextEdit):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMinimumHeight(45) 
+        self.setMinimumHeight(45)
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setAcceptRichText(False)
         self.setAcceptDrops(True)
@@ -18,7 +20,7 @@ class ChatInput(QTextEdit):
         self.setCursorWidth(2)
 
     def canInsertFromMimeData(self, source): return source.hasImage() or super().canInsertFromMimeData(source)
-    
+
     def insertFromMimeData(self, source):
         if source.hasImage():
             image = QImage(source.imageData())
@@ -27,7 +29,7 @@ class ChatInput(QTextEdit):
                 path = os.path.join(tempfile.gettempdir(), f"paste_{t}.png")
                 image.save(path, "PNG")
                 self.image_pasted_signal.emit(path)
-                return 
+                return
         super().insertFromMimeData(source)
 
     def keyPressEvent(self, event):

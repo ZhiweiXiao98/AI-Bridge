@@ -1,4 +1,5 @@
 import os
+import threading
 import warnings
 
 from PySide6.QtWidgets import (
@@ -18,7 +19,7 @@ from app.ui.components.settings.settings_basic import SettingsBasicSection
 from app.ui.components.settings.settings_api import SettingsApiSection
 from app.ui.components.settings.settings_api_fallback import SettingsApiFallbackSection
 from app.ui.components.settings.settings_api_usage import SettingsApiUsageSection
-from app.ui.components.settings.settings_daemon import SettingsDaemonSection
+from app.ui.components.settings.settings_subagent import SettingsSubagentSection
 from app.ui.components.settings.settings_context import SettingsContextSection
 from app.ui.components.settings.settings_blacklist import SettingsBlacklistSection
 from app.ui.components.settings.settings_styles import all_styles, bottom_bar_style
@@ -34,7 +35,7 @@ SECTIONS = [
     {"id": "api", "title": "API 配置"},
     {"id": "api_fallback", "title": "Fallback"},
     {"id": "api_usage", "title": "对话配置"},
-    {"id": "daemon", "title": "守护进程"},
+    {"id": "subagent", "title": "Subagent"},
     {"id": "context", "title": "快照推送"},
     {"id": "blacklist", "title": "黑名单"},
 ]
@@ -43,6 +44,8 @@ SECTIONS = [
 class SettingsPage(QWidget):
     config_saved = Signal(object)
     request_snapshot = Signal(list)
+    api_tool_probe_finished = Signal(object)
+    api_models_probe_finished = Signal(object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -50,6 +53,8 @@ class SettingsPage(QWidget):
         self.api_mode_config = APIModeConfigManager.load()
         self._last_api_context_status = {}
         self._scroll_filters = []
+        self.api_tool_probe_finished.connect(self._finish_api_tool_probe)
+        self.api_models_probe_finished.connect(self._finish_api_models_probe)
 
         self._build_ui()
 
@@ -107,7 +112,7 @@ class SettingsPage(QWidget):
             "api": SettingsApiSection,
             "api_fallback": SettingsApiFallbackSection,
             "api_usage": SettingsApiUsageSection,
-            "daemon": SettingsDaemonSection,
+            "subagent": SettingsSubagentSection,
             "context": SettingsContextSection,
             "blacklist": SettingsBlacklistSection,
         }
@@ -130,7 +135,7 @@ class SettingsPage(QWidget):
                 widget = cls(config=self.config, api_config=self.api_mode_config)
             elif sec_id in ("api_fallback", "api_usage"):
                 widget = cls(api_config=self.api_mode_config)
-            elif sec_id == "daemon":
+            elif sec_id == "subagent":
                 widget = cls(config=self.config, api_config=self.api_mode_config)
             elif sec_id == "blacklist":
                 widget = cls(config=self.config)
@@ -157,12 +162,31 @@ class SettingsPage(QWidget):
 
     def _on_section_config_changed(self, payload):
         action = payload.get("action", "") if isinstance(payload, dict) else ""
-        if action in ("api_saved", "api_profile_changed", "api_usage_saved", "daemon_saved"):
+        if action in ("api_saved", "api_profile_changed", "api_usage_saved"):
             self._try_reload_api_runtime()
+        elif action == "subagent_saved":
+            self._try_reload_subagent()
+        elif action == "api_probe_tools":
+            self._try_probe_api_tool_support()
+        elif action == "api_probe_models":
+            self._try_probe_api_models()
         elif action == "theme_preview":
             theme_name = payload.get("theme", "")
             if theme_name:
                 theme_manager.set_theme(theme_name)
+
+    def _try_reload_subagent(self):
+        main_win = self.window()
+        worker = getattr(main_win, "worker", None)
+        if not worker:
+            return False
+        if hasattr(worker, 'update_config'):
+            from app.core.config import ConfigManager
+            try:
+                worker.update_config(ConfigManager.load())
+            except Exception:
+                return False
+        return True
 
     def _try_reload_api_runtime(self):
         main_win = self.window()
@@ -173,6 +197,80 @@ class SettingsPage(QWidget):
             except Exception:
                 return False
         return False
+
+    def _try_probe_api_tool_support(self):
+        api_section = self._sections.get("api")
+        main_win = self.window()
+        worker = getattr(main_win, "worker", None)
+        if not worker or not hasattr(worker, "api_probe_tool_support"):
+            if api_section and hasattr(api_section, "on_api_tool_probe_result"):
+                api_section.on_api_tool_probe_result({
+                    "status": "partial",
+                    "reason": "worker_unavailable",
+                    "protocol": "markdown_fallback",
+                })
+            return False
+
+        if api_section and hasattr(api_section, "set_api_tool_probe_pending"):
+            api_section.set_api_tool_probe_pending(True)
+
+        def _run_probe():
+            try:
+                result = worker.api_probe_tool_support()
+            except Exception as e:
+                result = {
+                    "status": "partial",
+                    "reason": str(e),
+                    "protocol": "markdown_fallback",
+                }
+            self.api_tool_probe_finished.emit(result)
+
+        threading.Thread(target=_run_probe, name="api-tool-probe", daemon=True).start()
+        return True
+
+    def _finish_api_tool_probe(self, result):
+        self.api_mode_config = APIModeConfigManager.load()
+        api_section = self._sections.get("api")
+        if api_section and hasattr(api_section, "on_api_tool_probe_result"):
+            api_section.on_api_tool_probe_result(result)
+        self._try_reload_api_runtime()
+
+    def _try_probe_api_models(self):
+        api_section = self._sections.get("api")
+        main_win = self.window()
+        worker = getattr(main_win, "worker", None)
+        if not worker or not hasattr(worker, "api_probe_models"):
+            if api_section and hasattr(api_section, "on_api_models_probe_result"):
+                api_section.on_api_models_probe_result({
+                    "ok": False,
+                    "models": [],
+                    "reason": "worker_unavailable",
+                })
+            return False
+
+        if api_section and hasattr(api_section, "set_api_models_probe_pending"):
+            api_section.set_api_models_probe_pending(True)
+
+        def _run_probe():
+            try:
+                result = worker.api_probe_models()
+            except Exception as e:
+                result = {
+                    "ok": False,
+                    "models": [],
+                    "reason": str(e),
+                }
+            self.api_models_probe_finished.emit(result)
+
+        threading.Thread(target=_run_probe, name="api-model-probe", daemon=True).start()
+        return True
+
+    def _finish_api_models_probe(self, result):
+        self.api_mode_config = APIModeConfigManager.load()
+        api_section = self._sections.get("api")
+        if api_section and hasattr(api_section, "on_api_models_probe_result"):
+            api_section.on_api_models_probe_result(result)
+        self._try_reload_api_runtime()
 
     def bind_worker_signals(self):
         main_win = self.window()
@@ -213,15 +311,15 @@ class SettingsPage(QWidget):
         old_theme = self.config.get("theme", "Dark")
 
         basic = self._sections.get("basic")
-        daemon = self._sections.get("daemon")
+        subagent = self._sections.get("subagent")
         blacklist = self._sections.get("blacklist")
         api_usage = self._sections.get("api_usage")
 
         new_config = {}
         if basic:
             new_config.update(basic.collect_config())
-        if daemon:
-            new_config.update(daemon.collect_config())
+        if subagent:
+            new_config.update(subagent.collect_config())
         if blacklist:
             new_config.update(blacklist.collect_config())
 

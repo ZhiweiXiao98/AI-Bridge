@@ -1,7 +1,7 @@
 # filename: app/ui/pages/chat/api_session_list.py
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem,
-    QPushButton, QMenu, QLabel, QLineEdit, QApplication
+    QPushButton, QMenu, QLabel, QLineEdit, QApplication, QComboBox
 )
 from PySide6.QtCore import Qt, QSize, Signal, QEvent, QPoint
 from PySide6.QtGui import QAction
@@ -39,6 +39,13 @@ class APISessionList(QWidget):
         self.new_btn = QPushButton("+ 新建对话")
         self.new_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.new_btn.clicked.connect(self._on_new_clicked)
+        self.runtime_combo = QComboBox()
+        self.runtime_combo.setToolTip("仅用于新对话；现有会话运行时不可更改")
+        self.runtime_combo.addItem("正在检查运行时…", "")
+        self.runtime_combo.setEnabled(False)
+        self.new_btn.setEnabled(False)
+        self.runtime_combo.currentIndexChanged.connect(self._sync_runtime_selection)
+        top_bar.addWidget(self.runtime_combo)
         top_bar.addWidget(self.new_btn)
         layout.addLayout(top_bar)
 
@@ -54,6 +61,41 @@ class APISessionList(QWidget):
         self.status_label = QLabel("")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.status_label)
+
+    def selected_runtime(self):
+        index = self.runtime_combo.currentIndex()
+        item = self.runtime_combo.model().item(index) if index >= 0 else None
+        return self.runtime_combo.currentData() if item is not None and item.isEnabled() else None
+
+    def _sync_runtime_selection(self):
+        available = bool(self.selected_runtime())
+        self.new_btn.setEnabled(available)
+        reason = self.runtime_combo.currentData(Qt.ItemDataRole.ToolTipRole) or "运行时不可用"
+        self.new_btn.setToolTip("新建所选运行时的对话" if available else reason)
+        self.runtime_combo.setToolTip(str(reason))
+
+    def set_runtime_options(self, payload):
+        if not isinstance(payload, dict):
+            return
+        selected = self.selected_runtime() or "pi"
+        self.runtime_combo.blockSignals(True)
+        self.runtime_combo.clear()
+        for option in payload.get("items", []):
+            if not isinstance(option, dict) or not option.get("id"):
+                continue
+            available = bool(option.get("available"))
+            label = option.get("label") or option["id"]
+            self.runtime_combo.addItem(label + ("" if available else "（不可用）"), option["id"])
+            item = self.runtime_combo.model().item(self.runtime_combo.count() - 1)
+            item.setEnabled(available)
+            item.setToolTip(str(option.get("reason") or ""))
+        index = self.runtime_combo.findData(selected)
+        if index >= 0:
+            # Keep an unavailable selection visible rather than silently changing runtimes.
+            self.runtime_combo.setCurrentIndex(index)
+        self.runtime_combo.setEnabled(self.runtime_combo.count() > 0)
+        self.runtime_combo.blockSignals(False)
+        self._sync_runtime_selection()
 
     def apply_theme(self):
         p = theme_manager.get_palette()
@@ -85,31 +127,73 @@ class APISessionList(QWidget):
             self.list_widget.setCurrentRow(-1)
             self.list_widget.viewport().update()
         else:
-            self.status_label.setText(f"{len(conversations)} 个对话")
+            project_count = len({
+                str(c.get("project_root") or c.get("project_name") or "default")
+                for c in conversations
+                if isinstance(c, dict)
+            })
+            self.status_label.setText(f"{len(conversations)} 个对话 · {project_count} 个项目")
 
+        grouped = {}
         for conv in conversations:
-            title = conv.get("title", "未命名")
-            date_str = conv.get("date", "")
-            is_active = conv.get("active", False)
-            conv_id = conv.get("id", "")
-            turns = conv.get("turns", 0)
-            icon = conv.get("icon", "🤖")
+            if not isinstance(conv, dict):
+                continue
+            project_name = str(conv.get("project_name") or "未命名项目")
+            project_root = str(conv.get("project_root") or "")
+            key = project_root or project_name
+            if key not in grouped:
+                grouped[key] = {"name": project_name, "root": project_root, "items": []}
+            grouped[key]["items"].append(conv)
 
-            item = QListWidgetItem(self.list_widget)
-            item.setSizeHint(QSize(200, 60))
-            item.setData(Qt.ItemDataRole.UserRole, conv_id)
+        for group in grouped.values():
+            self._add_project_header(group["name"], group["root"], len(group["items"]))
+            for conv in group["items"]:
+                self._add_conversation_item(conv)
 
-            pinned = conv.get("pinned", False)
-            display_title = f"📍 {title}" if pinned else f"{title}"
-            if turns > 0:
-                display_title += f" ({turns}轮)"
+    def _add_project_header(self, project_name: str, project_root: str, count: int):
+        item = QListWidgetItem(self.list_widget)
+        item.setSizeHint(QSize(200, 28))
+        item.setFlags(Qt.ItemFlag.NoItemFlags)
+        item.setData(Qt.ItemDataRole.UserRole, "")
 
-            widget = SessionItemWidget(display_title, date_str, icon, is_active, source="api")
-            self.list_widget.setItemWidget(item, widget)
+        label = QLabel(f"  {project_name}  ·  {count}")
+        label.setToolTip(project_root or project_name)
+        p = theme_manager.get_palette()
+        label.setStyleSheet(f"""
+            QLabel {{
+                color: {p.TEXT_SECONDARY};
+                background-color: {p.BG_PRIMARY};
+                border-bottom: 1px solid {p.BORDER};
+                font-size: 11px;
+                font-weight: bold;
+                padding: 5px 8px;
+            }}
+        """)
+        self.list_widget.setItemWidget(item, label)
 
-            if is_active:
-                item.setSelected(True)
-                self.list_widget.setCurrentItem(item)
+    def _add_conversation_item(self, conv: dict):
+        title = conv.get("title", "未命名")
+        date_str = f"{conv.get('date', '')} · {'Pi' if conv.get('runtime', 'legacy') == 'pi' else 'Legacy'}"
+        is_active = conv.get("active", False)
+        conv_id = conv.get("id", "")
+        turns = conv.get("turns", 0)
+        icon = conv.get("icon", "🤖")
+
+        item = QListWidgetItem(self.list_widget)
+        item.setSizeHint(QSize(200, 60))
+        item.setData(Qt.ItemDataRole.UserRole, conv_id)
+
+        pinned = conv.get("pinned", False)
+        display_title = f"📍 {title}" if pinned else f"{title}"
+        if turns > 0:
+            display_title += f" ({turns}轮)"
+
+        widget = SessionItemWidget(display_title, date_str, icon, is_active, source="api")
+        self.list_widget.setItemWidget(item, widget)
+
+        if is_active:
+            item.setSelected(True)
+            self.list_widget.setCurrentItem(item)
 
     def _on_item_clicked(self, item):
         conv_id = item.data(Qt.ItemDataRole.UserRole)
@@ -117,7 +201,7 @@ class APISessionList(QWidget):
             self.session_selected.emit(conv_id)
 
     def _on_new_clicked(self):
-        if self._editing_conv_id is not None:
+        if self._editing_conv_id is not None or not self.selected_runtime():
             return
         self._start_inline_new()
 
@@ -219,7 +303,7 @@ class APISessionList(QWidget):
         if item is not None:
             row = self.list_widget.row(item)
             self.list_widget.takeItem(row)
-        if new_title:
+        if new_title and self.selected_runtime():
             self.new_conversation.emit(new_title)
         else:
             self.update_sessions(self._conversations)
@@ -269,4 +353,3 @@ class APISessionList(QWidget):
                     return True
 
         return super().eventFilter(obj, event)
-

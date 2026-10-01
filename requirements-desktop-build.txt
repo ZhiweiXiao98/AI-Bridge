@@ -4,3 +4,6 @@ PySide6==6.11.1
 requests==2.34.2
 tiktoken==0.13.0
 pyinstaller==6.22.0
+
+# Skill metadata referenced by the desktop chat UI
+PyYAML==6.0.3

@@ -5,13 +5,16 @@ from app.core.logging import get_logger
 from app.core.worker_modules.browser_stateless_profile import (
     ModelRequest,
     StatelessBrowserProfileAdapter,
+    summarize_browser_stateless_failure,
 )
+from app.core.worker_modules.upstream_consumer import UpstreamConsumer
 from app.core.worker_modules.upstream_events import (
     make_completed_event,
     make_failed_event,
     make_started_event,
     make_structured_event,
 )
+from app.core.driver.factory import EMBEDDED_QT_SOURCE, normalize_browser_source, create_browser_connector
 
 logger = get_logger("app.core.worker_modules.worker_browser_stateless", side="worker")
 
@@ -19,15 +22,13 @@ logger = get_logger("app.core.worker_modules.worker_browser_stateless", side="wo
 class WorkerBrowserStatelessBridge:
     def __init__(self, worker):
         self.worker = worker
+        self.consumer = UpstreamConsumer(worker)
 
-    def _emit_stream_event(self, event):
-        payload = event.to_stream_payload()
-        if payload.get("status") == "started":
-            self.worker.api_stream_chunk_signal.emit(payload)
-        elif payload.get("status") in ("completed", "error", "cancelled"):
-            self.worker.api_stream_status_signal.emit(payload)
-        else:
-            self.worker.api_stream_chunk_signal.emit(payload)
+    def _resolve_connector(self, profile: dict):
+        source = normalize_browser_source(profile.get("browser_source", "external_chrome"))
+        if source == EMBEDDED_QT_SOURCE:
+            return create_browser_connector({"browser_source": source})
+        return self.worker.connector
 
     def _emit_transient_reply(self, api_source, active_conv_id: str, progress_info: dict, request_id: str):
         if not isinstance(progress_info, dict):
@@ -55,33 +56,7 @@ class WorkerBrowserStatelessBridge:
             raw_message=structured_message,
             diagnostics={"raw_len": progress_info.get("raw_len", 0)},
         )
-        self._emit_stream_event(event)
-
-        base_msgs = api_source.get_history_as_messages_for(active_conv_id)
-        transient_msg = api_source.build_message_for_signal(
-            role="assistant",
-            content=raw_text,
-            index=len(base_msgs),
-            kind="text",
-            meta={
-                "profile_kind": "browser_stateless",
-                "request_id": request_id,
-                "transient": True,
-            },
-            raw_content=raw_text,
-            segments=segments,
-        )
-        transient_msg["id"] = f"{active_conv_id}:browser_stateless_transient"
-        transient_msg["conversation_id"] = active_conv_id
-        transient_msg["status"] = "streaming"
-        self.worker.messages_signal.emit([*base_msgs, transient_msg])
-        logger.debug(
-            "[BrowserStatelessBridge] transient reply emitted | conv_id=%s request_id=%s segments=%d raw_len=%d",
-            active_conv_id,
-            request_id,
-            len(segments or []),
-            len(raw_text),
-        )
+        self.consumer.emit_transient_reply(api_source, event)
 
     def handle_send(self, text: str, profile: dict):
         worker = self.worker
@@ -94,6 +69,7 @@ class WorkerBrowserStatelessBridge:
         profile_key = str(profile.get("_profile_key") or profile.get("key") or profile.get("name") or profile.get("provider") or "browser_web_primary")
         conversation_url = str(profile.get("conversation_url") or "").strip()
         conversation_name = str(profile.get("conversation_name") or "").strip()
+        browser_source = normalize_browser_source(profile.get("browser_source", "external_chrome"))
         legacy_browser_profile = str(profile.get("browser_profile") or "").strip()
         if not conversation_name and legacy_browser_profile and legacy_browser_profile != "current_debug_session":
             conversation_name = legacy_browser_profile
@@ -125,20 +101,23 @@ class WorkerBrowserStatelessBridge:
             diagnostics={
                 "conversation_url": conversation_url,
                 "conversation_name": conversation_name,
+                "browser_source": browser_source,
             },
         )
-        self._emit_stream_event(started_event)
-        round_payload = started_event.to_round_payload(
-            state="browser_stateless",
-            message="正在操作 WebAI 网页...",
-        )
-        round_payload.update({
+        self.consumer.emit_stream(started_event)
+        round_extra = {
             "conversation_url": conversation_url,
             "conversation_name": conversation_name,
+            "browser_source": browser_source,
             "trace_id": (get_current_trace().trace_id if get_current_trace() else ""),
             "round_id": (get_current_trace().round_id if get_current_trace() else ""),
-        })
-        worker.api_round_state_signal.emit(round_payload)
+        }
+        self.consumer.emit_round(
+            started_event,
+            state="browser_stateless",
+            message="正在操作 GoAmzAI 网页...",
+            extra=round_extra,
+        )
 
         api_source.append_user_message(text, conversation_id=active_conv_id)
         prepared_context = api_source.prepare_browser_stateless_request_context(conversation_id=active_conv_id)
@@ -161,7 +140,7 @@ class WorkerBrowserStatelessBridge:
             self._emit_transient_reply(api_source, active_conv_id, progress_info, request.request_id)
 
         adapter = StatelessBrowserProfileAdapter(
-            connector=worker.connector,
+            connector=self._resolve_connector(profile),
             profile_id=profile_key,
             conversation_url=conversation_url,
             conversation_name=conversation_name,
@@ -193,7 +172,13 @@ class WorkerBrowserStatelessBridge:
                     "请到设置页打开该浏览器 Profile，填写“目标对话名称”后再试。"
                 )
             else:
-                assistant_text = f"浏览器无上下文 Profile 调用失败: {error_code}"
+                assistant_text = summarize_browser_stateless_failure(response.diagnostics)
+            logger.warning(
+                "[浏览器无上下文][失败摘要] conv_id=%s request_id=%s\n%s",
+                active_conv_id,
+                response.request_id,
+                assistant_text,
+            )
 
         api_source.append_assistant_message(
             assistant_text,
@@ -217,22 +202,20 @@ class WorkerBrowserStatelessBridge:
             segments=assistant_segments or [],
             raw_message=response.structured_message if isinstance(response.structured_message, dict) else None,
             diagnostics=response.diagnostics,
-            error_message="" if response.finish_reason == "succeeded" else response.diagnostics.get("error_code", "unknown_error"),
+            error_message="" if response.finish_reason == "succeeded" else assistant_text,
         )
-        self._emit_stream_event(terminal_event)
-        worker.messages_signal.emit(msgs if msgs else [])
-        worker.context_status_signal.emit(api_source.get_context_status(conversation_id=active_conv_id))
-        final_payload = terminal_event.to_round_payload(state="finalized")
-        final_payload.update({
+        self.consumer.emit_stream(terminal_event)
+        self.consumer.emit_messages(msgs)
+        self.consumer.emit_context_status(api_source.get_context_status(conversation_id=active_conv_id))
+        self.consumer.emit_round(terminal_event, state="finalized", extra={
             "profile_kind": "browser_stateless",
             "conversation_url": conversation_url,
             "conversation_name": conversation_name,
             "trace_id": (get_current_trace().trace_id if get_current_trace() else ""),
             "round_id": (get_current_trace().round_id if get_current_trace() else ""),
         })
-        worker.api_round_state_signal.emit(final_payload)
         if response.finish_reason == "succeeded":
             worker.safe_emit_status("✅ 无上下文浏览器 Profile 调用完成")
         else:
-            worker.safe_emit_status("❌ 无上下文浏览器 Profile 调用失败")
+            worker.safe_emit_status(f"❌ 无上下文浏览器 Profile 调用失败: {response.diagnostics.get('error_code', 'unknown_error')}")
         return response

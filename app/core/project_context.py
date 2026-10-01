@@ -1,6 +1,7 @@
 import os
 import json
 import hashlib
+import threading
 from typing import List
 
 from PySide6.QtCore import QObject, Signal
@@ -23,6 +24,8 @@ class ProjectContext(QObject):
         self.project_root = APP_ROOT
         self.project_name = os.path.basename(APP_ROOT)
         self._recent_projects: List[dict] = []
+        self._runtime_lock = threading.RLock()
+        self._runtime_leases = set()
         self._projects_file = os.path.join(APP_ROOT, "projects.json")
 
     @classmethod
@@ -45,7 +48,23 @@ class ProjectContext(QObject):
     def get_project_hash(self) -> str:
         return self._compute_project_hash(self.project_root)
 
+    def acquire_runtime_lease(self, project_root: str, owner: str):
+        with self._runtime_lock:
+            if self._normalize_path(project_root) != self._normalize_path(self.project_root):
+                raise RuntimeError("请先切换到此会话所属项目，再启动 Pi 运行时")
+            self._runtime_leases.add(owner)
+
+    def release_runtime_lease(self, owner: str):
+        with self._runtime_lock:
+            self._runtime_leases.discard(owner)
+
     def switch_to(self, new_path: str) -> bool:
+        with self._runtime_lock:
+            if self._runtime_leases and self._normalize_path(new_path) != self._normalize_path(self.project_root):
+                raise RuntimeError("Pi 仍在运行或等待工具结束；请停止并等待结束后再切换项目")
+            return self._switch_to_unlocked(new_path)
+
+    def _switch_to_unlocked(self, new_path: str) -> bool:
         new_path = self._normalize_path(new_path)
 
         if not os.path.isdir(new_path):

@@ -1,52 +1,59 @@
-# === 核心驱动与界面 ===
-selenium
-webdriver-manager
-beautifulsoup4
-PySide6
-requests
-flet>=0.27.0           # 手机客户端 (Android APK 构建)
-pygments>=2.18.0       # 手机客户端代码高亮
-certifi                # httpx SSL 证书 (APK 打包需要显式声明)
-httpcore               # httpx 底层 HTTP 引擎
-idna                   # httpx 国际化域名
-anyio                  # httpx 异步 I/O
+# === Core desktop and browser automation ===
+selenium>=4.44.0
+webdriver-manager>=4.1.1
+beautifulsoup4>=4.14.3
+PySide6>=6.11.1
+PySide6-Addons>=6.11.1
+requests>=2.34.2
+flet>=0.85.2
+flet-cli>=0.85.2
+flet-desktop>=0.85.2
+pygments>=2.20.0
+certifi>=2026.5.20
+httpcore>=1.0.9
+idna>=3.17
+anyio>=4.13.0
 
-# === Server 端核心组件 (SaaS 架构) ===
-fastapi
-uvicorn
-websockets
-python-multipart
+# === Server core (SaaS architecture) ===
+fastapi>=0.136.3
+uvicorn>=0.48.0
+websockets>=16.0
+python-multipart>=0.0.30
 
-# === 安全与鉴权 (JWT/Hash) ===
-python-jose[cryptography]
-passlib[bcrypt]
-sqlalchemy
+# === Security and auth (JWT/Hash) ===
+python-jose[cryptography]>=3.5.0
+passlib[bcrypt]>=1.7.4
+sqlalchemy>=2.0.50
 
-# === 测试框架 ===
-pytest>=7.0
-pytest-cov>=4.0
-pytest-mock>=3.10
-pytest-asyncio>=0.20
-httpx
+# === Test framework ===
+pytest>=9.0.3
+pytest-cov>=7.1.0
+pytest-mock>=3.15.1
+pytest-socket>=0.7.0
+pytest-asyncio>=1.4.0
+httpx>=0.28.1
 
-# === 开发辅助与可视化 ===
-pyvis
-networkx
-streamlit          # benchmark UI (开发期工具，上线前移除)
+# === Development and visualization ===
+pyvis>=0.3.2
+networkx>=3.6.1
+streamlit>=1.58.0
 
-# === 商业级增强 ===
-pydantic>=2.0
-psutil
+# === Production-grade enhancements ===
+pydantic>=2.13.4
+pydantic-core>=2.46.4
+psutil>=7.2.2
 docker>=7.0.0
 
-# === RAG 检索引擎 V2 ===
-chromadb>=1.0.0
-fastembed>=0.2.0
-# langchain 已移除 — V2 自研实现，更轻量可控
-# === 网络搜索 (Web Search Skill) ===
-ddgs>=6.0                 # 免费搜索，零配置（原 duckduckgo-search 已更名）
-# tavily-python           # 可选：AI 优化搜索结果，需 API key
-# 上下文管理系统依赖
-openai>=1.0
-google-genai>=0.3.0
-tiktoken>=0.5
+# === RAG retrieval engine V2 ===
+chromadb>=1.5.9
+fastembed>=0.8.0
+# langchain removed: V2 uses a lighter self-owned implementation.
+
+# === Web Search Skill ===
+ddgs>=9.14.4
+# tavily-python is optional: AI-optimized search results, requires API key.
+
+# === Context management and model SDKs ===
+openai>=2.38.0
+google-genai>=2.7.0
+tiktoken>=0.13.0

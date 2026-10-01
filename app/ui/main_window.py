@@ -9,7 +9,7 @@ from app.core.logging import init_logging, get_logger, register_panel_handler, u
 from app.ui.logging import QtPanelLogHandler, LogPanelBridge
 
 logger = get_logger("app.ui.main_window")
-from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QFrame, QMenuBar, QMenu, QStackedWidget, QToolButton, QApplication, QDockWidget, QMessageBox, QSplitter, QLabel, QInputDialog, QTabWidget, QTabBar)
+from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QFrame, QMenuBar, QMenu, QStackedWidget, QToolButton, QApplication, QDockWidget, QMessageBox, QSplitter, QLabel, QInputDialog, QTabWidget, QTabBar, QSizePolicy)
 from PySide6.QtCore import Qt, QSize, QTimer, QSettings, QVariantAnimation, QEasingCurve, Signal
 from PySide6.QtGui import QIcon, QAction
 
@@ -22,6 +22,7 @@ from app.ui.theme import theme_manager
 from app.ui.components.preview_dialog import CodePreviewDialog
 from app.ui.components.overlay import OverlayWidget
 from app.core.config import ConfigManager
+from app.core.project_paths import project_config_path
 from app.core.app_constants import UPDATE_EXIT_CODE, RESTART_EXIT_CODE, UI_COLORS, UI_SIZES, APP_ROOT
 from app.core.utils.text_utils import is_test_log
 
@@ -34,10 +35,13 @@ from app.ui.components.panels import (
     GitControlPanel,
     RuntimeLogPanel,
     SandboxMonitorPanel,
-    ContextWorkspacePanel
+    ContextWorkspacePanel,
+    DocOrganizerPanel,
+    BrowserPanel,
 )
 from app.ui.components.panels.context_workspace_panel_logic import ContextWorkspacePanelLogic
 from app.ui.components.panels.git_control_panel_logic import GitControlPanelLogic
+from app.ui.components.panels.doc_organizer_panel_logic import DocOrganizerPanelLogic
 # SkillsManager 由插件使用
 
 # 🔌 插件系统导入
@@ -77,24 +81,24 @@ class MainWindow(QMainWindow):
         self.is_admin = "--admin" in sys.argv
         self.worker = worker_core
         self.user_profile = user_profile or {"role": "developer", "username": "Admin"}
-        
+
         ini_path = os.path.join(APP_ROOT, "layout.ini")
         self.settings = QSettings(ini_path, QSettings.Format.IniFormat)
-        
+
         self.save_timer = QTimer(self)
         self.save_timer.setSingleShot(True)
         self.save_timer.setInterval(1000)
         self.save_timer.timeout.connect(self.save_layout)
-        
+
         self.is_startup_protected = True
 
         role_name = self.user_profile.get("role", "user").upper()
         self._update_window_title()
         self.resize(*UI_SIZES["default_window"])
-        
+
         from app.core.project_context import ProjectContext
         ProjectContext.get().project_switched.connect(lambda r, d: self._update_window_title())
-        
+
         theme_manager.theme_changed.connect(self.apply_theme)
 
         central_widget = QWidget()
@@ -112,8 +116,8 @@ class MainWindow(QMainWindow):
         self.sidebar_frame = QFrame()
         self.sidebar_frame.setFixedWidth(UI_SIZES["sidebar_width"])
         self.sidebar_layout = QVBoxLayout(self.sidebar_frame)
-        self.sidebar_layout.setContentsMargins(5, 20, 5, 20)
-        self.sidebar_layout.setSpacing(15)
+        self.sidebar_layout.setContentsMargins(4, 12, 4, 12)
+        self.sidebar_layout.setSpacing(8)
         self.sidebar_btns = []
         self.init_sidebar()
         self.main_splitter.addWidget(self.sidebar_frame)
@@ -121,6 +125,7 @@ class MainWindow(QMainWindow):
         # 2. Content Stack
         self.content_stack = QStackedWidget()
         self.init_pages()
+        self._relax_width_constraints()
         self.main_splitter.addWidget(self.content_stack)
 
         self.main_splitter.setStretchFactor(0, 0)
@@ -157,19 +162,19 @@ class MainWindow(QMainWindow):
 
         if hasattr(self.worker, 'isRunning') and not self.worker.isRunning():
             self.worker.start()
-        
+
         # Skills 管理器现在由插件处理
 
-        
+
         # 🆕 初始化面板管理系统（必须在菜单之前，因为菜单需要 plugin_loader）
         try:
             self.init_panel_system()
         except Exception as e:
             print(f"❌ 面板系统初始化失败: {e}")
-        
+
         # 🆕 初始化菜单栏（现在可以安全使用 plugin_loader）
         self.init_menu_bar()
-        
+
         self.git_log_signal.connect(self._append_git_panel_log)
         self.git_busy_signal.connect(self._set_git_panel_busy)
         if self.worker and hasattr(self.worker, 'git_detail_signal') and self.worker.git_detail_signal:
@@ -191,6 +196,25 @@ class MainWindow(QMainWindow):
         self.apply_theme()
         QTimer.singleShot(0, self.delayed_restore)
 
+    def open_doc_html_in_embedded_browser(self, html_path, filename=""):
+        """Open generated docs HTML inside the built-in browser panel."""
+        browser = getattr(self, "embedded_browser_panel", None)
+        if browser is None:
+            logger.warning("内置浏览器面板不可用，无法预览文档 HTML: %s", html_path)
+            return
+
+        path_text = str(html_path)
+        title = os.path.splitext(os.path.basename(str(filename or html_path)))[0] or "计划书"
+        try:
+            if hasattr(self, "panel_manager"):
+                self.panel_manager.show_panel("embedded_browser")
+            browser.new_tab(url=path_text, title=title, device_mode="desktop")
+            browser.raise_()
+            browser.activateWindow()
+            logger.info("已在内置浏览器打开资料 HTML: %s", path_text)
+        except Exception as exc:
+            logger.warning("内置浏览器打开资料 HTML 失败: %s | %s", path_text, exc)
+
     def handle_clear_cache_request(self):
         is_remote = self._is_remote()
         if is_remote:
@@ -203,7 +227,7 @@ class MainWindow(QMainWindow):
         else:
             try:
                 cfg = ConfigManager.load()
-                staging_dir = cfg.get("export_code_path", "export/code")
+                staging_dir = project_config_path(cfg, "export_code_path", "export/code")
                 if os.path.exists(staging_dir):
                     shutil.rmtree(staging_dir)
                     os.makedirs(staging_dir)
@@ -572,8 +596,8 @@ class MainWindow(QMainWindow):
             x = self.settings.value("win_x", type=int)
             y = self.settings.value("win_y", type=int)
             if w and h and w > 100 and h > 100:
-                self.setFixedSize(w, h)
-                QTimer.singleShot(1000, self.unlock_window)
+                self.resize(w, h)
+                QTimer.singleShot(0, self.unlock_window)
             if x is not None and y is not None:
                 self.move(x, y)
             saved_sizes = self.settings.value("splitter_sizes")
@@ -591,30 +615,30 @@ class MainWindow(QMainWindow):
 
     def unlock_window(self):
         self.setMinimumSize(0, 0)
-        
+
         # 设置停靠面板的标签页位置为顶部
         from PySide6.QtCore import Qt
         self.setTabPosition(Qt.DockWidgetArea.AllDockWidgetAreas, QTabWidget.TabPosition.North)
-        
+
         # 启用标签拖拽（左右调整顺序）
         # 注意：这是 QMainWindow 的方法，用于 DockWidget 标签
         # Qt 会自动处理标签的左右拖拽，我们的事件过滤器处理上下拖拽
-        
+
         # 安装事件过滤器，用于智能标签拖拽
-        
+
         # 初始化标签栏：启用拖拽并安装事件过滤器
         QApplication.instance().processEvents()
         for tabbar in self.findChildren(QTabBar):
             tabbar.setMovable(True)
             tabbar.installEventFilter(self)
-        
+
         # 设置停靠区域间距，创造卡片感
         self.setDockOptions(
             QMainWindow.DockOption.AnimatedDocks |
             QMainWindow.DockOption.AllowNestedDocks |
             QMainWindow.DockOption.AllowTabbedDocks
         )
-        
+
         # 设置中央区域的 margin，为停靠面板创造间距
         if hasattr(self, 'centralWidget') and self.centralWidget():
             central_layout = self.centralWidget().layout()
@@ -676,11 +700,34 @@ class MainWindow(QMainWindow):
             self.settings_page.request_snapshot.connect(self.worker.request_generate_snapshot)
         self.content_stack.addWidget(self.settings_page)
         self.console_page = ConsolePage(self.worker)
+        self.console_page.request_focus_chat.connect(self.open_browser_chat_page)
         self.content_stack.addWidget(self.console_page)
         self.context_page = ContextPage(self.worker)
         self.context_page.request_push_pack.connect(self.handle_context_push)
         self.content_stack.addWidget(self.context_page)
         self.apply_permissions(self.user_profile.get("role", "user"))
+        self._relax_width_constraints()
+
+    def _relax_width_constraints(self):
+        """Reduce accidental minimum widths so the window can shrink on 1080p screens."""
+        try:
+            self.setMinimumWidth(0)
+            if hasattr(self, "content_stack"):
+                self.content_stack.setMinimumWidth(0)
+                self.content_stack.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+            protected = {getattr(self, "sidebar_frame", None)}
+            for widget in self.findChildren(QWidget):
+                if widget in protected:
+                    continue
+                if widget.minimumWidth() > 80:
+                    widget.setMinimumWidth(0)
+                policy = widget.sizePolicy()
+                if policy.horizontalPolicy() == QSizePolicy.Policy.Fixed and widget.maximumWidth() >= 16777215:
+                    policy.setHorizontalPolicy(QSizePolicy.Policy.Preferred)
+                    widget.setSizePolicy(policy)
+        except Exception as e:
+            logger.warning("宽度约束松绑失败: %s", e)
 
     def handle_context_push(self, content, goal):
         for btn in self.sidebar_btns:
@@ -696,7 +743,7 @@ class MainWindow(QMainWindow):
         if hasattr(self.worker, 'update_config'):
             self.worker.update_config(config)
         theme_manager.reload_from_config()
-        
+
     def apply_permissions(self, role):
         permissions = {
             "developer": [0, 1, 2, 3, 4, 5, 6],
@@ -726,6 +773,17 @@ class MainWindow(QMainWindow):
 
     def switch_to_page(self, idx):
         self.content_stack.setCurrentIndex(idx)
+
+    def open_browser_chat_page(self):
+        for btn in self.sidebar_btns:
+            if btn.text() == "对话":
+                self.handle_sidebar_click(btn, 0, None)
+                break
+        else:
+            self.switch_to_page(0)
+
+        if hasattr(self, "chat_page") and getattr(self.chat_page, "current_mode", "browser") != "browser":
+            self.chat_page.on_mode_switch("browser")
 
     def save_layout(self):
         if getattr(self, 'is_startup_protected', False):
@@ -814,27 +872,27 @@ class MainWindow(QMainWindow):
         fullscreen_action = view_menu.addAction("全屏")
         fullscreen_action.setCheckable(True)
         fullscreen_action.triggered.connect(self.toggle_fullscreen)
-        
+
         # 插件菜单
         self.plugin_menu = menubar.addMenu("插件(&L)")
-        
+
         # 插件管理器
         plugin_manager_action = self.plugin_menu.addAction("🔌 插件管理器")
         plugin_manager_action.triggered.connect(self.show_plugin_manager)
-        
+
         self.plugin_menu.addSeparator()
-        
+
         # 动态插件列表（将在 refresh_plugin_menu 中填充）
         self.refresh_plugin_menu()
-        
+
         help_menu = menubar.addMenu("帮助(&H)")
         about_action = help_menu.addAction("关于")
         about_action.triggered.connect(self.show_about)
-    
+
         from app.ui.components.panels.project_menu import ProjectMenu
         self._project_menu = ProjectMenu(self)
         menubar.insertMenu(view_menu.menuAction(), self._project_menu.get_menu())
-    
+
     def init_panel_system(self):
         self.panel_manager = PanelManager(self)
         config_dir = os.path.join(APP_ROOT, ".config")
@@ -866,24 +924,38 @@ class MainWindow(QMainWindow):
         print("🎉 面板注册流程完成，开始恢复布局...")
 
         layout_file = os.path.join(APP_ROOT, ".config", "panel_layout.json")
+        default_layout_file = os.path.join(APP_ROOT, "config", "panel_layout_default.json")
+        layout_loaded = False
+
         if os.path.exists(layout_file):
             try:
                 import json
                 with open(layout_file, 'r', encoding='utf-8') as f:
                     layout = json.load(f)
                 self.panel_manager.restore_layout(layout)
+                layout_loaded = True
                 print("✅ 已自动加载上次的面板布局")
             except Exception as e:
                 print(f"⚠️ 加载面板布局失败: {e}")
 
-        # Qt 恢复布局后再刷新菜单勾选状态，避免启动早期状态不准
+        if not layout_loaded and os.path.exists(default_layout_file):
+            try:
+                import json
+                with open(default_layout_file, 'r', encoding='utf-8') as f:
+                    layout = json.load(f)
+                self.panel_manager.restore_layout(layout)
+                print("✅ 已加载默认布局（纯净模式）")
+            except Exception as e:
+                print(f"⚠️ 加载默认布局失败: {e}")
+
+        QTimer.singleShot(250, self._relax_width_constraints)
         QTimer.singleShot(300, self.refresh_panel_menu)
         QTimer.singleShot(500, self.refresh_panel_menu)
 
         self.is_loading = False
         self.is_startup_protected = False
         print("✅ 启动完成，布局记忆已启用")
-    
+
     def create_devops_panels(self):
         """🆕 创建 DevOps 面板"""
         self.task_schedule_panel = TaskSchedulePanel()
@@ -937,7 +1009,21 @@ class MainWindow(QMainWindow):
         self._log_panel_bridge.log_signal.connect(self.runtime_log_panel.append_log)
         register_panel_handler(self._qt_log_handler)
         logger.info("运行日志面板已连接统一日志系统")
-        
+
+        self.embedded_browser_panel = BrowserPanel()
+        self.panel_manager.register_panel(self.embedded_browser_panel, {
+            "id": "embedded_browser",
+            "title": "内置浏览器",
+            "default_area": Qt.DockWidgetArea.RightDockWidgetArea
+        })
+        if self.embedded_browser_panel.render_mode == "fallback":
+            logger.warning(
+                "内置浏览器已启用轻量 HTML 预览降级模式: %s",
+                self.embedded_browser_panel.webengine_error,
+            )
+        else:
+            logger.info("内置浏览器已启用 Qt WebEngine 渲染")
+
         # 沙盒监控面板
         try:
             self.sandbox_monitor_panel = SandboxMonitorPanel()
@@ -946,15 +1032,15 @@ class MainWindow(QMainWindow):
                 "title": "沙盒监控",
                 "default_area": Qt.DockWidgetArea.RightDockWidgetArea
             })
-            
+
             # 连接沙盒监控信号
             self.sandbox_monitor_panel.refresh_requested.connect(self._refresh_sandbox_info)
             self.sandbox_monitor_panel.clear_history_requested.connect(self._clear_sandbox_history)
-            
+
             # 监听代码执行完成信号
             if self.worker and hasattr(self.worker, 'code_execution_completed'):
                 self.worker.code_execution_completed.connect(self._refresh_sandbox_info)
-            
+
             # 初始加载沙盒信息
             self._refresh_sandbox_info()
             print("✅ 沙盒监控面板已注册")
@@ -996,7 +1082,25 @@ class MainWindow(QMainWindow):
             self.context_workspace_panel_logic.initialize()
         except Exception as e:
             print(f"上下文工作台初始化请求失败: {e}")
-        
+
+        self.doc_organizer_panel = DocOrganizerPanel()
+        self.panel_manager.register_panel(self.doc_organizer_panel, {
+            "id": "doc_organizer",
+            "title": "资料整理",
+            "default_area": Qt.DockWidgetArea.RightDockWidgetArea
+        })
+        _llm_router = None
+        worker_subagent_bridge = getattr(self.worker, "subagent_bridge", None) if self.worker else None
+        if worker_subagent_bridge and hasattr(worker_subagent_bridge, "subagent_thread"):
+            _llm_router = getattr(worker_subagent_bridge.subagent_thread, "_llm", None)
+        self.doc_organizer_panel_logic = DocOrganizerPanelLogic(
+            panel=self.doc_organizer_panel,
+            llm_router=_llm_router,
+            html_opener=self.open_doc_html_in_embedded_browser,
+        )
+        self.doc_organizer_panel_logic.bind()
+        print("✅ 资料整理面板已注册")
+
         # 🔧 连接 worker 信号到面板
         if self.worker:
             try:
@@ -1006,17 +1110,17 @@ class MainWindow(QMainWindow):
                 else:
                     print(f"⚠️ server_log_signal 不可用")
                 print("✅ 已连接 server_log_signal 到运行日志面板")
-                
+
                 # 任务调度面板
                 if hasattr(self.worker, "queue_monitor_signal"):
                     self.worker.queue_monitor_signal.connect(
                         lambda data: self.task_schedule_panel.update_task_queue(
-                            data, 
+                            data,
                             client_id=getattr(self.worker, "client_id", "Host")
                         )
                     )
                     print("✅ 已连接 queue_monitor_signal 到任务调度面板")
-                
+
                 # 代码审查面板
                 if hasattr(self.worker, "update_list_signal"):
                     self.worker.update_list_signal.connect(self.code_review_panel.update_change_list)
@@ -1032,39 +1136,39 @@ class MainWindow(QMainWindow):
             # 扫描插件
             plugin_infos = self.plugin_loader.scan_plugins()
             print(f"[PluginSystem] 发现 {len(plugin_infos)} 个插件")
-            
+
             # 加载启用的插件
             loaded_count = 0
             for plugin_info in plugin_infos:
                 if not plugin_info.enabled:
                     print(f"[PluginSystem] 跳过禁用的插件: {plugin_info.name}")
                     continue
-                
+
                 try:
                     # 加载插件
                     plugin = self.plugin_loader.load_plugin(plugin_info.id)
                     if not plugin:
                         continue
-                    
+
                     # 创建面板
                     panel = plugin.create_panel()
                     if not panel:
                         print(f"[PluginSystem] 插件 {plugin_info.name} 创建面板失败")
                         continue
-                    
+
                     # 标记为插件面板
                     panel._plugin_id = plugin_info.id
-                    
+
                     # 注册面板
                     self.panel_manager.register_panel(panel, {
                         "id": plugin_info.id,
                         "title": plugin_info.name,
                         "default_area": self._get_dock_area(plugin_info.default_area)
                     })
-                    
+
                     # 调用插件钩子
                     plugin.on_panel_created(panel)
-                    
+
                     # 特殊处理：为 SkillsPanel 设置 skill_data
                     if plugin_info.id == 'skills_panel':
                         try:
@@ -1074,31 +1178,31 @@ class MainWindow(QMainWindow):
                         except Exception as e:
                             logger.warning(f"设置 SkillsPanel 数据失败: {e}")
                     plugin._set_panel_instance(panel)
-                    
+
                     # 连接面板关闭信号
                     panel.closed.connect(lambda pid=plugin_info.id: self._on_plugin_panel_closed(pid))
                     panel.visibilityChanged.connect(lambda visible, pid=plugin_info.id: self._on_plugin_visibility_changed(pid, visible))
-                    
+
                     loaded_count += 1
                     print(f"[PluginSystem] ✅ 插件加载成功: {plugin_info.name} v{plugin_info.version}")
-                    
+
                 except Exception as e:
                     print(f"[PluginSystem] ❌ 加载插件失败 {plugin_info.name}: {e}")
                     import traceback
                     traceback.print_exc()
-            
+
             print(f"[PluginSystem] 插件加载完成: {loaded_count}/{len(plugin_infos)}")
-            
+
             # 刷新插件菜单
             self.refresh_plugin_menu()
-            
+
         except Exception as e:
             print(f"[PluginSystem] ❌ 插件系统初始化失败: {e}")
             import traceback
             traceback.print_exc()
         plugin_count = len(self.plugin_loader.plugins) if hasattr(self, 'plugin_loader') else 0
         print(f"📊 插件面板加载完成: {plugin_count}")
-    
+
     def _get_dock_area(self, area_str: str) -> Qt.DockWidgetArea:
         """将字符串转换为 Qt.DockWidgetArea"""
         area_map = {
@@ -1108,7 +1212,7 @@ class MainWindow(QMainWindow):
             "bottom": Qt.DockWidgetArea.BottomDockWidgetArea,
         }
         return area_map.get(area_str.lower(), Qt.DockWidgetArea.RightDockWidgetArea)
-    
+
     def _on_plugin_panel_closed(self, plugin_id: str):
         """插件面板关闭时的回调"""
         try:
@@ -1116,10 +1220,10 @@ class MainWindow(QMainWindow):
             if plugin and plugin.panel_instance:
                 plugin.on_panel_closed(plugin.panel_instance)
                 plugin._set_panel_instance(None)
-            
+
             # 刷新插件菜单勾选状态
             self._update_plugin_menu_check_state()
-            
+
         except Exception as e:
             print(f"[PluginSystem] 处理面板关闭事件失败: {e}")
 
@@ -1132,7 +1236,7 @@ class MainWindow(QMainWindow):
         try:
             if not hasattr(self, 'plugin_menu'):
                 return
-            
+
             actions = self.plugin_menu.actions()
             # 跳过前两个（管理器 + 分隔符）
             for action in actions[2:]:
@@ -1151,7 +1255,7 @@ class MainWindow(QMainWindow):
     def update_panel_menu(self, panel_id):
         """🆕 更新面板菜单"""
         self.refresh_panel_menu()
-    
+
 
 
 
@@ -1161,7 +1265,7 @@ class MainWindow(QMainWindow):
             panel = self.panel_manager.get_panel(panel_id)
             if not panel or not hasattr(self, 'panel_menu'):
                 return
-            
+
             for action in self.panel_menu.actions():
                 if action.text() == panel.panel_title:
                     action.setChecked(is_visible)
@@ -1182,7 +1286,7 @@ class MainWindow(QMainWindow):
                     panel.closed.disconnect()
                 except Exception as e:
                     logger.warning(e)
-                
+
                 panel.minimize_requested.connect(lambda pid=panel_id: self._update_panel_menu_state(pid, False))
                 panel.docked.connect(lambda pid=panel_id: self._update_panel_menu_state(pid, True))
                 panel.closed.connect(lambda pid=panel_id: self._update_panel_menu_state(pid, False))
@@ -1191,17 +1295,17 @@ class MainWindow(QMainWindow):
         try:
             if not hasattr(self, 'panel_menu'):
                 return
-            
+
             # 清除现有的动态菜单项（保留工作区菜单和分隔符）
             actions = self.panel_menu.actions()
             # 保留前两项（工作区菜单和分隔符），删除后面的
             if len(actions) > 2:
                 for action in actions[2:]:
                     self.panel_menu.removeAction(action)
-            
+
             # 获取所有面板
             panels = self.panel_manager.get_all_panels()
-            
+
             # 为每个面板添加菜单项
             for panel_id, panel in panels.items():
                 panel_title = panel.panel_title if hasattr(panel, 'panel_title') else panel_id
@@ -1253,11 +1357,16 @@ class MainWindow(QMainWindow):
                 self.sandbox_monitor_panel.update_statistics(stats)
 
             if docker_manager.available and docker_manager.container:
-                docker_manager.container.reload()
-                status = docker_manager.container.status
-                container_id = docker_manager.container.short_id
-                if hasattr(self, "sandbox_monitor_panel"):
-                    self.sandbox_monitor_panel.update_container_status(status, container_id)
+                try:
+                    docker_manager.container.reload()
+                    status = docker_manager.container.status
+                    container_id = docker_manager.container.short_id
+                    if hasattr(self, "sandbox_monitor_panel"):
+                        self.sandbox_monitor_panel.update_container_status(status, container_id)
+                except Exception:
+                    # 容器可能已被清理（项目切换、手动停止等），标记为不可用
+                    if hasattr(self, "sandbox_monitor_panel"):
+                        self.sandbox_monitor_panel.update_container_status("unavailable")
             else:
                 if hasattr(self, "sandbox_monitor_panel"):
                     self.sandbox_monitor_panel.update_container_status("unavailable")
@@ -1354,42 +1463,42 @@ class MainWindow(QMainWindow):
         """刷新插件菜单"""
         try:
             print("[DEBUG] refresh_plugin_menu 被调用")
-            
+
             if not hasattr(self, 'plugin_menu'):
                 print("[DEBUG] plugin_menu 不存在")
                 return
-            
+
             print(f"[DEBUG] plugin_menu 存在，当前有 {len(self.plugin_menu.actions())} 个菜单项")
-            
+
             # 清除现有的动态菜单项（保留管理器和分隔符）
             actions = self.plugin_menu.actions()
             if len(actions) > 2:  # 管理器 + 分隔符
                 for action in actions[2:]:
                     self.plugin_menu.removeAction(action)
-            
+
             # 获取所有插件
             plugins = self.plugin_loader.scan_plugins()
             print(f"[DEBUG] 扫描到 {len(plugins)} 个插件")
             for p in plugins:
                 print(f"[DEBUG]   - {p.id}: {p.name} (enabled={p.enabled})")
-            
+
             if not plugins:
                 no_plugins_action = self.plugin_menu.addAction("(无可用插件)")
                 no_plugins_action.setEnabled(False)
                 return
-            
+
             # 添加插件菜单项
             for plugin_info in plugins:
                 plugin_id = plugin_info.id
                 plugin_name = plugin_info.name
                 plugin_icon = plugin_info.icon
                 is_enabled = plugin_info.enabled
-                
+
                 # 创建菜单项
                 action_text = f"{plugin_icon} {plugin_name}"
                 if is_enabled:
                     action_text += " ✓"
-                
+
                 action = self.plugin_menu.addAction(action_text)
                 print(f"[DEBUG] 添加菜单项: {action_text}")
                 action.setCheckable(True)
@@ -1400,22 +1509,22 @@ class MainWindow(QMainWindow):
                 else:
                     action.setChecked(is_enabled)
                 action.setData(plugin_id)
-                
+
                 # 连接信号（使用 lambda 捕获当前值）
                 action.triggered.connect(
                     lambda checked, pid=plugin_id: self.toggle_plugin_from_menu(pid, checked)
                 )
-            
+
             logger.debug(f"刷新插件菜单: {len(plugins)} 个插件")
-            
+
         except Exception as e:
             logger.error(f"刷新插件菜单失败: {e}")
-    
+
     def toggle_plugin_from_menu(self, plugin_id: str, checked: bool):
         """从菜单切换插件面板的显示/隐藏"""
         try:
             plugin = self.plugin_loader.get_plugin(plugin_id)
-            
+
             if checked:
                 # 显示面板
                 if plugin and plugin.panel_instance:
@@ -1450,7 +1559,7 @@ class MainWindow(QMainWindow):
                 # 隐藏面板
                 if plugin and plugin.panel_instance:
                     plugin.panel_instance.hide()
-                    
+
         except Exception as e:
             logger.error(f"切换插件面板失败: {e}")
             import traceback
@@ -1569,4 +1678,3 @@ class MainWindow(QMainWindow):
             self.worker.terminate()
             self.worker.wait()
         super().closeEvent(event)
-

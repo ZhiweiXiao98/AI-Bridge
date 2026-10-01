@@ -21,6 +21,7 @@ class ContextWorkspacePanelLogic:
         self.staging_injector = staging_injector
         self._snapshot_dialog = None
         self._snapshot_request_pending = False
+        self._snapshot_requested_conversation_id = ''
         self._token_counter = TokenCounter()
 
     def bind(self):
@@ -112,6 +113,7 @@ class ContextWorkspacePanelLogic:
             if self.worker and hasattr(self.worker, 'get_last_request_snapshot'):
                 target_id = conversation_id or None
                 self._snapshot_request_pending = True
+                self._snapshot_requested_conversation_id = conversation_id or ''
                 result = self.worker.get_last_request_snapshot(target_id)
                 if result:
                     self._snapshot_request_pending = False
@@ -130,17 +132,50 @@ class ContextWorkspacePanelLogic:
             if not self._snapshot_request_pending:
                 return
             self._snapshot_request_pending = False
-            if not isinstance(payload, dict) or not payload:
-                QMessageBox.information(
-                    self.panel,
-                    '暂无快照',
-                    '当前目标对话还没有最近一次请求快照。\n请先发送一条消息后再查看。'
-                )
-                return
-            self._show_snapshot_dialog(payload)
+            self._show_snapshot_dialog(self._normalize_snapshot_payload(payload))
         except Exception as e:
             self._log(f'处理上下文快照失败: {e}')
             QMessageBox.warning(self.panel, '显示失败', str(e))
+
+    def _normalize_snapshot_payload(self, payload):
+        if isinstance(payload, dict) and self._looks_like_snapshot(payload):
+            return payload
+        import time as _time
+        conv_id = self._snapshot_requested_conversation_id or ''
+        return {
+            'snapshot_unavailable': True,
+            'conversation_id': conv_id,
+            'model': '?',
+            'profile_key': '?',
+            'timestamp': _time.time(),
+            'system_blocks': {},
+            'final_system_prompt_tokens': 0,
+            'long_term_fragments': [],
+            'working_memory': {},
+            'history': [],
+            'initial_request': {'messages': []},
+            'rounds': [],
+            'final_reply': None,
+            'loop_count': 0,
+            'response': '暂无请求快照。完成一次 API 模式发送后，这里会显示最近一次实际发送给模型的完整上下文。',
+            'final_messages': [],
+        }
+
+    def _looks_like_snapshot(self, payload):
+        if not isinstance(payload, dict) or not payload:
+            return False
+        return any(
+            key in payload
+            for key in (
+                'timestamp',
+                'system_blocks',
+                'initial_request',
+                'final_messages',
+                'long_term_fragments',
+                'working_memory',
+                'response',
+            )
+        )
 
     def _show_snapshot_dialog(self, snapshot):
         if self._snapshot_dialog is not None:

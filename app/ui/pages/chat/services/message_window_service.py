@@ -18,10 +18,10 @@ class MessageWindowService:
     - 判断是否还有更多历史可加载
     """
 
-    def __init__(self, default_turns: int = 20, step_turns: int = 10):
+    def __init__(self, default_turns: int = 200, step_turns: int = 50):
         self.config = WindowConfig(
-            default_turns=max(1, int(default_turns or 20)),
-            step_turns=max(1, int(step_turns or 10)),
+            default_turns=max(1, int(default_turns or 200)),
+            step_turns=max(1, int(step_turns or 50)),
         )
         self._visible_turns = {
             'browser': self.config.default_turns,
@@ -53,8 +53,8 @@ class MessageWindowService:
 
     def update_config(self, default_turns: int, step_turns: int):
         self.config = WindowConfig(
-            default_turns=max(1, int(default_turns or 20)),
-            step_turns=max(1, int(step_turns or 10)),
+            default_turns=max(1, int(default_turns or 200)),
+            step_turns=max(1, int(step_turns or 50)),
         )
         for mode in ('browser', 'api'):
             self._visible_turns[mode] = self.config.default_turns

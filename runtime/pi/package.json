@@ -1,0 +1,19 @@
+{
+  "name": "ai-bridge-pi-sidecar",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Isolated Pi SDK sidecar; AI Bridge owns every tool execution",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "start": "node sidecar.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check sidecar.mjs && node --check protocol.mjs && node --check pi-session.mjs"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "0.99.1"
+  },
+  "license": "MIT"
+}

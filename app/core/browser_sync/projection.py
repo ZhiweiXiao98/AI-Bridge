@@ -83,7 +83,14 @@ class ChatProjectionReducer:
             logger.debug("[ProjectionReducer] 丢弃旧事件 | seq=%s | last_seq=%s", seq, self.state.last_seq)
             return {"type": "stale", "added": [], "updated": [], "removed": [], "seq": seq}
 
-        is_snapshot = (event == "conversation.snapshot")
+        is_snapshot = (event == "conversation.snapshot") or not event
+        if self.state.last_seq == 0 and seq > 0 and not is_snapshot:
+            logger.warning("[ProjectionReducer] 空投影收到首包增量 | event=%s | seq=%s | 请求 resync",
+                           event, seq)
+            if self._on_resync_needed:
+                self._on_resync_needed()
+            return {"type": "resync_needed", "added": [], "updated": [], "removed": [], "seq": seq}
+
         is_fresh_snapshot = (self.state.last_seq == 0) or is_snapshot
         if not is_fresh_snapshot and seq > self.state.last_seq + RESYNC_THRESHOLD:
             logger.warning("[ProjectionReducer] seq 跳跃过大 | seq=%s | last_seq=%s | gap=%s | 降级为全量应用",
@@ -92,12 +99,14 @@ class ChatProjectionReducer:
                 self._on_resync_needed()
             is_snapshot = True
 
+        old_ordered_ids = list(self.state.ordered_ids)
         added = []
         updated = []
         new_ids = set()
         remove_ids = set()
+        input_order_by_id = {}
 
-        for msg in messages:
+        for input_order, msg in enumerate(messages):
             if msg.get("_event") == "message.remove":
                 remove_ids.add(str(msg.get("id", "") or ""))
                 continue
@@ -106,6 +115,7 @@ class ChatProjectionReducer:
             if not mid:
                 continue
             new_ids.add(mid)
+            input_order_by_id[mid] = input_order
 
             content_hash = msg.get("content_hash", "")
             ordinal = msg.get("ordinal", 0)
@@ -157,34 +167,54 @@ class ChatProjectionReducer:
         if is_snapshot:
             self.state.ordered_ids = sorted(
                 new_ids,
-                key=lambda mid: self.state.messages_by_id.get(mid, {}).get("ordinal", 0)
+                key=lambda mid: self._sort_key(mid, input_order_by_id)
             )
         else:
             for mid in new_ids:
                 if mid not in self.state.ordered_ids:
                     self.state.ordered_ids.append(mid)
             self.state.ordered_ids.sort(
-                key=lambda mid: self.state.messages_by_id.get(mid, {}).get("ordinal", 0)
+                key=lambda mid: self._sort_key(mid, input_order_by_id)
             )
 
         if seq > 0:
             self.state.last_seq = seq
 
+        reordered = old_ordered_ids != self.state.ordered_ids
         change_type = "snapshot" if is_snapshot else "incremental"
         result = {
             "type": change_type,
             "added": added,
             "updated": updated,
             "removed": removed,
+            "reordered": reordered,
             "seq": seq,
         }
 
-        if added or updated or removed:
+        if added or updated or removed or reordered:
             self._notify_change(change_type, added + updated + removed)
-            logger.info("[ProjectionReducer] 应用完成 | type=%s | added=%s | updated=%s | removed=%s | seq=%s",
-                        change_type, len(added), len(updated), len(removed), seq)
+            logger.info("[ProjectionReducer] 应用完成 | type=%s | added=%s | updated=%s | removed=%s | reordered=%s | seq=%s",
+                        change_type, len(added), len(updated), len(removed), reordered, seq)
 
         return result
+
+    def _sort_key(self, message_id: str, input_order_by_id: Optional[Dict[str, int]] = None):
+        msg = self.state.messages_by_id.get(message_id, {}) or {}
+        fallback_order = None
+        if input_order_by_id:
+            fallback_order = input_order_by_id.get(message_id)
+        if fallback_order is None:
+            fallback_order = len(self.state.ordered_ids)
+            try:
+                fallback_order = self.state.ordered_ids.index(message_id)
+            except ValueError:
+                pass
+        return (
+            int(msg.get("ordinal", 0) or 0),
+            int(msg.get("index", 0) or 0),
+            int(fallback_order or 0),
+            str(message_id),
+        )
 
     def get_ordered_messages(self) -> List[dict]:
         return [self.state.messages_by_id[mid] for mid in self.state.ordered_ids

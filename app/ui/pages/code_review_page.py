@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QColor, QBrush
 from app.core.project_context import ProjectContext
 from app.core.config import ConfigManager
+from app.core.project_paths import project_config_path
 from app.core.app_constants import RESTART_EXIT_CODE
 from app.core.self_update import SelfUpdateManager
 from app.ui.components.preview_dialog import CodePreviewDialog
@@ -184,7 +185,7 @@ class CodeReviewPage(QWidget):
         self.current_preview_dlg.exec()
 
     def _load_local_preview(self, rel_path):
-        staging_dir = self.config.get("export_code_path", "export/code")
+        staging_dir = project_config_path(self.config, "export_code_path", "export/code")
         staging_path = os.path.join(staging_dir, rel_path)
         project_root = ProjectContext.get().get_project_root()
         current_path = os.path.join(project_root, rel_path)
@@ -247,7 +248,7 @@ class CodeReviewPage(QWidget):
             else:
                 UIHelper.warning(self, "错误", "服务端不支持此操作")
         else:
-            staging_dir = self.config.get("export_code_path", "export/code")
+            staging_dir = project_config_path(self.config, "export_code_path", "export/code")
             if os.path.exists(staging_dir):
                 shutil.rmtree(staging_dir)
                 os.makedirs(staging_dir)
@@ -275,7 +276,8 @@ class CodeReviewPage(QWidget):
 
         if action == action_discard:
             try:
-                full_path = os.path.join(self.config.get("export_code_path", "export/code"), rel_path)
+                staging_dir = project_config_path(self.config, "export_code_path", "export/code")
+                full_path = os.path.join(staging_dir, rel_path)
                 if os.path.exists(full_path):
                     os.remove(full_path)
                 self.update_list.takeItem(self.update_list.row(item))

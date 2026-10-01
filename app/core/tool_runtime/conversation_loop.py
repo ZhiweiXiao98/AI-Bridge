@@ -215,7 +215,23 @@ class ToolConversationLoop:
                 'success': res.success,
             })
 
-        if hasattr(self.api_source, 'append_assistant_message'):
+        if hasattr(self.api_source, 'append_tool_feedback_message'):
+            self.api_source.append_tool_feedback_message(
+                full_feedback,
+                raw_content=full_feedback,
+                meta={
+                    'tool_name': 'tool_router',
+                    'tool_kind': 'tool_feedback',
+                    'success': True,
+                    'segments': segments,
+                    'ephemeral': True,
+                    'round_stage': 'running_tools',
+                    'source_protocol': getattr(round_result, 'source_protocol', '') or 'tool_runtime',
+                },
+                visible_in_context=True,
+                compactible=True,
+            )
+        elif hasattr(self.api_source, 'append_assistant_message'):
             self.api_source.append_assistant_message(
                 full_feedback,
                 kind='tool_feedback',

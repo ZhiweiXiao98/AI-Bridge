@@ -59,7 +59,7 @@ class _ContextModuleCard(QFrame):
         self.status_badge = QLabel('-')
         self.status_badge.setObjectName('ContextModuleBadge')
         self.status_badge.setAlignment(Qt.AlignCenter)
-        self.status_badge.setMinimumWidth(64)
+        self.status_badge.setMinimumWidth(36)
         self.status_badge.setMinimumHeight(22)
 
         head.addWidget(self.title_lbl)
@@ -69,12 +69,12 @@ class _ContextModuleCard(QFrame):
 
         self.summary_lbl = QLabel('-')
         self.summary_lbl.setObjectName('ContextModuleSummary')
-        self.summary_lbl.setWordWrap(False)
+        self.summary_lbl.setWordWrap(True)
         main_col.addWidget(self.summary_lbl)
 
         self.detail_lbl = QLabel('')
         self.detail_lbl.setObjectName('ContextModuleDetail')
-        self.detail_lbl.setWordWrap(False)
+        self.detail_lbl.setWordWrap(True)
         self.detail_lbl.setVisible(False)
         main_col.addWidget(self.detail_lbl)
 
@@ -85,10 +85,10 @@ class _ContextModuleCard(QFrame):
         action_col.setSpacing(3)
         self.primary_btn = QPushButton('查看')
         self.secondary_btn = QPushButton('更多')
-        self.primary_btn.setMinimumWidth(80)
-        self.secondary_btn.setMinimumWidth(80)
-        self.primary_btn.setMinimumHeight(26)
-        self.secondary_btn.setMinimumHeight(26)
+        self.primary_btn.setMinimumWidth(36)
+        self.secondary_btn.setMinimumWidth(36)
+        self.primary_btn.setMinimumHeight(24)
+        self.secondary_btn.setMinimumHeight(24)
         action_col.addWidget(self.primary_btn)
         action_col.addWidget(self.secondary_btn)
         layout.addLayout(action_col)
@@ -209,7 +209,7 @@ class ContextWorkspacePanel(DockablePanel):
         self.target_lbl.setObjectName('ContextSectionHint')
 
         self.conv_combo = QComboBox()
-        self.conv_combo.setMinimumWidth(180)
+        self.conv_combo.setMinimumWidth(60)
         self.conv_combo.setToolTip('选择要管理的 API 对话。')
         self.conv_combo.currentIndexChanged.connect(self._on_conversation_changed)
 
@@ -268,7 +268,7 @@ class ContextWorkspacePanel(DockablePanel):
 
         self.overview_status_lbl = QLabel('系统 - · 任务 - · 记忆 - · 容量 -')
         self.overview_status_lbl.setObjectName('ContextOverviewStatus')
-        self.overview_status_lbl.setWordWrap(False)
+        self.overview_status_lbl.setWordWrap(True)
         self.overview_status_lbl.setToolTip('上下文各模块状态摘要。')
         overview_layout.addWidget(self.overview_status_lbl)
         layout.addWidget(self.overview_card)

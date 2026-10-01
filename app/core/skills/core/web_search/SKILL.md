@@ -8,6 +8,11 @@ version: 1.0.0
 author: System
 dangerous: false
 enabled: true
+summary: >
+  在互联网上搜索最新信息、技术文档、API 用法、错误解决方案。
+  支持多搜索引擎自动降级：Tavily（质量最好，需 API key）→ DuckDuckGo（免费，偶尔限流）→ SearXNG（自建）。
+  搜索结果来自互联网，需自行验证准确性。
+  调用格式：tool_call { "name": "web_search", "arguments": { "query": "搜索关键词", "max_results": 5 } }
 ---
 
 # 网络搜索

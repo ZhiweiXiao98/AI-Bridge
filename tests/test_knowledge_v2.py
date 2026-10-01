@@ -298,6 +298,8 @@ class TestEmbedder:
 
 # ========== Service 集成测试 ==========
 
+@pytest.mark.integration
+@pytest.mark.model
 class TestService:
 
     def test_index_and_search(self, service, sample_code):
@@ -451,6 +453,7 @@ class TestPerformance:
 
 # ========== 量化基准报告 ==========
 
+@pytest.mark.benchmark
 class TestBenchmarkReport:
     """运行: pytest tests/test_knowledge_v2.py::TestBenchmarkReport -s"""
 

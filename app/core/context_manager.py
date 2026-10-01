@@ -4,7 +4,7 @@
 职责：分层记忆管理、Token 计数、消息组装、滑动窗口
 设计原则：独立于传输通道（API/Browser），只负责"组装什么内容"
 
-参考: docs/context_system_plan.md
+参考: docs/上下文系统建设计划.md
 """
 
 import time
@@ -64,7 +64,7 @@ class TokenCounter:
         self._model = model
         try:
             self._encoder = tiktoken.encoding_for_model(model)
-        except KeyError:
+        except Exception:
             try:
                 self._encoder = tiktoken.get_encoding("cl100k_base")
             except Exception:
@@ -252,7 +252,7 @@ class ContextManager:
     # 消息组装（核心方法）
     # ----------------------------------------------------------
 
-    def build_messages(self) -> List[dict]:
+    def build_messages(self, system_prompt_role: str = "system") -> List[dict]:
         """
         组装发送给 LLM 的 messages 列表
 
@@ -263,11 +263,14 @@ class ContextManager:
           4. 对话历史（滑动窗口）
         """
         messages = []
+        prompt_role = str(system_prompt_role or "system").strip().lower()
+        if prompt_role not in ("system", "developer"):
+            prompt_role = "system"
 
         # 1. 系统层
         if self._system_content:
             messages.append({
-                "role": "system",
+                "role": prompt_role,
                 "content": self._system_content
             })
 
@@ -294,7 +297,15 @@ class ContextManager:
                 continue
             if msg.kind == 'meta':
                 continue
-            if msg.kind in ('tool_feedback', 'compact_summary', 'text'):
+            if msg.kind == 'tool_feedback':
+                messages.append({
+                    "role": "tool_feedback",
+                    "content": msg.content,
+                    "kind": msg.kind,
+                    "meta": dict(msg.meta or {}),
+                })
+                continue
+            if msg.kind in ('compact_summary', 'text'):
                 messages.append({"role": msg.role, "content": msg.content})
                 continue
             messages.append(msg.to_chat_dict())
