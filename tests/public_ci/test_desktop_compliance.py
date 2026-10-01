@@ -4,6 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -14,6 +15,28 @@ spec.loader.exec_module(compliance)
 
 
 class ComplianceTests(unittest.TestCase):
+    def test_exact_upstream_bytes_survive_windows_autocrlf(self):
+        attributes = (ROOT / ".gitattributes").read_bytes()
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            subprocess.run(["git", "init", "-q", str(work)], check=True)
+            (work / ".gitattributes").write_bytes(attributes)
+            samples = {"licenses/desktop/example.txt": b"original LF\n",
+                       "licenses/vendor/example.txt": b"original CRLF\r\n",
+                       "lib/example.js": b"line one\nline two\r\n"}
+            for relative, data in samples.items():
+                path = work / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+            subprocess.run(["git", "-C", str(work), "-c", "core.autocrlf=false",
+                            "add", ".gitattributes", "licenses", "lib"], check=True)
+            destination = work / "checkout"
+            destination.mkdir()
+            subprocess.run(["git", "-C", str(work), "-c", "core.autocrlf=true",
+                            "checkout-index", "--all", f"--prefix={destination.as_posix()}/"], check=True)
+            for relative, data in samples.items():
+                self.assertEqual((destination / relative).read_bytes(), data)
+
     def test_new_text_io_always_declares_encoding(self):
         for relative in ("tools/desktop/compliance.py", "tools/desktop/recombine.py",
                          "tools/desktop/smoke.py", "licenses/vendor/verify_vendored_licenses.py",
