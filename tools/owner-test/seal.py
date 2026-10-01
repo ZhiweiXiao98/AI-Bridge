@@ -37,7 +37,7 @@ def seal(archive: Path, public_path: Path, output: Path, workflow_commit: str, r
     if not isinstance(public_key, rsa.RSAPublicKey) or public_key.key_size != 3072:
         raise ValueError("Expected an RSA-3072 public key")
     plaintext = archive.read_bytes()
-    if not CHUNK_SIZE < len(plaintext) + 16 <= CHUNK_SIZE * 2:
+    if not 0 < len(plaintext) + 16 <= CHUNK_SIZE * 2:
         raise ValueError("Package size outside the fixed delivery limit")
     public_der = public_key.public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
     manifest = {
@@ -62,7 +62,8 @@ def seal(archive: Path, public_path: Path, output: Path, workflow_commit: str, r
                 "ciphertext_sha256": hashlib.sha256(ciphertext).hexdigest()}
     # A new, dedicated directory and explicit filenames prevent upload glob leaks.
     output.mkdir(parents=True, exist_ok=False)
-    parts = [ciphertext[:CHUNK_SIZE], ciphertext[CHUNK_SIZE:]]
+    midpoint = (len(ciphertext) + 1) // 2
+    parts = [ciphertext[:midpoint], ciphertext[midpoint:]]
     envelope["parts"] = []
     for number, data in enumerate(parts, 1):
         name = f"owner-test.part{number}.aesgcm"

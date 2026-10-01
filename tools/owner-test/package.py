@@ -102,15 +102,15 @@ def main():
         "这是远程客户端，使用时需要你的服务器地址和账号。\n"
         "启动测试只覆盖离线登录窗口；实际服务器连接和账号登录尚需你测试。\n\n"
         "源码版本：" + SOURCE_COMMIT + "\n"
-        "同版本应用源码见 AI-Bridge-source.zip；重建说明见其中 docs/DESKTOP_REBUILD.md。\n"
+        "同版本应用源码见 AI-Bridge-source.tar；重建说明见其中 docs/DESKTOP_REBUILD.md。\n"
         "第三方许可和对应源码信息见应用包 Contents/Resources/THIRD_PARTY_NOTICES。\n"
         "这不改变第三方许可证赋予你的权利，也不代表公开分发已获得许可核验。\n",
         encoding="utf-8")
-    run("git", "archive", "--format=zip", "--output=" + str(staging / "AI-Bridge-source.zip"), SOURCE_COMMIT)
+    run("git", "archive", "--format=tar", "--output=" + str(staging / "AI-Bridge-source.tar"), SOURCE_COMMIT)
     # Evidence is included privately with the exact program, not published separately.
     (staging / "desktop-inventory.json").write_text(json.dumps(inventory, ensure_ascii=False, indent=2), encoding="utf-8")
     dmg = out / ARCHIVE_NAME
-    run("hdiutil", "create", "-volname", "AI-Bridge Remote Test", "-srcfolder", str(staging), "-ov", "-format", "UDZO", str(dmg))
+    run("hdiutil", "create", "-volname", "AI-Bridge Remote Test", "-srcfolder", str(staging), "-ov", "-format", "ULMO", str(dmg))
     run("hdiutil", "verify", str(dmg))
     mount = out / "mounted"
     mount.mkdir()
@@ -132,6 +132,9 @@ def main():
                 raise ValueError("Mounted image runtime differs from tested app")
     finally:
         run("hdiutil", "detach", str(mount))
+    print("Validated owner-test DMG bytes: " + str(dmg.stat().st_size))
+    if dmg.stat().st_size > 32 * 1024 * 1024:
+        raise ValueError("Validated DMG still exceeds the 32 MiB packaging target")
     print("Validated owner-test DMG SHA256: " + sha256(dmg))
 
 
