@@ -18,6 +18,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 SOURCE_COMMIT = "415309cd195973fa495efecff4a7a0dcb3d56f02"
 ARCHIVE_NAME = "AI-Bridge-Remote-macOS-ARM64-owner-test.dmg"
 AAD_LABEL = b"AI-Bridge owner-test transport v1"
+CHUNK_SIZE = 24 * 1024 * 1024
 
 
 def canonical(value):
@@ -36,7 +37,7 @@ def seal(archive: Path, public_path: Path, output: Path, workflow_commit: str, r
     if not isinstance(public_key, rsa.RSAPublicKey) or public_key.key_size != 3072:
         raise ValueError("Expected an RSA-3072 public key")
     plaintext = archive.read_bytes()
-    if not 0 < len(plaintext) <= 1_500_000_000:
+    if not CHUNK_SIZE < len(plaintext) + 16 <= CHUNK_SIZE * 2:
         raise ValueError("Package size outside the fixed delivery limit")
     public_der = public_key.public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
     manifest = {
@@ -61,7 +62,12 @@ def seal(archive: Path, public_path: Path, output: Path, workflow_commit: str, r
                 "ciphertext_sha256": hashlib.sha256(ciphertext).hexdigest()}
     # A new, dedicated directory and explicit filenames prevent upload glob leaks.
     output.mkdir(parents=True, exist_ok=False)
-    (output / "owner-test.dmg.aesgcm").write_bytes(ciphertext)
+    parts = [ciphertext[:CHUNK_SIZE], ciphertext[CHUNK_SIZE:]]
+    envelope["parts"] = []
+    for number, data in enumerate(parts, 1):
+        name = f"owner-test.part{number}.aesgcm"
+        (output / name).write_bytes(data)
+        envelope["parts"].append({"name": name, "size": len(data), "sha256": hashlib.sha256(data).hexdigest()})
     (output / "owner-test-envelope.json").write_bytes(canonical(envelope) + b"\n")
     print("Owner test package sealed; public binary-release approval remains false.")
 

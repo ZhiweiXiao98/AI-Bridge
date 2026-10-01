@@ -65,14 +65,22 @@ jobs:
           .delivery-venv/bin/python -m pip install --index-url https://pypi.org/simple --only-binary=:all: cryptography==50.0.0 cffi==2.1.1 pycparser==3.0
       - name: 只用收件公钥加密测试包
         run: |
-          .delivery-venv/bin/python ../recipe/tools/owner-test/seal.py --archive build/owner-test/AI-Bridge-Remote-macOS-ARM64-owner-test.dmg --public-key ../recipe/tools/owner-test/recipient-public.pem --output build/owner-test/sealed
+          .delivery-venv/bin/python ../recipe/tools/owner-test/seal.py --archive build/owner-test/AI-Bridge-Remote-macOS-ARM64-owner-test.dmg --public-key ../recipe/tools/owner-test/recipient-public.pub --output build/owner-test/sealed
       - name: 仅上传加密密文和公开封套
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: owner-macos-arm64-encrypted-${{ github.sha }}
+          name: owner-macos-arm64-encrypted-part1-${{ github.sha }}
           path: |
-            source/build/owner-test/sealed/owner-test.dmg.aesgcm
+            source/build/owner-test/sealed/owner-test.part1.aesgcm
             source/build/owner-test/sealed/owner-test-envelope.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传第二段加密密文
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: owner-macos-arm64-encrypted-part2-${{ github.sha }}
+          path: source/build/owner-test/sealed/owner-test.part2.aesgcm
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
