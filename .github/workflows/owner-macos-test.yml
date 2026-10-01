@@ -1,0 +1,78 @@
+name: 仅本人安装测试（Mac ARM64 加密交付）
+
+# One-shot branch publication starts this owner-requested test. Do not merge
+# this workflow into main/develop or treat encrypted transport as release clearance.
+on:
+  push:
+    branches: ['feature/owner-macos-test-20261001']
+    paths: ['.github/workflows/owner-macos-test.yml', 'tools/owner-test/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: owner-macos-test-20261001
+  cancel-in-progress: false
+
+jobs:
+  owner-test:
+    if: github.repository == 'ZhiweiXiao98/AI-Bridge' && github.actor == 'ZhiweiXiao98' && github.ref == 'refs/heads/feature/owner-macos-test-20261001'
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: source
+        shell: bash
+    steps:
+      - name: 检出固定应用源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: 415309cd195973fa495efecff4a7a0dcb3d56f02
+          path: source
+          persist-credentials: false
+      - name: 检出本次加密交付工具
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: recipe
+          persist-credentials: false
+      - name: 配置固定 Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12.10'
+      - name: 创建隔离构建环境
+        run: |
+          test "$(uname -m)" = arm64
+          python -m venv .desktop-venv
+          echo "$PWD/.desktop-venv/bin" >> "$GITHUB_PATH"
+      - name: 安装固定桌面构建依赖
+        run: |
+          mkdir -p build/desktop
+          python -m pip install --report build/desktop/install-report.json -r requirements-desktop-build.txt
+      - name: 检查许可资料和打包范围
+        run: |
+          python licenses/vendor/verify_vendored_licenses.py --source-root .
+          python -m unittest discover -s tests/public_ci -p 'test_desktop*.py' -v
+      - name: 构建并测试离线登录窗口
+        run: |
+          env GITHUB_SHA=415309cd195973fa495efecff4a7a0dcb3d56f02 python tools/desktop/build.py
+          python tools/desktop/smoke.py
+      - name: 创建并验证可安装测试磁盘映像
+        run: python ../recipe/tools/owner-test/package.py
+      - name: 创建独立加密工具环境（不进入应用）
+        run: |
+          python -m venv .delivery-venv
+          .delivery-venv/bin/python -m pip install --index-url https://pypi.org/simple --only-binary=:all: cryptography==50.0.0 cffi==2.1.1 pycparser==3.0
+      - name: 只用收件公钥加密测试包
+        run: |
+          .delivery-venv/bin/python ../recipe/tools/owner-test/seal.py --archive build/owner-test/AI-Bridge-Remote-macOS-ARM64-owner-test.dmg --public-key ../recipe/tools/owner-test/recipient-public.pem --output build/owner-test/sealed
+      - name: 仅上传加密密文和公开封套
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: owner-macos-arm64-encrypted-${{ github.sha }}
+          path: |
+            source/build/owner-test/sealed/owner-test.dmg.aesgcm
+            source/build/owner-test/sealed/owner-test-envelope.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
