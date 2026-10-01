@@ -1,0 +1,117 @@
+[
+  {
+    "path": "README_VENDORED_LICENSES.zh-CN.md",
+    "size_bytes": 5336,
+    "sha256": "c92fd19ba288c6804214c558aabc4dc3fad07a7f8015136f930c9f4530f63153"
+  },
+  {
+    "path": "VENDORED_PROVENANCE.json",
+    "size_bytes": 30207,
+    "sha256": "9a34fecbb39f0dac54782cf3a8bc3bc77f6ad1024d987f3ec210eb7cb5080f89"
+  },
+  {
+    "path": "third_party_licenses/SOURCE-NOTICES.txt",
+    "size_bytes": 18076,
+    "sha256": "66e87abed23c64f3fd838810bd4a904f71c1901d3753f4c47e31600fc423bf09"
+  },
+  {
+    "path": "third_party_licenses/babel__runtime-corejs3-7.17.8/LICENSE",
+    "size_bytes": 1106,
+    "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76"
+  },
+  {
+    "path": "third_party_licenses/component-emitter-1.3.0/LICENSE",
+    "size_bytes": 1128,
+    "sha256": "bf9b8053dead389db16aaf9a2634abc99297f2cdb72144f474af0cae5aa72c32"
+  },
+  {
+    "path": "third_party_licenses/core-js-pure-3.21.1/LICENSE",
+    "size_bytes": 1064,
+    "sha256": "e1dad265f157187a8b0290f57b3c6807d94c322ffbcdf75ab82b638eb52b1789"
+  },
+  {
+    "path": "third_party_licenses/egjs__hammerjs-2.0.17/LICENSE.md",
+    "size_bytes": 1143,
+    "sha256": "68e3fbc87924b2ca7f6a10d52be2ee83e86f7d2f28e74f343795e8f9e58f3ec1"
+  },
+  {
+    "path": "third_party_licenses/keycharm-0.4.0/LICENSE-APACHE-2.0",
+    "size_bytes": 10347,
+    "sha256": "7a1da246f5e03ea6f987021848a3ff9d9e9a86a54adf96a216f2ee57a9a762d6"
+  },
+  {
+    "path": "third_party_licenses/keycharm-0.4.0/LICENSE-MIT",
+    "size_bytes": 1102,
+    "sha256": "7909cb1efaa8bd800a6d33d73cb9538bfe56a7da61c1fd8b4afb9ddd557ec044"
+  },
+  {
+    "path": "third_party_licenses/pyvis-0.3.2/LICENSE_BSD.txt",
+    "size_bytes": 1533,
+    "sha256": "295e9ef50d142d9576117156755c6c82a78c16848cdf187efd4d924dcf7153e3"
+  },
+  {
+    "path": "third_party_licenses/regenerator-runtime-0.13.9/LICENSE",
+    "size_bytes": 1080,
+    "sha256": "51887a3d47051ac2fce1210562e5b9fe0830a8a8fabeb272c2d586eeb18a05fd"
+  },
+  {
+    "path": "third_party_licenses/timsort-0.3.0/LICENSE.md",
+    "size_bytes": 1075,
+    "sha256": "12dc138ac8f4fab95290f8403221fea6933f37bb9ce0a9a4e478707acf030928"
+  },
+  {
+    "path": "third_party_licenses/tom-select-2.0.0-rc.4/LICENSE",
+    "size_bytes": 11350,
+    "sha256": "f15dc64ea1f373c8af0ee7c020064360497addf335c9c2bcf27c3a6f56a6f0bd"
+  },
+  {
+    "path": "third_party_licenses/tslib-2.3.1/CopyrightNotice.txt",
+    "size_bytes": 824,
+    "sha256": "dd835e67a9a297da32f9467d7677a5d02c8e50e10f15da43b810147c79c04b9b"
+  },
+  {
+    "path": "third_party_licenses/tslib-2.3.1/LICENSE.txt",
+    "size_bytes": 655,
+    "sha256": "210b19e543130388c68654b7497e967119ce17145f66ab7d85688fbd70f08751"
+  },
+  {
+    "path": "third_party_licenses/uuid-8.3.2/LICENSE.md",
+    "size_bytes": 1109,
+    "sha256": "beaa6b04fb82e41dd2ad679e19e27953afb5999b1abbb455b6564e78ebfeb332"
+  },
+  {
+    "path": "third_party_licenses/vis-data-7.1.4/LICENSE-APACHE-2.0",
+    "size_bytes": 10171,
+    "sha256": "1509904280a272780fd69c04b858f512cf216f8e3464a0dd98d8f34416feced9"
+  },
+  {
+    "path": "third_party_licenses/vis-data-7.1.4/LICENSE-MIT",
+    "size_bytes": 1084,
+    "sha256": "1f65085e54c036645082257618db2c7b787e68c3b02485e214ecd09e0834ee8f"
+  },
+  {
+    "path": "third_party_licenses/vis-network-9.1.2/LICENSE-APACHE-2.0",
+    "size_bytes": 10171,
+    "sha256": "1509904280a272780fd69c04b858f512cf216f8e3464a0dd98d8f34416feced9"
+  },
+  {
+    "path": "third_party_licenses/vis-network-9.1.2/LICENSE-MIT",
+    "size_bytes": 1084,
+    "sha256": "1f65085e54c036645082257618db2c7b787e68c3b02485e214ecd09e0834ee8f"
+  },
+  {
+    "path": "third_party_licenses/vis-util-5.0.3/LICENSE-APACHE-2.0",
+    "size_bytes": 10171,
+    "sha256": "1509904280a272780fd69c04b858f512cf216f8e3464a0dd98d8f34416feced9"
+  },
+  {
+    "path": "third_party_licenses/vis-util-5.0.3/LICENSE-MIT",
+    "size_bytes": 1121,
+    "sha256": "b88d2c1898485a909bfd92d1a2a676c266db5384d7153f3bdb80caebb7038351"
+  },
+  {
+    "path": "verify_vendored_licenses.py",
+    "size_bytes": 2161,
+    "sha256": "1470e42125354170fff9d33e5da388dd0604400679481e05007f4b0840a7cdc9"
+  }
+]

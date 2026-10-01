@@ -1,0 +1,607 @@
+{
+  "schema_version": 1,
+  "verified_at_utc": "2026-10-01",
+  "scope": "Only the five inherited source assets listed below. This attribution-only patch does not change the assets and is not a full application or packaged-binary license audit.",
+  "actual_historical_download_origin": "Not proven by byte equality; sources below are exact or explicitly transformed upstream release exemplars.",
+  "assets": [
+    {
+      "path": "lib/tom-select/tom-select.complete.min.js",
+      "size_bytes": 44776,
+      "sha256": "7f67501325a15e9ecce68dccb26812eb327f1aae295c5c52c524ec62b3f13dcd",
+      "git_blob_sha1": "e2e0211fecd8511afccfc177ee4b7f235a5b37fc",
+      "component": "tom-select",
+      "version_exemplar": "2.0.0-rc.4",
+      "pyvis_reference": {
+        "release_tag": "v0.3.2",
+        "commit": "ccb7ce745ee4159ce45eac70b9848ab965fc0906",
+        "path": "pyvis/lib/tom-select/tom-select.complete.min.js",
+        "source_url": "https://github.com/WestHealth/pyvis/blob/ccb7ce745ee4159ce45eac70b9848ab965fc0906/pyvis/lib/tom-select/tom-select.complete.min.js",
+        "git_blob_sha1": "e2e0211fecd8511afccfc177ee4b7f235a5b37fc",
+        "match": "exact"
+      },
+      "release_reference": {
+        "registry_url": "https://registry.npmjs.org/tom-select/2.0.0-rc.4",
+        "tarball_url": "https://registry.npmjs.org/tom-select/-/tom-select-2.0.0-rc.4.tgz",
+        "tarball_dist_shasum": "1a8809f3a6c7a162a3d40221845eccc346f51656",
+        "tarball_dist_integrity": "sha512-6kjF1mblEEEkbtUtEezlqIVcCkgj1WH0rFvemRUApHew88r+zxKcHiGwaABxikN1sD0cZO6ROJ1rWg8B+xe6fQ==",
+        "tarball_integrity_verified": true,
+        "package_path": "package/dist/js/tom-select.complete.min.js",
+        "sha256": "7f67501325a15e9ecce68dccb26812eb327f1aae295c5c52c524ec62b3f13dcd",
+        "size_bytes": 44776,
+        "match": "exact"
+      }
+    },
+    {
+      "path": "lib/tom-select/tom-select.css",
+      "size_bytes": 9328,
+      "sha256": "260a9419fb65dbd685f5f109f8e6de3d8b979a154050af93a761a22d34ede784",
+      "git_blob_sha1": "5ec4f726b8acfeba1fc146331b091e3f7bab518a",
+      "component": "tom-select",
+      "version_exemplar": "2.0.0-rc.4",
+      "pyvis_reference": {
+        "release_tag": "v0.3.2",
+        "commit": "ccb7ce745ee4159ce45eac70b9848ab965fc0906",
+        "path": "pyvis/lib/tom-select/tom-select.css",
+        "source_url": "https://github.com/WestHealth/pyvis/blob/ccb7ce745ee4159ce45eac70b9848ab965fc0906/pyvis/lib/tom-select/tom-select.css",
+        "git_blob_sha1": "5ec4f726b8acfeba1fc146331b091e3f7bab518a",
+        "match": "exact"
+      },
+      "release_reference": {
+        "registry_url": "https://registry.npmjs.org/tom-select/2.0.0-rc.4",
+        "tarball_url": "https://registry.npmjs.org/tom-select/-/tom-select-2.0.0-rc.4.tgz",
+        "tarball_dist_shasum": "1a8809f3a6c7a162a3d40221845eccc346f51656",
+        "tarball_dist_integrity": "sha512-6kjF1mblEEEkbtUtEezlqIVcCkgj1WH0rFvemRUApHew88r+zxKcHiGwaABxikN1sD0cZO6ROJ1rWg8B+xe6fQ==",
+        "tarball_integrity_verified": true,
+        "package_path": "package/dist/css/tom-select.css",
+        "sha256": "260a9419fb65dbd685f5f109f8e6de3d8b979a154050af93a761a22d34ede784",
+        "size_bytes": 9328,
+        "match": "exact"
+      }
+    },
+    {
+      "path": "lib/vis-9.1.2/vis-network.min.js",
+      "size_bytes": 468787,
+      "sha256": "f3c1229464749a6f5a80c80867189edfdc0198be0d015c3d770aff196cb6c0a1",
+      "git_blob_sha1": "dfb4f5f81e36e28d8c62095858f63d798650c468",
+      "component": "vis-network",
+      "version_exemplar": "9.1.2",
+      "pyvis_reference": {
+        "release_tag": "v0.3.2",
+        "commit": "ccb7ce745ee4159ce45eac70b9848ab965fc0906",
+        "path": "pyvis/lib/vis-9.1.2/vis-network.min.js",
+        "source_url": "https://github.com/WestHealth/pyvis/blob/ccb7ce745ee4159ce45eac70b9848ab965fc0906/pyvis/lib/vis-9.1.2/vis-network.min.js",
+        "git_blob_sha1": "108a712588ad669bb23956239d0c2af7b713121e",
+        "match": "exact_after_CRLF_to_LF",
+        "upstream_sha256": "1f20f0736f32cb9bedf8f6383b25cfea2f839e1abe80d6e8040b4d5bea378c69",
+        "CRLF_to_LF_count": 26
+      },
+      "release_reference": {
+        "registry_url": "https://registry.npmjs.org/vis-network/9.1.2",
+        "tarball_url": "https://registry.npmjs.org/vis-network/-/vis-network-9.1.2.tgz",
+        "tarball_dist_shasum": "ddaca300a9764bbf1646a0aa03eb28fe55823ca8",
+        "tarball_dist_integrity": "sha512-BdapguKg7sk3NvdZaDsM7T6rNhOBFz0/F4ZScxctK4klRzQPLQPTEcmbioXaZhMkkgWymzBR3lFCxL1q+eYyAw==",
+        "tarball_integrity_verified": true,
+        "package_path": "package/dist/vis-network.min.js",
+        "sha256": "6e30a2350474cdf92a0932c6d55b8adcb91929066817ed3eec7b87907a4612f3",
+        "size_bytes": 468791,
+        "match": "transformed",
+        "transformations": [
+          {
+            "operation": "replace_all",
+            "from_unicode": "U+00A0",
+            "to_unicode": "U+0020",
+            "occurrences": 3
+          },
+          {
+            "operation": "remove_one_final_LF"
+          }
+        ]
+      },
+      "warning": "The three U+00A0 substitutions occur inside JavaScript string data; do not label the npm-to-PyVis difference as formatting-only or claim byte identity to npm."
+    },
+    {
+      "path": "lib/vis-9.1.2/vis-network.css",
+      "size_bytes": 220163,
+      "sha256": "2e82d445ad5878ea881652470ce632601f8f55f1b99e6ebecdff8614600e6d0e",
+      "git_blob_sha1": "8b03219bb397b69eb8a4e1ef1cee18bf0f8f8916",
+      "component": "vis-network",
+      "version_exemplar": "9.1.2",
+      "pyvis_reference": {
+        "release_tag": "v0.3.2",
+        "commit": "ccb7ce745ee4159ce45eac70b9848ab965fc0906",
+        "path": "pyvis/lib/vis-9.1.2/vis-network.css",
+        "source_url": "https://github.com/WestHealth/pyvis/blob/ccb7ce745ee4159ce45eac70b9848ab965fc0906/pyvis/lib/vis-9.1.2/vis-network.css",
+        "git_blob_sha1": "8b03219bb397b69eb8a4e1ef1cee18bf0f8f8916",
+        "match": "exact"
+      },
+      "release_reference": {
+        "registry_url": "https://registry.npmjs.org/vis-network/9.1.2",
+        "tarball_url": "https://registry.npmjs.org/vis-network/-/vis-network-9.1.2.tgz",
+        "tarball_dist_shasum": "ddaca300a9764bbf1646a0aa03eb28fe55823ca8",
+        "tarball_dist_integrity": "sha512-BdapguKg7sk3NvdZaDsM7T6rNhOBFz0/F4ZScxctK4klRzQPLQPTEcmbioXaZhMkkgWymzBR3lFCxL1q+eYyAw==",
+        "tarball_integrity_verified": true,
+        "package_path": "package/dist/dist/vis-network.min.css",
+        "sha256": "2e82d445ad5878ea881652470ce632601f8f55f1b99e6ebecdff8614600e6d0e",
+        "size_bytes": 220163,
+        "match": "exact"
+      }
+    },
+    {
+      "path": "lib/bindings/utils.js",
+      "size_bytes": 6311,
+      "sha256": "3113c73317c30c99eaafbc782916160ce7d23183a148615da0496643e9560cb0",
+      "git_blob_sha1": "088effe2051dd483c3b638c0701e25e4fb685688",
+      "component": "pyvis",
+      "version_exemplar": "0.3.2",
+      "pyvis_reference": {
+        "release_tag": "v0.3.2",
+        "commit": "ccb7ce745ee4159ce45eac70b9848ab965fc0906",
+        "path": "pyvis/lib/bindings/utils.js",
+        "source_url": "https://github.com/WestHealth/pyvis/blob/ccb7ce745ee4159ce45eac70b9848ab965fc0906/pyvis/lib/bindings/utils.js",
+        "git_blob_sha1": "088effe2051dd483c3b638c0701e25e4fb685688",
+        "match": "exact"
+      }
+    }
+  ],
+  "top_level_license_files": [
+    {
+      "path": "third_party_licenses/tom-select-2.0.0-rc.4/LICENSE",
+      "sha256": "f15dc64ea1f373c8af0ee7c020064360497addf335c9c2bcf27c3a6f56a6f0bd",
+      "git_blob_sha1": "ea75a94ec76c752159cd6cf68aca9553fd5f3d06",
+      "size_bytes": 11350,
+      "source_url": "https://github.com/orchidjs/tom-select/blob/43a263ccce79a8f790e6aca036b59719517879ef/LICENSE"
+    },
+    {
+      "path": "third_party_licenses/vis-network-9.1.2/LICENSE-MIT",
+      "sha256": "1f65085e54c036645082257618db2c7b787e68c3b02485e214ecd09e0834ee8f",
+      "git_blob_sha1": "ca928f7bb9fe2cd6b473cff1f4c8593531ef1cba",
+      "size_bytes": 1084,
+      "source_url": "https://github.com/visjs/vis-network/blob/8602b1f67f562196ebb42d397f0bb25cec951302/LICENSE-MIT"
+    },
+    {
+      "path": "third_party_licenses/vis-network-9.1.2/LICENSE-APACHE-2.0",
+      "sha256": "1509904280a272780fd69c04b858f512cf216f8e3464a0dd98d8f34416feced9",
+      "git_blob_sha1": "ea2712c09fefba52a44cd9139821af2bf54bb22b",
+      "size_bytes": 10171,
+      "source_url": "https://github.com/visjs/vis-network/blob/8602b1f67f562196ebb42d397f0bb25cec951302/LICENSE-APACHE-2.0"
+    },
+    {
+      "path": "third_party_licenses/pyvis-0.3.2/LICENSE_BSD.txt",
+      "sha256": "295e9ef50d142d9576117156755c6c82a78c16848cdf187efd4d924dcf7153e3",
+      "git_blob_sha1": "024edb53c67c104aa0560a4a64f64da9f4916d99",
+      "size_bytes": 1533,
+      "source_url": "https://github.com/WestHealth/pyvis/blob/ccb7ce745ee4159ce45eac70b9848ab965fc0906/LICENSE_BSD.txt"
+    }
+  ],
+  "release_source_maps": [
+    {
+      "component": "tom-select",
+      "version": "2.0.0-rc.4",
+      "package_path": "package/dist/js/tom-select.complete.min.js.map",
+      "sha256": "451bfc190f57ddcfd67b59a844398b365a0cce6712f720c06ff64225517f2323",
+      "source_count": 26,
+      "tarball_url": "https://registry.npmjs.org/tom-select/-/tom-select-2.0.0-rc.4.tgz"
+    },
+    {
+      "component": "vis-network",
+      "version": "9.1.2",
+      "package_path": "package/dist/vis-network.min.js.map",
+      "sha256": "20359c0b06bae162aaf84c6381b6084759644b87131aafde9f04fbae2e4b0c88",
+      "source_count": 496,
+      "tarball_url": "https://registry.npmjs.org/vis-network/-/vis-network-9.1.2.tgz"
+    }
+  ],
+  "bundled_packages_verified": [
+    {
+      "name": "@babel/runtime-corejs3",
+      "version": "7.17.8",
+      "bundle": "vis-network",
+      "license_declared": "MIT",
+      "repository": {
+        "url": "https://github.com/babel/babel.git",
+        "type": "git",
+        "directory": "packages/babel-runtime-corejs3"
+      },
+      "registry_url": "https://registry.npmjs.org/@babel/runtime-corejs3/7.17.8",
+      "tarball_url": "https://registry.npmjs.org/@babel/runtime-corejs3/-/runtime-corejs3-7.17.8.tgz",
+      "tarball_sha256": "f6b3ce04ad4a6b74e59657f5248a3e397a8e0a2cf5e7ce37360ca49637d2b919",
+      "dist_shasum": "d7dd49fb812f29c61c59126da3792d8740d4e284",
+      "dist_integrity": "sha512-ZbYSUvoSF6dXZmMl/CYTMOvzIFnbGfv4W3SEHYgMvNsFTeLaF2gkGAF4K2ddmtSK4Emej+0aYcnSC6N5dPCXUQ==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/babel__runtime-corejs3-7.17.8/LICENSE",
+          "upstream_path": "package/LICENSE",
+          "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76",
+          "size_bytes": 1106
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 84,
+        "source_map_content_pairs_sha256": "09bb7ad56d3accf2beb1ebd4e69e1646c18b5971d2ff5bbd76c4250a1d64f559",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "@egjs/hammerjs",
+      "version": "2.0.17",
+      "bundle": "vis-network",
+      "license_declared": "MIT",
+      "repository": {
+        "url": "git://github.com/naver/hammer.js.git",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/@egjs/hammerjs/2.0.17",
+      "tarball_url": "https://registry.npmjs.org/@egjs/hammerjs/-/hammerjs-2.0.17.tgz",
+      "tarball_sha256": "d931dbb173f8028d1fe3167cd8049f4064bf268d55e9f6d374d8cea289b84cfd",
+      "dist_shasum": "5dc02af75a6a06e4c2db0202cae38c9263895124",
+      "dist_integrity": "sha512-XQsZgjm2EcVUiZQf11UBJQfmZeEmOW8DpI1gsFeln6w0ae0ii4dMQEQ0kjl6DspdWX1aGY1/loyXnP0JS06e/A==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/egjs__hammerjs-2.0.17/LICENSE.md",
+          "upstream_path": "package/LICENSE.md",
+          "sha256": "68e3fbc87924b2ca7f6a10d52be2ee83e86f7d2f28e74f343795e8f9e58f3ec1",
+          "size_bytes": 1143
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 1,
+        "source_map_content_pairs_sha256": "f57ca5b11d72ab7ebf822cea4e3afe76f86f1c366b479968b6432bbaf68aab7f",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "component-emitter",
+      "version": "1.3.0",
+      "bundle": "vis-network",
+      "license_declared": "MIT",
+      "repository": {
+        "url": "git+https://github.com/component/emitter.git",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/component-emitter/1.3.0",
+      "tarball_url": "https://registry.npmjs.org/component-emitter/-/component-emitter-1.3.0.tgz",
+      "tarball_sha256": "10643e76e9fcd23ea3bb4cde57f214cad74e3741a7013b2b4550ed6741c78161",
+      "dist_shasum": "16e4070fba8ae29b679f2215853ee181ab2eabc0",
+      "dist_integrity": "sha512-Rd3se6QB+sO1TwqZjscQrurpEPIfO0/yYnSin6Q/rD3mOutHvUrCAhJub3r90uNb+SESBuE0QYoB90YdfatsRg==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/component-emitter-1.3.0/LICENSE",
+          "upstream_path": "package/LICENSE",
+          "sha256": "bf9b8053dead389db16aaf9a2634abc99297f2cdb72144f474af0cae5aa72c32",
+          "size_bytes": 1128
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 1,
+        "source_map_content_pairs_sha256": "f316e3303b09a2b4088122c09ad3b55d0232d3528263571aa25e3c2e23e87bdb",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "core-js-pure",
+      "version": "3.21.1",
+      "bundle": "vis-network",
+      "license_declared": "MIT",
+      "repository": {
+        "url": "git+https://github.com/zloirock/core-js.git",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/core-js-pure/3.21.1",
+      "tarball_url": "https://registry.npmjs.org/core-js-pure/-/core-js-pure-3.21.1.tgz",
+      "tarball_sha256": "fd737cb09b265225783ddf50054595d06c55f638f13113fddef30ce73412e5f2",
+      "dist_shasum": "8c4d1e78839f5f46208de7230cebfb72bc3bdb51",
+      "dist_integrity": "sha512-12VZfFIu+wyVbBebyHmRTuEE/tZrB4tJToWcwAMcsp3h4+sHR+fMJWbKpYiCRWlhFBq+KNyO8rIV9rTkeVmznQ==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/core-js-pure-3.21.1/LICENSE",
+          "upstream_path": "package/LICENSE",
+          "sha256": "e1dad265f157187a8b0290f57b3c6807d94c322ffbcdf75ab82b638eb52b1789",
+          "size_bytes": 1064
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 324,
+        "source_map_content_pairs_sha256": "9685da6a403c1ea724e9b664935dae18851a26aca0d98eb2fed0610e64ff09d4",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "keycharm",
+      "version": "0.4.0",
+      "bundle": "vis-network",
+      "license_declared": "(Apache-2.0 OR MIT)",
+      "repository": {
+        "url": "git+https://github.com/AlexDM0/keycharm.git",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/keycharm/0.4.0",
+      "tarball_url": "https://registry.npmjs.org/keycharm/-/keycharm-0.4.0.tgz",
+      "tarball_sha256": "1dd82923d5c1d0b507d1e4e579171a4a94afe0fdfee8354062c6594b700a043b",
+      "dist_shasum": "8d684ea9cc01379a07fbddee33ff32d97f5ae2a7",
+      "dist_integrity": "sha512-TyQTtsabOVv3MeOpR92sIKk/br9wxS+zGj4BG7CR8YbK4jM3tyIBaF0zhzeBUMx36/Q/iQLOKKOT+3jOQtemRQ==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/keycharm-0.4.0/LICENSE-MIT",
+          "upstream_path": "package/LICENSE-MIT",
+          "sha256": "7909cb1efaa8bd800a6d33d73cb9538bfe56a7da61c1fd8b4afb9ddd557ec044",
+          "size_bytes": 1102
+        },
+        {
+          "path": "third_party_licenses/keycharm-0.4.0/LICENSE-APACHE-2.0",
+          "upstream_path": "package/LICENSE-APACHE-2.0",
+          "sha256": "7a1da246f5e03ea6f987021848a3ff9d9e9a86a54adf96a216f2ee57a9a762d6",
+          "size_bytes": 10347
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 1,
+        "source_map_content_pairs_sha256": "16de99aa9b4638a5644d5088b0e7f6ba840c9b13911464bdc55a347c0803a66a",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "regenerator-runtime",
+      "version": "0.13.9",
+      "bundle": "vis-network",
+      "license_declared": "MIT",
+      "repository": {
+        "url": "https://github.com/facebook/regenerator/tree/master/packages/runtime",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/regenerator-runtime/0.13.9",
+      "tarball_url": "https://registry.npmjs.org/regenerator-runtime/-/regenerator-runtime-0.13.9.tgz",
+      "tarball_sha256": "1a6b5437215dc6558817acfd9f8300f5519475ddc8f9f55bec243c622fd099b8",
+      "dist_shasum": "8925742a98ffd90814988d7566ad30ca3b263b52",
+      "dist_integrity": "sha512-p3VT+cOEgxFsRRA9X4lkI1E+k2/CtnKtU4gcxyaCUreilL/vqI6CdZ3wxVUx3UOUg+gnUOQQcRI7BmSI656MYA==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/regenerator-runtime-0.13.9/LICENSE",
+          "upstream_path": "package/LICENSE",
+          "sha256": "51887a3d47051ac2fce1210562e5b9fe0830a8a8fabeb272c2d586eeb18a05fd",
+          "size_bytes": 1080
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 1,
+        "source_map_content_pairs_sha256": "059cd32124f769a3944d51a3d5566fddcdee5737ea62f303d61d19120a2fdcae",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "timsort",
+      "version": "0.3.0",
+      "bundle": "vis-network",
+      "license_declared": "MIT",
+      "repository": {
+        "url": "git+https://github.com/mziccard/node-timsort.git",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/timsort/0.3.0",
+      "tarball_url": "https://registry.npmjs.org/timsort/-/timsort-0.3.0.tgz",
+      "tarball_sha256": "a3f9d0b7c004a21de7b84e23bff4e23cd7f368378796763dae4e150d4a56ccfe",
+      "dist_shasum": "405411a8e7e6339fe64db9a234de11dc31e02bd4",
+      "dist_integrity": "sha512-qsdtZH+vMoCARQtyod4imc2nIJwg9Cc7lPRrw9CzF8ZKR0khdr8+2nX80PBhET3tcyTtJDxAffGh2rXH4tyU8A==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/timsort-0.3.0/LICENSE.md",
+          "upstream_path": "package/LICENSE.md",
+          "sha256": "12dc138ac8f4fab95290f8403221fea6933f37bb9ce0a9a4e478707acf030928",
+          "size_bytes": 1075
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 2,
+        "source_map_content_pairs_sha256": "b46f9872c1613ec11d41d52f53bbb705232619bede0f465330783577db06dd0f",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "tslib",
+      "version": "2.3.1",
+      "bundle": "vis-network",
+      "license_declared": "0BSD",
+      "repository": {
+        "url": "git+https://github.com/Microsoft/tslib.git",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/tslib/2.3.1",
+      "tarball_url": "https://registry.npmjs.org/tslib/-/tslib-2.3.1.tgz",
+      "tarball_sha256": "1774fefbfd64c476f33b92ae8efad1347c171ea1300720d0be036e102b8198fc",
+      "dist_shasum": "e8a335add5ceae51aa261d32a490158ef042ef01",
+      "dist_integrity": "sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/tslib-2.3.1/CopyrightNotice.txt",
+          "upstream_path": "package/CopyrightNotice.txt",
+          "sha256": "dd835e67a9a297da32f9467d7677a5d02c8e50e10f15da43b810147c79c04b9b",
+          "size_bytes": 824
+        },
+        {
+          "path": "third_party_licenses/tslib-2.3.1/LICENSE.txt",
+          "upstream_path": "package/LICENSE.txt",
+          "sha256": "210b19e543130388c68654b7497e967119ce17145f66ab7d85688fbd70f08751",
+          "size_bytes": 655
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 1,
+        "source_map_content_pairs_sha256": "806359c0b0883c38c0dc4f446f5e4ae411ff544b69fd8041cf4bd2c829bece20",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "uuid",
+      "version": "8.3.2",
+      "bundle": "vis-network",
+      "license_declared": "MIT",
+      "repository": {
+        "url": "git+https://github.com/uuidjs/uuid.git",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/uuid/8.3.2",
+      "tarball_url": "https://registry.npmjs.org/uuid/-/uuid-8.3.2.tgz",
+      "tarball_sha256": "f630703647a5821c735a542edcf8d26c989724efe9d9912ab6f6836a1e79924a",
+      "dist_shasum": "80d5b5ced271bb9af6c445f21a1a04c606cefbe2",
+      "dist_integrity": "sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/uuid-8.3.2/LICENSE.md",
+          "upstream_path": "package/LICENSE.md",
+          "sha256": "beaa6b04fb82e41dd2ad679e19e27953afb5999b1abbb455b6564e78ebfeb332",
+          "size_bytes": 1109
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 5,
+        "source_map_content_pairs_sha256": "60ecdffc9da054f7d7813f09f9411a1aaccda23642eb31074b93cca1a5e054ca",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "vis-data",
+      "version": "7.1.4",
+      "bundle": "vis-network",
+      "license_declared": "(Apache-2.0 OR MIT)",
+      "repository": {
+        "url": "git+https://github.com/visjs/vis-data.git",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/vis-data/7.1.4",
+      "tarball_url": "https://registry.npmjs.org/vis-data/-/vis-data-7.1.4.tgz",
+      "tarball_sha256": "b913de8626ba46578efe9137b8f76a11a955def3277629c6f5358f1ae6cc8ef4",
+      "dist_shasum": "90e5e796a79e1901de14c0808fb32a1a0735c1dc",
+      "dist_integrity": "sha512-usy+ePX1XnArNvJ5BavQod7YRuGQE1pjFl+pu7IS6rCom2EBoG0o1ZzCqf3l5US6MW51kYkLR+efxRbnjxNl7w==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/vis-data-7.1.4/LICENSE-MIT",
+          "upstream_path": "package/LICENSE-MIT",
+          "sha256": "1f65085e54c036645082257618db2c7b787e68c3b02485e214ecd09e0834ee8f",
+          "size_bytes": 1084
+        },
+        {
+          "path": "third_party_licenses/vis-data-7.1.4/LICENSE-APACHE-2.0",
+          "upstream_path": "package/LICENSE-APACHE-2.0",
+          "sha256": "1509904280a272780fd69c04b858f512cf216f8e3464a0dd98d8f34416feced9",
+          "size_bytes": 10171
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 1,
+        "source_map_content_pairs_sha256": "2aa7503cc660c19e70922d4e44970e9c5f4e8805f15a8ba6592636bdb58606b4",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "vis-util",
+      "version": "5.0.3",
+      "bundle": "vis-network",
+      "license_declared": "(Apache-2.0 OR MIT)",
+      "repository": {
+        "url": "git+https://github.com/visjs/vis-util.git",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/vis-util/5.0.3",
+      "tarball_url": "https://registry.npmjs.org/vis-util/-/vis-util-5.0.3.tgz",
+      "tarball_sha256": "5c48d61687130346a72714aac2bc2ba6351abe12f7f122e418d07478dd6ded7a",
+      "dist_shasum": "6a9d67c6ed92f2bfa67e50c20166bb5f59ac07bf",
+      "dist_integrity": "sha512-Wf9STUcFrDzK4/Zr7B6epW2Kvm3ORNWF+WiwEz2dpf5RdWkLUXFSbLcuB88n1W6tCdFwVN+v3V4/Xmn9PeL39g==",
+      "dist_integrity_verified": true,
+      "license_files": [
+        {
+          "path": "third_party_licenses/vis-util-5.0.3/LICENSE-MIT",
+          "upstream_path": "package/LICENSE-MIT",
+          "sha256": "b88d2c1898485a909bfd92d1a2a676c266db5384d7153f3bdb80caebb7038351",
+          "size_bytes": 1121
+        },
+        {
+          "path": "third_party_licenses/vis-util-5.0.3/LICENSE-APACHE-2.0",
+          "upstream_path": "package/LICENSE-APACHE-2.0",
+          "sha256": "1509904280a272780fd69c04b858f512cf216f8e3464a0dd98d8f34416feced9",
+          "size_bytes": 10171
+        }
+      ],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 1,
+        "source_map_content_pairs_sha256": "39fe2a806fe2ae6db04f74a8ca3762b7ca19c86a08224b2bf31eee4b6d638518",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      }
+    },
+    {
+      "name": "@orchidjs/sifter",
+      "version": "0.9.0",
+      "bundle": "tom-select",
+      "license_declared": "Apache-2.0",
+      "repository": {
+        "url": "git+https://github.com/orchidjs/sifter.js.git",
+        "type": "git"
+      },
+      "registry_url": "https://registry.npmjs.org/@orchidjs/sifter/0.9.0",
+      "tarball_url": "https://registry.npmjs.org/@orchidjs/sifter/-/sifter-0.9.0.tgz",
+      "tarball_sha256": "af949d443aa5919149ad93ea61b65e57423a9448baa2f292f6c9a2f7c615abb3",
+      "dist_shasum": "07eab78de2ac1799d2c169bf1f2e3e746d86c32c",
+      "dist_integrity": "sha512-NDYPhjdydJNbwDRvMFyUFFeImj1a+CJAwpjh/goKmvTHi726DPAJ1nW0X05p/GsorQgXHwhgDPyu6WaYqd4cRA==",
+      "dist_integrity_verified": true,
+      "license_files": [],
+      "source_map_verification": {
+        "all_listed_sources_exactly_match_package_files": true,
+        "matching_source_count": 3,
+        "source_map_content_pairs_sha256": "b4a9116d7a7178964388d7597287d312db98e3b3c3f386c0b0561f6a3b8c9890",
+        "method": "UTF-8 encode each corresponding sourcesContent string and compare byte-for-byte to the official npm tar member"
+      },
+      "license_text_reference": "third_party_licenses/tom-select-2.0.0-rc.4/LICENSE",
+      "license_evidence": "Official package declares Apache-2.0; exact matched lib/sifter.ts embeds Apache-2.0 and Brian Reavis copyright notice. No standalone LICENSE/NOTICE exists in the 0.9.0 npm tarball or the v0.9.0 source tree.",
+      "source_commit": "1a7a59fe86634628989361b0295ee81eade4a9fb"
+    }
+  ],
+  "source_notice_compilation": {
+    "path": "third_party_licenses/SOURCE-NOTICES.txt",
+    "sha256": "66e87abed23c64f3fd838810bd4a904f71c1901d3753f4c47e31600fc423bf09",
+    "notice_count": 26,
+    "verbatim_comment_texts": true,
+    "is_upstream_NOTICE_file": false
+  },
+  "upstream_notice_search": {
+    "tom_select_tag": "No NOTICE-named file in recursive tag tree or npm archive",
+    "vis_network_tag": "No NOTICE-named file in recursive tag tree or npm archive",
+    "pyvis_tag": "No NOTICE-named file in recursive tag tree; LICENSE_BSD.txt preserved",
+    "dependency_packages": "All root license/notice/copying files in the exact matched npm versions were retained, including tslib CopyrightNotice.txt"
+  },
+  "open_issues": [
+    {
+      "component": "Tom Select / highlight v3",
+      "status": "original_standalone_license_text_unresolved",
+      "evidence": "Exact Tom Select 2.0.0-rc.4 source-map src/contrib/highlight.ts declares MIT and credits Johann Burkard, Marshal and Brian Reavis. This exact header is preserved in SOURCE-NOTICES.txt. A separately version-pinned full MIT license from the original highlight v3 distribution has not been verified. No copyright year or standalone license text was invented.",
+      "source_url": "https://github.com/orchidjs/tom-select/blob/43a263ccce79a8f790e6aca036b59719517879ef/src/contrib/highlight.ts",
+      "original_project_url": "https://johannburkard.de/blog/programming/javascript/highlight-javascript-text-higlighting-jquery-plugin.html"
+    },
+    {
+      "component": "Tom Select / MicroEvent",
+      "status": "historical_revision_unresolved",
+      "evidence": "Exact Tom Select source-map src/contrib/microevent.ts credits Jerome Etienne. The original microevent.js repository provides an MIT license, but its exact historical revision corresponding to this rewritten TypeScript derivative has not been established. The Tom Select source header is preserved; no original release version is asserted.",
+      "source_url": "https://github.com/orchidjs/tom-select/blob/43a263ccce79a8f790e6aca036b59719517879ef/src/contrib/microevent.ts",
+      "upstream_license_reference_url": "https://github.com/jeromeetienne/microevent.js/blob/1511836a1754a16f14863856c007f797a84f7aac/MIT-LICENSE.txt"
+    }
+  ],
+  "release_clearance": "Incomplete: preserve identified notices now; resolve or explicitly review the two historical Tom Select attribution gaps before claiming complete license clearance."
+}

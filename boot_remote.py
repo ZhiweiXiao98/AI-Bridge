@@ -101,6 +101,16 @@ def main():
         login_win.close()
         from pathlib import Path
         from app.core.app_constants import APP_ROOT
+        import json
+        import platform
+        import PySide6
+        from PySide6.QtCore import qVersion
+        from PySide6.support import deprecated
+        (Path(APP_ROOT) / "desktop-runtime.json").write_text(json.dumps({
+            "python": platform.python_version(), "pyside": PySide6.__version__,
+            "qt": qVersion(), "qt_build": QLibraryInfo.build(),
+            "recombination_marker": getattr(deprecated, "AI_BRIDGE_RECOMBINATION_MARKER", None),
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
         (Path(APP_ROOT) / "desktop-smoke-ok.txt").write_text(
             "login-window-ok\n", encoding="utf-8")
         return

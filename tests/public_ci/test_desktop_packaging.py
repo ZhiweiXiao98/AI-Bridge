@@ -67,7 +67,7 @@ class DesktopPackagingTests(unittest.TestCase):
     def test_payload_is_license_only(self):
         self.assertEqual(build.REPOSITORY_DATA, ("LICENSE",))
         command = build.command(ROOT / "build/test")
-        self.assertEqual(command.count("--add-data"), 1)
+        self.assertEqual(command.count("--add-data"), 2)
         self.assertNotIn("--collect-all", command)
 
     def test_only_current_qt_binding_installed(self):
@@ -83,7 +83,7 @@ class DesktopPackagingTests(unittest.TestCase):
         self.assertIn("name: 未签名远程客户端 / ${{ matrix.os }}", workflow)
         self.assertIn("contents: read", workflow)
         self.assertIn("persist-credentials: false", workflow)
-        self.assertIn("path: build/desktop/review/desktop-inventory.json", workflow)
+        self.assertIn("build/desktop/review/desktop-inventory.json", workflow)
         self.assertNotIn("path: build/desktop/dist", workflow)
         self.assertNotIn("secrets.", workflow)
         self.assertNotIn("pull_request_target", workflow)

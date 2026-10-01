@@ -1,9 +1,22 @@
-# Remote-client-only build environment. Server, mobile, browser automation and
-# embedding models are deliberately not installed or bundled here.
+# 远程客户端隔离构建依赖；完整锁定解析闭包。
+# 各目标平台的 wheel URL/SHA-256 由 pip --report 留证；不把这些环境包全算作运行时 BOM。
 PySide6==6.11.1
+PySide6_Addons==6.11.1
+PySide6_Essentials==6.11.1
+shiboken6==6.11.1
 requests==2.34.2
+certifi==2026.7.22
+charset-normalizer==3.5.2
+idna==3.20
+urllib3==2.8.0
 tiktoken==0.13.0
-pyinstaller==6.22.0
-
-# Skill metadata referenced by the desktop chat UI
+regex==2026.9.29
 PyYAML==6.0.3
+pyinstaller==6.22.0
+pyinstaller-hooks-contrib==2026.8
+altgraph==0.17.5
+packaging==26.3
+setuptools==84.0.0
+pefile==2024.8.26; sys_platform == "win32"
+pywin32-ctypes==0.2.3; sys_platform == "win32"
+macholib==1.16.4; sys_platform == "darwin"

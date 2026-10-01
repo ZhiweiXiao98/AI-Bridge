@@ -1,0 +1,212 @@
+{
+  "records": [
+    {
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz",
+          "sha256": "d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f",
+          "filename": "pyyaml-6.0.3.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/PyYAML/6.0.3/json"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/a3/c2/24167ea9858356b47a87a50d39908bfdb72ceeefe0041586e704e5376b3a/certifi-2026.7.22.tar.gz",
+          "sha256": "741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55",
+          "filename": "certifi-2026.7.22.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/certifi/2026.7.22/json"
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.2",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/33/1c/f41d4e74c28ab327ff3acd36053f7ea506c55872d7a90b0fa71aa3ab0c89/charset_normalizer-3.5.2.tar.gz",
+          "sha256": "39de2a259fc954455c57274dc94c79d5842774e1247a016aff30bc0efed0f4ef",
+          "filename": "charset_normalizer-3.5.2.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/charset-normalizer/3.5.2/json"
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/f5/08/8eea9d4b8302028f3abb2c0813953f7aec26d33b7a8960ed760e65ff29fa/idna-3.20.tar.gz",
+          "sha256": "a7db850025b95ded1eae8a46181a1a6c56c92c96f0e2b005d9ff8dc0210cab44",
+          "filename": "idna-3.20.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/idna/3.20/json"
+    },
+    {
+      "name": "regex",
+      "version": "2026.9.29",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/fc/f2/af1da9d3ceed77bfcdce40427d49ba0be94e4fe84245e3bfef68c10e75b6/regex-2026.9.29.tar.gz",
+          "sha256": "8b5fcc4771732191b2b7d1dd68d8f0353f47f8d90b6150f6dce58bf1112442cb",
+          "filename": "regex-2026.9.29.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/regex/2026.9.29/json"
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz",
+          "sha256": "f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed",
+          "filename": "requests-2.34.2.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/requests/2.34.2/json"
+    },
+    {
+      "name": "tiktoken",
+      "version": "0.13.0",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/e4/e5/5f3cb2159769d0f4324c0e9e87f9de3c4b1cd45848a96b2eb3566ad5ca77/tiktoken-0.13.0.tar.gz",
+          "sha256": "c9435714c3a84c2319499de9a300c0e604449dd0799ff246458b3bb6a7f433c1",
+          "filename": "tiktoken-0.13.0.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/tiktoken/0.13.0/json"
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/e3/05/b17359e1cefb4f909b5e40b1b90a496d987258916dbbf88e842c729f510e/urllib3-2.8.0.tar.gz",
+          "sha256": "63bf2ead4c879426ebf22ef2a781eeb4aa3b4ae798a0435506f8687fd5bb9b63",
+          "filename": "urllib3-2.8.0.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/urllib3/2.8.0/json"
+    },
+    {
+      "name": "pyinstaller",
+      "version": "6.22.0",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/05/03/669d06735cf57d7e2e5dfc3c2e1643554b34c559eff21449c58172ca0335/pyinstaller-6.22.0.tar.gz",
+          "sha256": "8b0166fff4583b374bbe7fa044bf03ddc33cab0f792a665807d96048e63f060e",
+          "filename": "pyinstaller-6.22.0.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/pyinstaller/6.22.0/json"
+    },
+    {
+      "name": "pyinstaller-hooks-contrib",
+      "version": "2026.8",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/c9/3b/fab1a12a21bf9223af012e5dd002b7d4265683d21d9fabbd0ccb347316e4/pyinstaller_hooks_contrib-2026.8.tar.gz",
+          "sha256": "4d825786ad7a9b7dbcc52d612748a34562fe273461bcfd88f4d549c594bbf8f9",
+          "filename": "pyinstaller_hooks_contrib-2026.8.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/pyinstaller-hooks-contrib/2026.8/json"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz",
+          "sha256": "94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79",
+          "filename": "packaging-26.3.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/packaging/26.3/json"
+    },
+    {
+      "name": "setuptools",
+      "version": "84.0.0",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/6d/44/f5da03a8ef95d369145c5bb53050e7877c9f3d312e128605fd9504829143/setuptools-84.0.0.tar.gz",
+          "sha256": "f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73",
+          "filename": "setuptools-84.0.0.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/setuptools/84.0.0/json"
+    },
+    {
+      "name": "altgraph",
+      "version": "0.17.5",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/7e/f8/97fdf103f38fed6792a1601dbc16cc8aac56e7459a9fff08c812d8ae177a/altgraph-0.17.5.tar.gz",
+          "sha256": "c87b395dd12fabde9c99573a9749d67da8d29ef9de0125c7f536699b4a9bc9e7",
+          "filename": "altgraph-0.17.5.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/altgraph/0.17.5/json"
+    },
+    {
+      "name": "pefile",
+      "version": "2024.8.26",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/03/4f/2750f7f6f025a1507cd3b7218691671eecfd0bbebebe8b39aa0fe1d360b8/pefile-2024.8.26.tar.gz",
+          "sha256": "3ff6c5d8b43e8c37bb6e6dd5085658d658a7a0bdcd20b6a07b1fcfc1c4e9d632",
+          "filename": "pefile-2024.8.26.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/pefile/2024.8.26/json"
+    },
+    {
+      "name": "pywin32-ctypes",
+      "version": "0.2.3",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/85/9f/01a1a99704853cb63f253eea009390c88e7131c67e66a0a02099a8c917cb/pywin32-ctypes-0.2.3.tar.gz",
+          "sha256": "d162dc04946d704503b2edc4d55f3dba5c1d539ead017afa00142c38b9885755",
+          "filename": "pywin32-ctypes-0.2.3.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/pywin32-ctypes/0.2.3/json"
+    },
+    {
+      "name": "macholib",
+      "version": "1.16.4",
+      "source_archives": [
+        {
+          "url": "https://files.pythonhosted.org/packages/10/2f/97589876ea967487978071c9042518d28b958d87b17dceb7cdc1d881f963/macholib-1.16.4.tar.gz",
+          "sha256": "f408c93ab2e995cd2c46e34fe328b130404be143469e41bc366c807448979362",
+          "filename": "macholib-1.16.4.tar.gz"
+        }
+      ],
+      "verification": "published PyPI release metadata; archive content and wheel correspondence not independently verified",
+      "evidence_url": "https://pypi.org/pypi/macholib/1.16.4/json"
+    }
+  ]
+}
