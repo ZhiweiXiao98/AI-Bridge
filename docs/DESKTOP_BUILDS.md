@@ -1,6 +1,6 @@
 # 桌面远程客户端构建验证
 
-`.github/workflows/desktop-build.yml` 使用标准 GitHub-hosted runner：Windows x64（`windows-latest`）、macOS ARM64（`macos-latest`）、macOS x64（`macos-15-intel`）。不选用 larger/付费标签；实际计费仍取决于 GitHub 账户和仓库政策。
+`.github/workflows/desktop-build.yml` 使用标准 GitHub-hosted runner，仅构建 Windows x64（`windows-latest`）和 Apple Silicon Mac ARM64（`macos-latest`）。不选用 larger/付费标签；实际计费仍取决于 GitHub 账户和仓库政策。
 
 入口为 `boot_remote.py`，不是启动 Python 子进程的 `start_client.py`。CI 在 CPython 3.12.10 的全新 venv 中安装完全固定版本的远程客户端依赖，并记录实际 wheel URL/哈希。构建、重建和库重新组合步骤见 [DESKTOP_REBUILD.md](DESKTOP_REBUILD.md)。
 

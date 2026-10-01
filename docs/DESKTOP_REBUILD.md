@@ -4,7 +4,7 @@
 
 ## 1. 固定构建输入
 
-使用与清单一致的操作系统、CPU 架构和 CPython 3.12.10。分别构建 Windows x64、macOS ARM64 和 macOS x64；不能把某平台的 wheel 用作另一平台的证据。
+使用与清单一致的操作系统、CPU 架构和 CPython 3.12.10。分别构建 Windows x64 和 macOS ARM64（Apple Silicon）；不能把某平台的 wheel 用作另一平台的证据。
 
 先从审查对应的公开 Git commit 检出完整源码。在全新目录创建一次性虚拟环境，不使用日常工作的 Python 环境：
 
@@ -54,7 +54,7 @@ python tools/desktop/recombine.py
 
 若更换 Qt / PySide / Shiboken 原生部分，应从上述精确源码起步，使用相同 Python ABI、Qt 公共接口与目标架构生成自己的兼容 wheel，在新 venv 中安装并重建应用。保留自己的源码改动、工具链、配置和 wheel 哈希。不要直接把其他版本、其他架构的 DLL/framework 混入。
 
-须用有可观察修改的接口兼容库运行登录、GUI、网络相关探针，证明加载的是用户修改版本；现有登录 smoke 不代替完整功能测试。Windows、macOS ARM64 和 macOS x64 都须分别留下证据。
+须用有可观察修改的接口兼容库运行登录、GUI、网络相关探针，证明加载的是用户修改版本；现有登录 smoke 不代替完整功能测试。Windows x64 和 macOS ARM64 都须分别留下证据。
 
 macOS 优先通过完整 PyInstaller 构建重新生成 `.app`，由 PyInstaller 对自己的修改产物作 ad-hoc 签名。若进行手工 shared-library 替换，必须保留 framework 目录层次、相对 symlink、install name/rpath，按内层库到外层 app 的顺序重新签名；不能把对外层一次 `--deep` 签名当作正确重签顺序的替代。最后可执行：
 

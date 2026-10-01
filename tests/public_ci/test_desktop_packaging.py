@@ -78,7 +78,8 @@ class DesktopPackagingTests(unittest.TestCase):
 
     def test_standard_runners_and_no_binary_upload(self):
         workflow = (ROOT / ".github/workflows/desktop-build.yml").read_text(encoding="utf-8")
-        self.assertIn("os: [windows-latest, macos-latest, macos-15-intel]", workflow)
+        self.assertIn("os: [windows-latest, macos-latest]", workflow)
+        self.assertNotIn("macos-15-intel", workflow)
         self.assertIn("name: 桌面远程客户端构建", workflow)
         self.assertIn("name: 未签名远程客户端 / ${{ matrix.os }}", workflow)
         self.assertIn("contents: read", workflow)

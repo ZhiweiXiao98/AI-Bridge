@@ -337,7 +337,7 @@ def collect_inventory(root: Path, output: Path, prepared: dict) -> dict:
             unresolved.append("distribution:" + name)
     from PySide6.QtCore import QLibraryInfo, qVersion
     issues = ["原生库内嵌第三方组件、Qt 翻译/codec、OpenSSL 两套来源及平台再分发权限仍需逐项核验",
-              "Windows x64 / macOS ARM64 / macOS x64 的修改库重新组合测试尚未验收",
+              "Windows x64 / macOS ARM64 的修改库重新组合测试尚未验收",
               "最终发行归档的隐私/许可复核及源码可取得性仍须确认"]
     missing_notices = [item["name"] for item in actual if not item["notice_files"]]
     missing_wheels = [item["name"] for item in actual if "wheel" not in item]
