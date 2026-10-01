@@ -1,4 +1,4 @@
-name: Public source safety
+name: 公开源码安全检查
 
 on:
   push:
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   public-safety:
-    name: Public safety (${{ matrix.os }})
+    name: 公开源码安全检查（${{ matrix.os }}）
     strategy:
       fail-fast: false
       matrix:
@@ -24,15 +24,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: 检出源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - name: 配置 Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
-      - name: Check tracked public export boundary
+      - name: 检查已跟踪文件的公开发布边界
         run: python tools/check_public_tree.py
-      - name: Run offline authentication and export regression tests
+      - name: 运行离线认证与公开发布回归测试
         run: python -m unittest discover -s tests/public_ci -v
-      - name: Check Python syntax without importing application code
+      - name: 检查 Python 语法（不导入应用代码）
         run: python -m compileall -q app tests server.py boot_remote.py start_client.py start_server.py

@@ -1,4 +1,4 @@
-name: Desktop remote-client build
+name: 桌面远程客户端构建
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    name: Unsigned remote client / ${{ matrix.os }}
+    name: 未签名远程客户端 / ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -24,24 +24,26 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: 检出源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - name: 配置 Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
-      - name: Install isolated remote-client build dependencies
+      - name: 安装远程客户端专用构建依赖
         run: python -m pip install -r requirements-desktop-build.txt
-      - name: Test packaging safety contracts
+      - name: 验证打包安全约束
         run: python -m unittest discover -s tests/public_ci -p test_desktop_packaging.py -v
-      - name: Build remote client and collect dependency notices
+      - name: 构建远程客户端并收集依赖许可声明
         run: python tools/desktop/build.py
-      - name: Smoke-test frozen login window
+      - name: 冒烟测试打包后的登录窗口
         run: python tools/desktop/smoke.py
-      # Do not upload dist/ or dependency binaries until exact Qt/dependency
-      # notices, corresponding source and replace/relink requirements are reviewed.
-      # There is deliberately no user-controlled switch bypassing this gate.
-      - name: Upload build inventory only (no executable)
+      # 在完成 Qt 及其他依赖的许可声明、对应源码与替换／重新链接要求审查前，
+      # 不得上传 dist/ 或依赖二进制文件。
+      # 此处有意不提供可由用户控制的开关，以免绕过审查。
+      - name: 仅上传构建清单（不含可执行文件）
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: AI-Bridge-Remote-UNSIGNED-review-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
