@@ -89,9 +89,17 @@ def main():
         except UnicodeEncodeError:
             print("[INFO] 正在以管理模式自动登录...")
         try:
+            password = DEFAULT_AUTH_CREDENTIALS.get("admin", {}).get("password")
+            if not password:
+                QMessageBox.warning(
+                    None, "Administrator login",
+                    "Set AUTH_ADMIN_PASSWORD in the process environment for automatic login, "
+                    "or start without --admin/--panel and log in manually."
+                )
+                return
             url = f"http://{LOCAL_SERVER_HOST}:{SERVER_PORT}/api/login"
             resp = requests.post(
-                url, json={"username": "admin", "password": DEFAULT_AUTH_CREDENTIALS["admin"]["password"]},                 
+                url, json={"username": "admin", "password": password},
                 timeout=10, proxies={"http": None, "https": None} 
             )
             if resp.status_code == 200:

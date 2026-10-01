@@ -1,0 +1,38 @@
+name: Public source safety
+
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'fix/**']
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-safety:
+    name: Public safety (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Check tracked public export boundary
+        run: python tools/check_public_tree.py
+      - name: Run offline authentication and export regression tests
+        run: python -m unittest discover -s tests/public_ci -v
+      - name: Check Python syntax without importing application code
+        run: python -m compileall -q app tests server.py boot_remote.py start_client.py start_server.py

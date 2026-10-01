@@ -64,9 +64,18 @@ class AuthService:
                           ip TEXT,
                           timestamp TEXT)''')
             
-            # 初始化默认用户
-            for username, info in DEFAULT_AUTH_CREDENTIALS.items():
-                self._create_user_if_not_exists(c, username, info["password"], info["role"], info["display_name"])
+            # Bootstrap only an empty database. Never rotate existing users implicitly.
+            if c.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
+                info = DEFAULT_AUTH_CREDENTIALS.get("admin", {})
+                password = info.get("password", "")
+                if len(password.strip()) < 12 or password.strip().lower() in {"admin", "changeme", "password"}:
+                    raise RuntimeError(
+                        "First server start requires AUTH_ADMIN_PASSWORD with at least 12 characters. "
+                        "Set it in the process environment; no default password is supplied."
+                    )
+                self._create_user_if_not_exists(
+                    c, "admin", password, "developer", "Administrator"
+                )
             conn.commit()
 
     def _create_user_if_not_exists(self, cursor, username, pwd, role, name):

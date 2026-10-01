@@ -340,11 +340,10 @@ async def upload_file(file: UploadFile = File(...)):
 @app.websocket("/ws/{token}/{device_id}")
 async def websocket_endpoint(websocket: WebSocket, token: str, device_id: str):
     payload = auth.decode_token(token)
-    username = "Guest"
-    if not payload:
-        if token == "admin": username, role = "admin", "developer"
-        else: await websocket.close(code=1008); return
-    else: username, role = payload.get("sub"), payload.get("role", "user")
+    if not payload or not isinstance(payload.get("sub"), str) or not payload["sub"].strip():
+        await websocket.close(code=1008)
+        return
+    username, role = payload["sub"], payload.get("role", "user")
 
     group_id = "admin" if role == "developer" else "user"
     client_ip = websocket.client.host if websocket.client else "Unknown"

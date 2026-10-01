@@ -37,7 +37,7 @@ def replace_in_file(path: str, old_text: str, new_text: str, count: int = 1, ato
     return success_result('replace_in_file', path, output_format=output_format, Replacements=min(count, occurrences), Verified=verified, Atomic=atomic, TotalMatches=occurrences, ValidateCode=validate_code, **risk)
 
 
-def insert_after(path: str, anchor_text: str, content: str, occurrence: int = 1, strict_anchor: bool = False, atomic: bool = True, output_format: str = 'text', validate_code: bool = True, knowledge_engine=None):def insert_after(path: str, anchor_text: str, content: str, occurrence: int = 1, strict_anchor: bool = False, atomic: bool = True, output_format: str = 'text', validate_code: bool = True, knowledge_engine=None):
+def insert_after(path: str, anchor_text: str, content: str, occurrence: int = 1, strict_anchor: bool = False, atomic: bool = True, output_format: str = 'text', validate_code: bool = True, knowledge_engine=None):
     import logging
     logger = logging.getLogger("FileOpsInsertDebug")
 

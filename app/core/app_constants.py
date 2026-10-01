@@ -37,13 +37,14 @@ CHROME_PORT = int(os.environ.get("CHROME_PORT", "9527"))
 DEFAULT_PROXY_URL = os.environ.get("DEFAULT_PROXY_URL", "http://127.0.0.1:7890")
 
 # --- 认证配置 ---
+_bootstrap_password = os.environ.get("AUTH_ADMIN_PASSWORD", "")
 DEFAULT_AUTH_CREDENTIALS = {
     "admin": {
-        "password": os.environ.get("AUTH_ADMIN_PASSWORD", "admin"),
+        "password": _bootstrap_password,
         "role": "developer",
         "display_name": "Administrator",
     },
-}
+} if _bootstrap_password else {}
 
 # ============================================================
 # 以下为内部常量，一般不需要修改
