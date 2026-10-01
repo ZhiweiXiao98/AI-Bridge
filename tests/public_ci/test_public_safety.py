@@ -11,6 +11,7 @@ import tempfile
 import types
 import unittest
 from datetime import datetime
+from contextlib import closing
 from unittest.mock import patch
 from typing import Optional
 
@@ -103,7 +104,7 @@ class AuthenticationTests(unittest.TestCase):
     def init_database(self, path, credentials):
         cls = load_definition('app/core/auth_service.py', 'AuthService', {
             'os': os, 'sqlite3': sqlite3, 'hashlib': hashlib, 'binascii': binascii,
-            'datetime': datetime, 'Optional': Optional, 'List': list,
+            'datetime': datetime, 'Optional': Optional, 'List': list, 'closing': closing,
             'DEFAULT_AUTH_CREDENTIALS': credentials, 'DB_PATH': str(path),
         })
         instance = cls.__new__(cls)
@@ -120,10 +121,10 @@ class AuthenticationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             db = Path(tmp) / 'test.db'
             self.init_database(db, {'admin': {'password': 'unit-test-only-password'}})
-            with sqlite3.connect(db) as conn:
+            with closing(sqlite3.connect(db)) as conn, conn:
                 before = conn.execute('SELECT * FROM users').fetchall()
             self.init_database(db, {})
-            with sqlite3.connect(db) as conn:
+            with closing(sqlite3.connect(db)) as conn, conn:
                 self.assertEqual(conn.execute('SELECT * FROM users').fetchall(), before)
 
 
