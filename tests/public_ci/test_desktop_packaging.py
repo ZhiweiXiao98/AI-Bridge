@@ -26,6 +26,37 @@ def isolated_method(relative, name):
 
 
 class DesktopPackagingTests(unittest.TestCase):
+    def test_native_inventory_blocks_unused_qt_components(self):
+        paths = [
+            "PySide6/Qt/lib/libQt6VirtualKeyboard.so.6",
+            "PySide6/Qt/bin/Qt6Pdf.dll",
+            "PySide6/Qt/lib/QtQml.framework/Versions/A/QtQml",
+            "PySide6/Qt/lib/QtQuick.framework/QtQuick",
+            "PySide6/Qt/plugins/imageformats/qpdf.dll",
+        ]
+        self.assertEqual(build.unexpected_native_files([{"path": p} for p in paths]), paths)
+        self.assertEqual(build.unexpected_native_files([
+            {"path": "PySide6/QtCore.abi3.so"},
+            {"path": "PySide6/Qt/lib/QtWidgets.framework/QtWidgets"},
+            {"path": "PySide6/Qt/plugins/platforms/qwindows.dll"},
+        ]), [])
+
+    def test_qt_hook_removes_optional_plugin_inputs_only(self):
+        plugins = [
+            ("/qt/plugins/qpdf.dll", "imageformats"),
+            ("/qt/plugins/libqpdf.dylib", "imageformats"),
+            ("/qt/plugins/qtvirtualkeyboardplugin.dll", "platforminputcontexts"),
+            ("/qt/plugins/libqtvirtualkeyboardplugin.so", "platforminputcontexts"),
+            ("/qt/plugins/qjpeg.dll", "imageformats"),
+            ("/qt/plugins/qcocoa.dylib", "platforms"),
+        ]
+        fake = types.ModuleType("PyInstaller.utils.hooks.qt")
+        fake.add_qt6_dependencies = lambda _: ([], plugins, [])
+        with patch.dict(sys.modules, {"PyInstaller.utils.hooks.qt": fake}):
+            data = runpy.run_path(str(ROOT / "tools/desktop/hooks/hook-PySide6.QtGui.py"))
+        self.assertEqual(data["binaries"], plugins[-2:])
+        self.assertIn("--additional-hooks-dir", build.command(ROOT / "build/test"))
+
     def test_entry_point_is_remote_client(self):
         command = build.command(ROOT / "build/test")
         self.assertEqual(command[-1], str(ROOT / "boot_remote.py"))
@@ -47,7 +78,9 @@ class DesktopPackagingTests(unittest.TestCase):
 
     def test_standard_runners_and_no_binary_upload(self):
         workflow = (ROOT / ".github/workflows/desktop-build.yml").read_text(encoding="utf-8")
-        self.assertIn("os: [windows-latest, macos-latest]", workflow)
+        self.assertIn("os: [windows-latest, macos-latest, macos-15-intel]", workflow)
+        self.assertIn("name: 桌面远程客户端构建", workflow)
+        self.assertIn("name: 未签名远程客户端 / ${{ matrix.os }}", workflow)
         self.assertIn("contents: read", workflow)
         self.assertIn("persist-credentials: false", workflow)
         self.assertIn("path: build/desktop/review/desktop-inventory.json", workflow)

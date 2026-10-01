@@ -30,6 +30,19 @@ EXCLUDES = (
 )
 
 
+# Check actual native filenames/framework paths, not only Python imports.
+# This is a scope gate, not a complete dependency-license allowlist.
+UNUSED_QT_COMPONENTS = (
+    "qt6virtualkeyboard", "qtvirtualkeyboard", "qt6pdf", "qtpdf", "qpdf.",
+    "qt6qml", "qtqml", "qt6quick", "qtquick",
+)
+
+
+def unexpected_native_files(files: list[dict]) -> list[str]:
+    return [entry["path"] for entry in files
+            if any(name in entry["path"].lower() for name in UNUSED_QT_COMPONENTS)]
+
+
 def command(output: Path) -> list[str]:
     result = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean",
               "--onedir", "--windowed", "--noupx", "--name", NAME,
@@ -37,6 +50,7 @@ def command(output: Path) -> list[str]:
               "--workpath", str(output / "work"),
               "--specpath", str(output),
               "--runtime-hook", str(ROOT / "tools/desktop/runtime_hook.py"),
+              "--additional-hooks-dir", str(ROOT / "tools/desktop/hooks"),
               "--hidden-import", "app.core.app_constants",
               "--collect-submodules", "tiktoken_ext"]
     for relative in REPOSITORY_DATA:
@@ -97,11 +111,15 @@ def main() -> None:
             files.append({"path": path.relative_to(output / "dist").as_posix(),
                           "size": path.stat().st_size,
                           "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    unexpected = unexpected_native_files(files)
     (report / "desktop-inventory.json").write_text(json.dumps({
         "entry_point": "boot_remote.py", "platform": sys.platform,
         "repository_data": list(REPOSITORY_DATA), "dependencies": dependencies,
         "binary_distribution_approved": False, "files": files,
+        "blocked_native_components": unexpected,
     }, indent=2), encoding="utf-8")
+    if unexpected:
+        raise SystemExit("Unused Qt native components entered the bundle: " + ", ".join(unexpected))
     print(f"Built {NAME}; binary upload remains disabled pending license review.")
 
 

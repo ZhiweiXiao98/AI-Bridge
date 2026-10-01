@@ -1,7 +1,8 @@
 # Desktop build verification (Windows and macOS)
 
 `.github/workflows/desktop-build.yml` builds the **remote client** on standard
-GitHub-hosted `windows-latest` and `macos-latest` runners. It never selects larger
+GitHub-hosted `windows-latest` (x64), `macos-latest` (ARM64), and
+`macos-15-intel` (x64) runners. It never selects larger
 or paid runner labels, publishes a release, signs with a certificate, or notarizes.
 Billing still depends on GitHub's account/repository plan and policy.
 
@@ -35,6 +36,15 @@ metadata for this review; `review/desktop-inventory.json` lists versions and eve
 built file's SHA-256. These are inputs to review, not a complete compliance claim.
 See [Qt obligations](https://www.qt.io/development/open-source-lgpl-obligations)
 and [PyInstaller's license](https://pyinstaller.org/en/stable/license.html).
+
+## Native Qt scope checks
+
+A small QtGui analysis hook omits the unused PDF image plugin and virtual-keyboard
+plugin before PyInstaller resolves their native dependencies. After building,
+`desktop-inventory.json` is checked for VirtualKeyboard, Pdf, Qml and Quick library,
+framework and plugin names. Any remaining instance fails the build. This validates
+the actual output rather than assuming Python-module exclusions remove native
+libraries. It does not replace the distribution-license gate above.
 
 ## Scope and privacy
 
