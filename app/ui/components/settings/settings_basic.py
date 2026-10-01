@@ -167,8 +167,8 @@ class SettingsBasicSection(QFrame):
         self.auto_export_toggle.setChecked(self.config.get("auto_export", True))
         self.code_path_edit.setText(self.config.get("export_code_path", ""))
         self.img_path_edit.setText(self.config.get("export_image_path", ""))
-        self.chat_load_turns_spin.setValue(int(self.config.get("chat_message_load_turns", 20)))
-        self.chat_load_step_turns_spin.setValue(int(self.config.get("chat_message_load_step_turns", 10)))
+        self.chat_load_turns_spin.setValue(int(self.config.get("chat_message_load_turns", 200)))
+        self.chat_load_step_turns_spin.setValue(int(self.config.get("chat_message_load_step_turns", 50)))
 
         theme_name = self.config.get("theme", "Dark")
         idx = self.theme_combo.findText(theme_name)

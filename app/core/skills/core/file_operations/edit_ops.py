@@ -22,7 +22,7 @@ def replace_in_file(path: str, old_text: str, new_text: str, count: int = 1, ato
     p = Path(path)
     if not p.exists():
         return error_result('replace_in_file', path, 'File not found', output_format=output_format)
-    text = p.read_text(encoding='utf-8', errors='replace')
+    text = p.read_text(encoding='utf-8-sig', errors='replace')
     occurrences = text.count(old_text)
     if occurrences <= 0:
         return error_result('replace_in_file', path, 'Target text not found', output_format=output_format, Replacements=0)
@@ -44,7 +44,7 @@ def insert_after(path: str, anchor_text: str, content: str, occurrence: int = 1,
     p = Path(path)
     if not p.exists():
         return error_result('insert_after', path, 'File not found', output_format=output_format)
-    text = p.read_text(encoding='utf-8', errors='replace')
+    text = p.read_text(encoding='utf-8-sig', errors='replace')
     positions = find_anchor_positions(text, anchor_text)
     if not positions:
         return error_result('insert_after', path, 'Anchor not found', output_format=output_format, Anchor=anchor_text)
@@ -86,7 +86,7 @@ def insert_after(path: str, anchor_text: str, content: str, occurrence: int = 1,
         return error_result('insert_after', path, 'syntax validation failed', output_format=output_format, Anchor=anchor_text, Occurrence=occurrence, TotalMatches=len(positions), ValidateCode=validate_code, **details)
 
     try:
-        actual_content = p.read_text(encoding='utf-8')
+        actual_content = p.read_text(encoding='utf-8-sig')
         if actual_content != updated:
             logger.error(f"[Debug][InsertAfter] Post insert content mismatch detected on {path}")
             logger.debug(f"[Debug][InsertAfter] Actual content length {len(actual_content)}, expected {len(updated)}")
@@ -105,11 +105,11 @@ def insert_after(path: str, anchor_text: str, content: str, occurrence: int = 1,
 def insert_before(path: str, anchor_text: str, content: str, occurrence: int = 1, strict_anchor: bool = False, atomic: bool = True, output_format: str = 'text', validate_code: bool = True, knowledge_engine=None):
     import logging
     logger = logging.getLogger("FileOpsInsertDebug")
-    
+
     p = Path(path)
     if not p.exists():
         return error_result('insert_before', path, 'File not found', output_format=output_format)
-    text = p.read_text(encoding='utf-8', errors='replace')
+    text = p.read_text(encoding='utf-8-sig', errors='replace')
     positions = find_anchor_positions(text, anchor_text)
     if not positions:
         return error_result('insert_before', path, 'Anchor not found', output_format=output_format, Anchor=anchor_text)
@@ -119,26 +119,26 @@ def insert_before(path: str, anchor_text: str, content: str, occurrence: int = 1
         return error_result('insert_before', path, 'Occurrence out of range', output_format=output_format, Anchor=anchor_text, TotalMatches=len(positions), RequestedOccurrence=occurrence)
     insert_at = positions[occurrence - 1]
     structural = assess_python_structural_anchor_risk(path, text, insert_at, content, position='before')
-    
+
     # Find start of line containing anchor
     line_start = text.rfind(chr(10), 0, insert_at)
     if line_start >= 0:
         insert_at = line_start + 1
     else:
         insert_at = 0
-    
+
     # Auto-insert newline if needed
     insert_content = content
     if insert_at > 0 and text[insert_at - 1] != chr(10):
         insert_content = chr(10) + content
     if content and content[-1] != chr(10):
         insert_content = insert_content + chr(10)
-    
+
     updated = text[:insert_at] + insert_content + text[insert_at:]
-    
+
     logger.info(f"[Debug][InsertBefore] Inserting into {path} at position {insert_at}, content length {len(insert_content)}")
     logger.debug(f"[Debug][InsertBefore] Insert content preview:\n{insert_content[:500]}")
-    
+
     validation = validate_by_extension(path, updated, validate_code=validate_code)
     if not validation.get('ok'):
         details = {}
@@ -151,10 +151,10 @@ def insert_before(path: str, anchor_text: str, content: str, occurrence: int = 1
     if not ok:
         logger.error(f"[Debug][InsertBefore] Persist failed on {path}: {details}")
         return error_result('insert_before', path, 'syntax validation failed', output_format=output_format, Anchor=anchor_text, Occurrence=occurrence, TotalMatches=len(positions), ValidateCode=validate_code, **details)
-    
+
     # 写入后读取文件对比
     try:
-        actual_content = p.read_text(encoding='utf-8')
+        actual_content = p.read_text(encoding='utf-8-sig')
         if actual_content != updated:
             logger.error(f"[Debug][InsertBefore] Post insert content mismatch detected on {path}")
             logger.debug(f"[Debug][InsertBefore] Actual content length {len(actual_content)}, expected {len(updated)}")
@@ -162,7 +162,7 @@ def insert_before(path: str, anchor_text: str, content: str, occurrence: int = 1
             logger.info(f"[Debug][InsertBefore] Insert verified for {path}")
     except Exception as e:
         logger.error(f"[Debug][InsertBefore] Error reading back {path} post insert: {e}")
-    
+
     verified = verify_contains(path, content[: min(len(content), 120)]) if content else True
     extra = {}
     if structural.get('risk'):

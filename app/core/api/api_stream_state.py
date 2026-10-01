@@ -11,6 +11,7 @@ class APIStreamState:
         self._conversation_id: Optional[str] = None
         self._status: StreamStatus = StreamStatus.COMPLETED
         self._accumulated_text: str = ""
+        self._accumulated_thinking: str = ""
         self._chunk_count: int = 0
 
     @property
@@ -30,6 +31,10 @@ class APIStreamState:
         return self._accumulated_text
 
     @property
+    def accumulated_thinking(self) -> str:
+        return self._accumulated_thinking
+
+    @property
     def status(self) -> StreamStatus:
         return self._status
 
@@ -42,12 +47,14 @@ class APIStreamState:
         self._conversation_id = conversation_id
         self._status = StreamStatus.STARTED
         self._accumulated_text = ""
+        self._accumulated_thinking = ""
         self._chunk_count = 0
         logger.debug(f"Stream started: {self._stream_id} | conv={conversation_id}")
         return self._stream_id
 
-    def append(self, text: str):
+    def append(self, text: str = "", thinking: str = ""):
         self._accumulated_text += text
+        self._accumulated_thinking += thinking
         self._chunk_count += 1
         if self._status == StreamStatus.STARTED:
             self._status = StreamStatus.STREAMING
@@ -69,4 +76,5 @@ class APIStreamState:
         self._conversation_id = None
         self._status = StreamStatus.COMPLETED
         self._accumulated_text = ""
+        self._accumulated_thinking = ""
         self._chunk_count = 0

@@ -26,7 +26,7 @@ class ASTChunker:
     def _chunk_python(self, file_path: str, content: str) -> List[Dict]:
         """用 AST 解析 Python 文件，按函数/类边界分块"""
         try:
-            tree = ast.parse(content)
+            tree = ast.parse(content, filename=file_path)
         except SyntaxError:
             logger.debug(f"AST 解析失败，fallback: {file_path}")
             return []

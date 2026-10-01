@@ -1,0 +1,64 @@
+name: 桌面远程客户端构建
+
+on:
+  workflow_dispatch:
+  push:
+    paths: ['app/**', 'boot_remote.py', 'requirements-desktop-build.txt', 'tools/desktop/**', 'licenses/desktop/**', 'licenses/vendor/**', 'lib/**', 'docs/DESKTOP_REBUILD.md', 'tests/public_ci/test_desktop*.py', '.github/workflows/desktop-build.yml']
+  pull_request:
+    paths: ['app/**', 'boot_remote.py', 'requirements-desktop-build.txt', 'tools/desktop/**', 'licenses/desktop/**', 'licenses/vendor/**', 'lib/**', 'docs/DESKTOP_REBUILD.md', 'tests/public_ci/test_desktop*.py', '.github/workflows/desktop-build.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: 未签名远程客户端 / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - name: 检出源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: 配置 Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12.10'
+      - name: 建立一次性构建环境并记录 wheel 来源
+        run: |
+          python -m venv .desktop-venv
+          python -c "import os; from pathlib import Path; p = Path('.desktop-venv') / ('Scripts' if os.name == 'nt' else 'bin'); open(os.environ['GITHUB_PATH'], 'a', encoding='utf-8').write(str(p.resolve()) + '\n')"
+      - name: 安装远程客户端专用构建依赖
+        run: |
+          python -c "from pathlib import Path; Path('build/desktop').mkdir(parents=True, exist_ok=True)"
+          python -m pip install --report build/desktop/install-report.json -r requirements-desktop-build.txt
+      - name: 核验继承前端资源的来源和声明完整性
+        run: python licenses/vendor/verify_vendored_licenses.py --source-root .
+      - name: 验证打包安全约束
+        run: python -m unittest discover -s tests/public_ci -p "test_desktop*.py" -v
+      - name: 构建远程客户端并收集依赖许可声明
+        run: python tools/desktop/build.py
+      - name: 冒烟测试打包后的登录窗口
+        run: python tools/desktop/smoke.py
+      - name: 验证修改后的 PySide 支持代码可重新组合
+        run: python tools/desktop/recombine.py
+      # 在完成 Qt 及其他依赖的许可声明、对应源码与替换／重新链接要求审查前，
+      # 不得上传 dist/ 或依赖二进制文件。
+      # 此处有意不提供可由用户控制的开关，以免绕过审查。
+      - name: 仅上传构建清单（不含可执行文件）
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: AI-Bridge-Remote-UNSIGNED-review-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
+          path: |
+            build/desktop/review/desktop-inventory.json
+            build/desktop/review/recombination-test.json
+          if-no-files-found: error
+          retention-days: 7

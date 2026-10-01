@@ -37,13 +37,14 @@ CHROME_PORT = int(os.environ.get("CHROME_PORT", "9527"))
 DEFAULT_PROXY_URL = os.environ.get("DEFAULT_PROXY_URL", "http://127.0.0.1:7890")
 
 # --- 认证配置 ---
+_bootstrap_password = os.environ.get("AUTH_ADMIN_PASSWORD", "")
 DEFAULT_AUTH_CREDENTIALS = {
     "admin": {
-        "password": os.environ.get("AUTH_ADMIN_PASSWORD", "admin"),
+        "password": _bootstrap_password,
         "role": "developer",
         "display_name": "Administrator",
     },
-}
+} if _bootstrap_password else {}
 
 # ============================================================
 # 以下为内部常量，一般不需要修改
@@ -60,6 +61,24 @@ GEMINI_MODELS = [
     "gemini-2.5-flash",
     "gemini-1.5-pro",
 ]
+
+MIMO_MODELS = [
+    "mimo-v2.5-pro",
+    "mimo-v2.5",
+    "mimo-v2-pro",
+    "mimo-v2-omni",
+    "mimo-v2-flash",
+]
+
+MIMO_DEFAULT_BASE_URL = "https://api.xiaomimimo.com/v1"
+
+PROVIDER_DISPLAY_NAMES = {
+    "openai_compatible": "OpenAI 兼容",
+    "mimo": "Xiaomi MiMo",
+    "gemini": "Google Gemini",
+    "web_ai": "网页 AI",
+    "api": "OpenAI 兼容",
+}
 
 MAX_WORKERS = 4
 DEFAULT_SYSTEM_BUDGET = 8000
@@ -90,9 +109,9 @@ UI_COLORS = {
 }
 
 UI_SIZES = {
-    "sidebar_width": 70,
-    "sidebar_button": (60, 60),
-    "sidebar_icon": (28, 28),
-    "default_window": (1200, 800),
-    "default_sidebar_width": 260,
+    "sidebar_width": 54,
+    "sidebar_button": (46, 46),
+    "sidebar_icon": (22, 22),
+    "default_window": (1360, 860),
+    "default_sidebar_width": 180,
 }

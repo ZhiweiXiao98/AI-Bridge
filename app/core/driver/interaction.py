@@ -398,11 +398,11 @@ class InteractionManager:
                 if btn.is_displayed():
                     btn.click()
                     clicked = True; break
-            
+
             # [Fix] 如果没找到附件按钮，尝试直接找 input[type=file]
             if not clicked:
                 print("⚠️ 未找到显式附件按钮，尝试隐式 Input...")
-            
+
             # 2. 查找文件输入框 (增加 fallback)
             file_input = self._wait_for_file_input(timeout=8)
             if not file_input:
@@ -410,15 +410,15 @@ class InteractionManager:
             file_input.send_keys(paths_str)
 
             wait_time = 1.0 + 0.5 * paths_str.count('\n')
-            time.sleep(wait_time) 
-            
+            time.sleep(wait_time)
+
             # 3. 确认上传 (如果有确认按钮的话)
             confirms = self.driver.find_elements(By.XPATH, SELECTORS["upload_confirm"])
             for btn in confirms:
-                if btn.is_displayed(): 
+                if btn.is_displayed():
                     btn.click()
                     break
-            
+
             return True, "批量上传指令已执行"
         except Exception as e:
             return False, f"上传异常: {e}"
@@ -602,20 +602,20 @@ class InteractionManager:
             return { need_scroll: false };
             """
             info = self.driver.execute_script(js_measure, target_xpath)
-            
+
             if info and info.get('need_scroll'):
                 start = info['start']
                 end = info['end']
                 print(f"🔧 [AutoFix] 正在遍历最后一条消息 ({start} -> {end})...")
-                
+
                 self.driver.execute_script(f"""
                 var c = document.evaluate(arguments[0], document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 if(c) c.scrollTo({{top: {start}, behavior: 'auto'}});
                 """, target_xpath)
-                
+
                 current = start
                 step = 400
-                
+
                 while current < end:
                     current += step
                     self.driver.execute_script(f"""
@@ -623,18 +623,18 @@ class InteractionManager:
                     if(c) c.scrollTo({{top: {current}, behavior: 'auto'}});
                     """, target_xpath)
                     time.sleep(0.02)
-                
+
                 self.driver.execute_script(f"""
                 var c = document.evaluate(arguments[0], document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 if(c) c.scrollTo({{top: c.scrollHeight, behavior: 'auto'}});
                 """, target_xpath)
-                
+
         except Exception as e:
             print(f"⚠️ [AutoFix] Error: {e}")
 
     def ensure_expanded(self): pass
     def trigger_refresh(self, message_element, block_index, unique_id): pass
-    
+
     def scroll_traverse(self, interrupt_check=None):
         try:
             target_xpath = SELECTORS["scroll_container_xpath"]
@@ -647,17 +647,17 @@ class InteractionManager:
             time.sleep(0.2)
 
             current = 0
-            max_steps = 4000 
-            last_scroll_top = -1 
-            
-            FAST_STEP = 600   
-            FAST_WAIT = 0.01  
-            
-            SLOW_STEP = 150   
-            SLOW_WAIT = 0.05  
-            
-            step_count = 0 
-            
+            max_steps = 4000
+            last_scroll_top = -1
+
+            FAST_STEP = 600
+            FAST_WAIT = 0.01
+
+            SLOW_STEP = 150
+            SLOW_WAIT = 0.05
+
+            step_count = 0
+
             while current < total_height and max_steps > 0:
                 if interrupt_check and interrupt_check():
                     print("🛑 [Scroll] 收到中断信号，立即停止唤醒！")
@@ -689,45 +689,45 @@ class InteractionManager:
                 return false;
                 """
                 in_code_block = self.driver.execute_script(js_check_view, target_xpath)
-                
+
                 if in_code_block:
                     step = SLOW_STEP
                     wait = SLOW_WAIT
                 else:
                     step = FAST_STEP
                     wait = FAST_WAIT
-                
+
                 current += step
-                
+
                 js_scroll = """
                 var container = document.evaluate(arguments[0], document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                if (container) { 
+                if (container) {
                     container.scrollTo({top: arguments[1], behavior: 'auto'});
-                    return { total: container.scrollHeight, top: container.scrollTop }; 
+                    return { total: container.scrollHeight, top: container.scrollTop };
                 }
                 return null;
                 """
                 result = self.driver.execute_script(js_scroll, target_xpath, current)
-                
+
                 if not result: break
-                
+
                 new_total = result['total']
                 current_top = result['top']
-                
+
                 if current_top == last_scroll_top: break
                 if current_top + 1000 >= new_total: break
-                    
+
                 last_scroll_top = current_top
                 if new_total > total_height: total_height = new_total
-                
-                time.sleep(wait) 
-                
+
+                time.sleep(wait)
+
                 step_count += 1
                 if in_code_block or (step_count % 10 == 0):
                     self.fast_expand_all()
-                
+
                 max_steps -= 1
-            
+
             if not (interrupt_check and interrupt_check()):
                 js_bottom = """
                 var container = document.evaluate(arguments[0], document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -778,13 +778,13 @@ class InteractionManager:
                 return 0;
                 """
                 block_height = 0
-                for _ in range(15): 
+                for _ in range(15):
                     h = self.driver.execute_script(js_measure, toggle_btn)
                     if h > 600:
                         block_height = h
                         break
                     time.sleep(0.2)
-                if block_height == 0: 
+                if block_height == 0:
                     block_height = self.driver.execute_script(js_measure, toggle_btn)
                 js_audit = """
                 var btn = arguments[0];
@@ -863,8 +863,8 @@ class InteractionManager:
             target_xpath = SELECTORS["scroll_container_xpath"]
             js_scroll_bottom = """
             var container = document.evaluate(arguments[0], document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            if (container) { 
-                container.scrollTo({top: container.scrollHeight, behavior: 'smooth'}); 
+            if (container) {
+                container.scrollTo({top: container.scrollHeight, behavior: 'smooth'});
             }
             """
             self.driver.execute_script(js_scroll_bottom, target_xpath)
@@ -1006,17 +1006,17 @@ class InteractionManager:
                 try:
                     if self.driver.current_window_handle == self.target_handle:
                         if has_chat_surface():
-                            return 
+                            return
                 except:
                     self.target_handle = None
             handles = self.driver.window_handles
-            if len(handles) == 1: 
+            if len(handles) == 1:
                 self.target_handle = handles[0]
                 return
             for handle in handles:
                 self.driver.switch_to.window(handle)
                 if "chrome://" in self.driver.current_url: continue
-                if has_chat_surface(): 
+                if has_chat_surface():
                     self.target_handle = handle
-                    return 
+                    return
         except: pass

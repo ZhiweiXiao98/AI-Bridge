@@ -12,7 +12,8 @@ USER_PREF_FILE = '用户偏好.md'
 PLAN_PROMPT_FILE = 'Plan_SystemPrompt.md'
 BUILD_PROMPT_FILE = 'Build_SystemPrompt.md'
 ASSEMBLED_PROMPT_FILE = '系统提示词.md'
-DAEMON_PROMPT_PREFIX = 'Daemon_'
+SUBAGENT_PROMPT_PREFIX = 'Subagent_'
+LEGACY_SUBAGENT_PROMPT_PREFIX = 'Daemon_'
 
 
 def _load_prompt_file(filename: str) -> str:
@@ -66,14 +67,21 @@ def save_assembled_prompt(content: str) -> bool:
         return False
 
 
-def load_daemon_prompt(task_name: str) -> str:
-    """加载守护进程提示词。
+def load_subagent_prompt(task_name: str) -> str:
+    """加载Subagent提示词。
 
-    task_name 对应 Prompt/Daemon_{task_name}.md
-    例如: load_daemon_prompt("suggest") -> Prompt/Daemon_Suggest.md
+    task_name 对应 Prompt/Subagent_{task_name}.md
+    例如: load_subagent_prompt("suggest") -> Prompt/Subagent_Suggest.md
     """
-    filename = f"{DAEMON_PROMPT_PREFIX}{task_name.capitalize()}.md"
+    filename = f"{SUBAGENT_PROMPT_PREFIX}{task_name.capitalize()}.md"
     content = _load_prompt_file(filename)
     if not content:
-        logger.warning('守护进程提示词为空或不存在: %s', filename)
+        legacy_filename = f"{LEGACY_SUBAGENT_PROMPT_PREFIX}{task_name.capitalize()}.md"
+        content = _load_prompt_file(legacy_filename)
+    if not content:
+        logger.warning('Subagent提示词为空或不存在: %s', filename)
     return content
+
+
+def load_daemon_prompt(task_name: str) -> str:
+    return load_subagent_prompt(task_name)

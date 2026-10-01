@@ -33,7 +33,12 @@ class WorkerApiConversationBridge:
 
         if ok:
             if isinstance(usage, dict):
-                worker.safe_emit_status(f"✅ 本对话模型来源已更新: {usage.get('type')} / {usage.get('ref')}")
+                model = usage.get("model") or "跟随 Profile"
+                reasoning = usage.get("reasoning") if isinstance(usage.get("reasoning"), dict) else {}
+                reasoning_text = "思考开启" if reasoning.get("enabled") else "思考关闭"
+                worker.safe_emit_status(
+                    f"✅ 本对话模型设置已更新: {usage.get('type')} / {usage.get('ref')} / {model} / {reasoning_text}"
+                )
             else:
                 worker.safe_emit_status("✅ 本对话已恢复使用全局默认模型来源")
         else:

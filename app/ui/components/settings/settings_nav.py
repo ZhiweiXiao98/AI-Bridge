@@ -8,15 +8,15 @@ class SettingsNav(QFrame):
     def __init__(self, sections, parent=None):
         super().__init__(parent)
         self.setObjectName("settingsNavBar")
-        self.setFixedWidth(180)
+        self.setFixedWidth(136)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 16, 0, 16)
+        layout.setContentsMargins(0, 10, 0, 10)
         layout.setSpacing(0)
 
         title = QLabel("设置")
         title.setObjectName("settingsNavTitle")
-        title.setStyleSheet("font-size: 16px; font-weight: 700; padding: 8px 16px 16px 16px; border: none; background: transparent;")
+        title.setStyleSheet("font-size: 14px; font-weight: 700; padding: 6px 12px 10px 12px; border: none; background: transparent;")
         layout.addWidget(title)
 
         self.list_widget = QListWidget()
@@ -42,7 +42,7 @@ class SettingsNav(QFrame):
         title = self.findChild(QLabel, "settingsNavTitle")
         if title:
             title.setStyleSheet(
-                f"font-size: 16px; font-weight: 700; padding: 8px 16px 16px 16px; "
+                f"font-size: 14px; font-weight: 700; padding: 6px 12px 10px 12px; "
                 f"border: none; background: transparent; color: {p.TEXT_PRIMARY};"
             )
 

@@ -5,7 +5,7 @@ from app.core.logging import get_logger
 
 logger = get_logger("app.core.prompt_runtime.system_policy_loader", side="worker")
 
-API_MODE_SYSTEM_POLICY_PATH = Path('docs/API_MODE_SYSTEM_POLICY.md')
+API_MODE_SYSTEM_POLICY_PATH = Path('docs/API模式系统策略.md')
 
 
 def load_api_mode_system_policy() -> str:

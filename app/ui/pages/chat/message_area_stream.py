@@ -35,8 +35,18 @@ class MessageAreaStreamManager(QObject):
         else:
             logger.warning(f"[MessageAreaStream] 气泡不可用或不支持 append_stream_text")
 
+    def append_thinking(self, stream_id: str, text: str):
+        logger.debug(f"[MessageAreaStream] append_thinking | stream_id={stream_id} | text_len={len(text)}")
+        if stream_id != self._active_stream_id:
+            logger.warning(f"[MessageAreaStream] stream_id 不匹配 | expected={self._active_stream_id} | got={stream_id}")
+            return
+        if self._active_bubble and hasattr(self._active_bubble, 'append_stream_thinking'):
+            self._active_bubble.append_stream_thinking(text)
+        else:
+            logger.warning("[MessageAreaStream] 气泡不可用或不支持 append_stream_thinking")
+
     def end_stream(self, stream_id: str, cancelled: bool = False, error_message: str = ""):
-        """结束首轮 assistant 流式临时气泡；这里只表示 initial stream finished，不代表整轮 finalized。"""
+        """结束首轮 assistant 流式临时气泡，finalize 后立即移除，避免与正式气泡重复。"""
         logger.info(f"[MessageAreaStream] end_stream | stream_id={stream_id} | cancelled={cancelled} | error={error_message}")
         if stream_id != self._active_stream_id:
             logger.warning(f"[MessageAreaStream] stream_id 不匹配 | expected={self._active_stream_id} | got={stream_id}")
@@ -47,20 +57,22 @@ class MessageAreaStreamManager(QObject):
             if hasattr(self._active_bubble, 'finalize_stream'):
                 logger.info(f"[MessageAreaStream] 完成气泡 | stream_id={stream_id}")
                 self._active_bubble.finalize_stream(cancelled=cancelled, error_message=error_message)
-            
-            # 首轮流式结束后移除临时气泡；是否由正式历史接管，交给上层 round_state 决定
+
+
+            # 立即移除临时气泡，避免与正式渲染的 ChatBubble 重复
             try:
                 self._active_bubble.setParent(None)
                 self._active_bubble.deleteLater()
+                logger.info(f"[MessageAreaStream] 已移除临时气泡 | stream_id={stream_id}")
             except Exception as e:
-                logger.warning(e)
-                
+                logger.warning(f"[MessageAreaStream] 移除临时气泡失败 | error={e}")
         self._active_bubble = None
         self._active_stream_id = None
         self._auto_scroll()
     def _create_stream_bubble(self):
         from app.ui.components.chat_bubble_stream import StreamingChatBubble
         bubble = StreamingChatBubble(role="AI", parent=self._message_area)
+        bubble.setProperty("api_stream_transient", True)
 
         # 优先插入 MessageArea 的真实消息布局（chat_layout）
         if hasattr(self._message_area, 'chat_layout'):

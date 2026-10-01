@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal
 
 from app.core.api_mode_config import APIModeConfigManager
+from app.core.app_constants import PROVIDER_DISPLAY_NAMES
 from app.ui.theme import Theme, theme_manager
 from app.ui.components.settings.settings_widgets import (
     ScrollSafeComboBox, SettingsCard, SettingsField,
@@ -87,7 +88,7 @@ class SettingsApiUsageSection(QFrame):
 
         if is_profile:
             pd = self.api_mode_config.get("profiles", {}).get(ref, {})
-            vendor = pd.get("vendor", "未知")
+            vendor = PROVIDER_DISPLAY_NAMES.get(pd.get("provider", ""), pd.get("provider", "未知"))
             model = pd.get("model", "未知")
             base_url = pd.get("base_url", "")
             self._summary_content_label.setText(
@@ -104,7 +105,7 @@ class SettingsApiUsageSection(QFrame):
             profile_lines = []
             for i, p_ref in enumerate(profiles, 1):
                 pd = self.api_mode_config.get("profiles", {}).get(p_ref, {})
-                vendor = pd.get("vendor", "未知")
+                vendor = PROVIDER_DISPLAY_NAMES.get(pd.get("provider", ""), pd.get("provider", "未知"))
                 model = pd.get("model", "未知")
                 profile_lines.append(f"  {i}. {pd.get('name', p_ref)} ({vendor} / {model})")
             chain_desc = "\n".join(profile_lines) if profile_lines else "  (空)"

@@ -8,6 +8,11 @@ version: 1.0.0
 author: System
 dangerous: true
 enabled: true
+summary: >
+  在 Docker 沙盒中安全执行 Python 代码，用于验证逻辑、测试功能、诊断 bug。
+  重要：代码块开头必须加 # EXEC 标记才会真正执行，否则只作为示例展示。
+  支持：静态安全检查、60 秒超时、1GB 内存限制、Docker 容器隔离。
+  调用方式：直接在回复中写带 # EXEC 标记的 python 代码块，无需 tool_call。
 ---
 
 # 代码执行

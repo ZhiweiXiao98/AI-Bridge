@@ -19,9 +19,10 @@ class UpdateService:
             c['rel_path'] = c['rel_path'].replace('\\', '/')
         return changes
 
-    def get_file_category(self, file_path):
+    @staticmethod
+    def get_file_category(file_path):
         p = file_path.replace('\\', '/')
-        
+
         # 1. 纯静态资源/文档 -> 绝对无需重启
         if p.startswith("docs/") or p.endswith(".md"):
             return "SAFE_STATIC"
@@ -29,29 +30,29 @@ class UpdateService:
         # 2. 测试代码与工具脚本 -> 绝对无需重启
         if p.startswith("tests/") or p.startswith("tools/") or p.startswith("scripts/"):
             return "SAFE_SCRIPT"
-            
+
         # 3. 根目录下的辅助工具 -> 无需重启
         if p in ["dump_code.py", "print_tree.py", "pytest.ini", ".gitignore"]:
             return "SAFE_SCRIPT"
 
         # [Fix] 核心修正：Worker 位置已变更，必须优先判定为 CRITICAL
-        if p == "app/core/worker.py": 
+        if p == "app/core/worker.py":
             return "CRITICAL"
 
         # 4. 客户端独有代码 -> 仅客户端更新，服务端不重启
-        if p.startswith("app/ui/") or p in ["boot_remote.py", "start_client.py"]: 
+        if p.startswith("app/ui/") or p in ["boot_remote.py", "start_client.py"]:
             return "CLIENT_ONLY"
-        
+
         if p.startswith("RhinoBIM_Client/"):
             return "CLIENT_ONLY"
 
         # 5. 核心架构 -> 必须重启
         if p in ["server.py", "start_server.py", "requirements.txt", "config.json", "server_config.json"]:
             return "CRITICAL"
-            
+
         if p.startswith("app/core/"):
             return "CRITICAL"
-            
+
         return "UNKNOWN"
 
     def apply_hot_patch(self, cache_dir):
@@ -71,25 +72,26 @@ class UpdateService:
 
     def process_updates(self, paths, logger_func, ota_callback):
         changes = self.mgr.scan()
-        cache_root = "update_cache"
+        project_root = ProjectContext.get().get_project_root()
+        cache_root = os.path.join(project_root, "update_cache")
         if not os.path.exists(cache_root): os.makedirs(cache_root)
-        
+
         staged_count = 0
-        sync_data = {} 
+        sync_data = {}
         needs_restart = False
-        
+
         normalized_target_paths = [p.replace('\\', '/') for p in paths]
         NO_RESTART_EXTS = {'.md', '.txt', '.json', '.yaml', '.yml', '.html', '.css', '.js', '.png', '.jpg', '.ini'}
 
         for change in changes:
             normalized_rel = change['rel_path'].replace('\\', '/')
             if normalized_rel not in normalized_target_paths: continue
-            
+
             with open(change['staging_path'], 'r', encoding='utf-8') as f: content = f.read()
-            
+
             # [Validation] 语法检查
             if normalized_rel.endswith(".py"):
-                valid, err = self.file_service.validate_python_code(content)
+                valid, err = self.file_service.validate_python_code(content, normalized_rel)
                 if not valid:
                     print(f"❌ [UpdateService] 残缺拦截: {normalized_rel} -> {err}")
                     logger_func(f"⚠️ 跳过残缺文件: {os.path.basename(normalized_rel)}")
@@ -103,17 +105,17 @@ class UpdateService:
 
             full_cache_path = os.path.join(cache_root, change['rel_path'])
             os.makedirs(os.path.dirname(full_cache_path), exist_ok=True)
-            
+
             try:
                 with open(full_cache_path, 'w', encoding='utf-8') as f: f.write(content)
                 sync_data[normalized_rel] = content
                 staged_count += 1
-                
+
                 filename = os.path.basename(normalized_rel)
                 _, ext = os.path.splitext(filename)
-                
+
                 category = self.get_file_category(normalized_rel)
-                
+
                 if category in ["SAFE_STATIC", "SAFE_SCRIPT"]:
                     print(f"ℹ️ [HotUpdate] 豁免重启 ({category}): {normalized_rel}")
                 elif category == "CLIENT_ONLY":
@@ -126,7 +128,7 @@ class UpdateService:
                 else:
                     print(f"⚡ [Update] 默认重启策略: {normalized_rel}")
                     needs_restart = True
-                    
+
             except Exception as e:
                 print(f"Failed to stage {change['rel_path']}: {e}")
 
@@ -138,14 +140,14 @@ class UpdateService:
         if needs_restart:
             logger_func(f"⚡ [Server] 核心代码变更，呼叫启动器重启...")
             print(MAGIC_CMD_RESTART_SERVER, flush=True)
-            while True: time.sleep(1) 
+            while True: time.sleep(1)
         else:
             if staged_count > 0:
                 logger_func(f"✅ [Server] 热更新完成 (无需重启)")
                 self.apply_hot_patch(cache_root)
             else:
                 logger_func("⚠️ [Server] 无需更新")
-        
+
         return needs_restart
 
     def pack_client_code(self):
@@ -167,7 +169,7 @@ class UpdateService:
         for dirname in INCLUDE_DIRS:
             dir_path = os.path.join(project_root, dirname)
             if not os.path.exists(dir_path): continue
-            
+
             for root, dirs, files in os.walk(dir_path):
                 dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
                 for file in files:

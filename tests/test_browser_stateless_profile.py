@@ -10,6 +10,7 @@ from app.core.worker_modules.browser_stateless_profile import (
     ModelRequest,
     ResponseNormalizer,
     StatelessBrowserProfileAdapter,
+    summarize_browser_stateless_failure,
 )
 from app.core.app_constants import UPSTREAM_AI_URL
 
@@ -265,3 +266,22 @@ def test_adapter_passes_full_request_to_compiler():
     assert response.finish_reason == "succeeded"
     assert compiler.messages == messages
     assert compiler.context_bundle == context_bundle
+
+
+def test_summarize_browser_stateless_failure_uses_chinese_stage_and_details():
+    summary = summarize_browser_stateless_failure({
+        "states": ["queued", "acquiring_lock", "switching_conversation", "failed"],
+        "error_code": "conversation_switch_failed",
+        "conversation_name": "Web_Profile",
+        "prompt_chars": 1234,
+        "switch_conversation": {
+            "current_url": "https://web-ai.example.com/chat#1",
+            "error_code": "conversation_switch_failed",
+        },
+    })
+
+    assert "失败阶段：切换网页目标对话" in summary
+    assert "错误类型：conversation_switch_failed（切换目标对话失败）" in summary
+    assert "目标对话名称：Web_Profile" in summary
+    assert "prompt 长度：1234" in summary
+    assert "切换信息" in summary

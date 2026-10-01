@@ -11,11 +11,12 @@
 """
 
 import hashlib
+import copy
 import json
 import logging
 import re
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from .models import CanonicalMessage, CanonicalSegment
 
@@ -108,7 +109,7 @@ class DOMNormalizer:
             role = str(raw.get("role", "") or "")
             msg_key = f"{raw_id}:{role}" if raw_id else ""
             if i < active_start and msg_key and msg_key in self._processed_cache:
-                frozen_msgs.append(self._processed_cache[msg_key])
+                frozen_msgs.append(copy.deepcopy(self._processed_cache[msg_key]))
             else:
                 active_raw.append((i, raw))
 
@@ -121,22 +122,29 @@ class DOMNormalizer:
 
         result.sort(key=lambda m: m.ordinal)
 
-        self._bind_tool_feedback_to_ai(result, conversation_id, round_id)
+        previous_cache = self._processed_cache
+        log_message_ids = {msg.id for msg in newly_processed}
+        self._bind_tool_feedback_to_ai(
+            result,
+            conversation_id,
+            round_id,
+            log_message_ids=log_message_ids,
+        )
 
-        for msg in newly_processed:
-            self._processed_cache[msg.id] = msg
-            self._raw_cache[msg.id] = msg.content_hash
-
-        newly_bound_ids = set(id(m) for m in newly_processed)
-        changed_ids = [msg.id for msg in newly_processed]
+        changed_ids = []
         for msg in result:
-            if id(msg) in newly_bound_ids:
-                continue
-            cached = self._processed_cache.get(msg.id)
-            if cached and cached.content_hash != msg.content_hash:
+            cached = previous_cache.get(msg.id)
+            if cached is None:
                 changed_ids.append(msg.id)
-                self._processed_cache[msg.id] = msg
-                self._raw_cache[msg.id] = msg.content_hash
+                continue
+            if (
+                cached.content_hash != msg.content_hash
+                or cached.rev != msg.rev
+                or cached.ordinal != msg.ordinal
+                or cached.index != msg.index
+                or cached.role != msg.role
+            ):
+                changed_ids.append(msg.id)
 
         _fb_count = sum(1 for m in result if m.id.startswith("msg_fb_"))
         _hidden_count = sum(1 for m in result if m.extra.get("_hidden"))
@@ -146,10 +154,13 @@ class DOMNormalizer:
             total, len(frozen_msgs), _active_count, len(changed_ids), _hidden_count,
         )
 
-        removed_ids = self._detect_removed_ids(active_raw, newly_processed)
-        for rid in removed_ids:
-            self._processed_cache.pop(rid, None)
-            self._raw_cache.pop(rid, None)
+        removed_ids = self._detect_removed_ids(active_raw, result)
+
+        self._processed_cache = {msg.id: copy.deepcopy(msg) for msg in result}
+        self._raw_cache = {
+            msg.id: getattr(msg, "_raw_content_hash", msg.content_hash)
+            for msg in result
+        }
 
         return result, changed_ids, removed_ids
 
@@ -171,8 +182,8 @@ class DOMNormalizer:
         self._processed_cache.clear()
         self._raw_cache.clear()
         for msg in result:
-            self._processed_cache[msg.id] = msg
-            self._raw_cache[msg.id] = msg.content_hash
+            self._processed_cache[msg.id] = copy.deepcopy(msg)
+            self._raw_cache[msg.id] = getattr(msg, "_raw_content_hash", msg.content_hash)
 
         new_ids = {m.id for m in result}
         removed_ids = [rid for rid in old_ids if rid not in new_ids]
@@ -193,15 +204,17 @@ class DOMNormalizer:
     def _detect_removed_ids(
         self,
         active_raw: List[tuple],
-        newly_processed: List[CanonicalMessage],
+        current_result: List[CanonicalMessage],
     ) -> List[str]:
         """检测本轮被替换的消息 ID。
 
         当 active_raw 区间的消息 ID 与 _processed_cache 中同 ordinal 位置的
         消息 ID 不同时，说明 DOM 发生了整批替换，旧 ID 应标记为移除。
+        注意：工具回流会在绑定阶段追加 msg_user_*/msg_fb_tool_* 等派生消息，
+        删除检测必须基于最终 result，而不能只看 newly_processed 的原始 DOM 消息。
         """
         active_ordinals = {ordinal for ordinal, _ in active_raw}
-        new_ids = {m.id for m in newly_processed}
+        new_ids = {m.id for m in current_result}
         removed = []
         for msg_id, cached_msg in list(self._processed_cache.items()):
             if cached_msg.ordinal in active_ordinals and msg_id not in new_ids:
@@ -219,6 +232,7 @@ class DOMNormalizer:
         messages: List[CanonicalMessage],
         conversation_id: str,
         round_id: str,
+        log_message_ids: Optional[Set[str]] = None,
     ):
         """服务端绑定：将工具回流消息的 tool_result 绑定到 AI 消息的 tool_call segment。
 
@@ -233,6 +247,12 @@ class DOMNormalizer:
         ai_tool_call_map: Dict[str, CanonicalSegment] = {}
         ai_block_key_map: Dict[str, CanonicalSegment] = {}
         bound_seg_set = set()
+        bound_message_count = 0
+        bound_result_count = 0
+        fallback_message_count = 0
+        fallback_result_count = 0
+        extracted_user_count = 0
+        active_detail_count = 0
         for msg in messages:
             if msg.role != "AI":
                 continue
@@ -250,11 +270,16 @@ class DOMNormalizer:
         for msg in messages:
             if msg.role != "User":
                 continue
-            if msg.extra.get("_hidden"):
+            if log_message_ids is not None and msg.id not in log_message_ids:
+                continue
+            if msg.extra.get("_hidden") and not msg.extra.get("_tool_feedback"):
                 continue
             has_tool_result = any(s.type in ("tool_result", "tool_call") for s in msg.segments)
             if not has_tool_result:
                 continue
+
+            for flag in ("_hidden", "_tool_feedback", "_fallback_all_split"):
+                msg.extra.pop(flag, None)
 
             user_message_segs = [s for s in msg.segments if s.type == "user_message"]
             tool_result_segs = [s for s in msg.segments if s.type == "tool_result"]
@@ -273,11 +298,13 @@ class DOMNormalizer:
                     unmatched_results.append(tr_seg)
                     continue
 
+                self._strip_bound_results_from_segment(target_seg, msg.id)
                 if "_bound_results" not in target_seg.extra:
                     target_seg.extra["_bound_results"] = []
                 target_seg.extra["_bound_results"].append(tr_seg.to_dict())
                 bound_seg_set.add(id(target_seg))
                 bound_count += 1
+                bound_result_count += 1
 
             # 第二轮：顺序匹配兜底 — 在紧邻的前一条 AI 消息内配对
             if unmatched_results:
@@ -285,10 +312,14 @@ class DOMNormalizer:
                     messages, msg_index, msg,
                 )
                 if prev_ai_msg is not None:
+                    for seg in prev_ai_msg.segments:
+                        if self._is_tool_call_anchor(seg):
+                            self._strip_bound_results_from_segment(seg, msg.id)
                     unbound_in_prev = [
                         s for s in prev_ai_msg.segments
                         if self._is_tool_call_anchor(s)
                         and id(s) not in bound_seg_set
+                        and not s.extra.get("_bound_results")
                     ]
                     if len(unbound_in_prev) == len(unmatched_results):
                         for ai_seg, tr_seg in zip(unbound_in_prev, unmatched_results):
@@ -297,8 +328,10 @@ class DOMNormalizer:
                             ai_seg.extra["_bound_results"].append(tr_seg.to_dict())
                             bound_seg_set.add(id(ai_seg))
                             bound_count += 1
+                            bound_result_count += 1
                         unmatched_results = []
-                        logger.info(
+                        log_fn = logger.info if self._should_log_binding_detail(msg.id, log_message_ids) else logger.debug
+                        log_fn(
                             "[Normalizer] 顺序匹配兜底成功 | msg=%s | prev_ai=%s | matched=%s",
                             msg.id[:12], prev_ai_msg.id[:12], len(unbound_in_prev),
                         )
@@ -311,20 +344,28 @@ class DOMNormalizer:
 
             # 第三轮：最终兜底 — 每个 tool_result 拆为独立 AI 消息
             if unmatched_results:
+                fallback_message_count += 1
+                fallback_result_count += len(unmatched_results)
+                if self._should_log_binding_detail(msg.id, log_message_ids):
+                    active_detail_count += 1
                 for tr_seg in unmatched_results:
                     fallback_msg = self._make_fallback_ai_message(
                         tr_seg, msg.ordinal, conversation_id, round_id,
                     )
                     extra_messages.append(fallback_msg)
-                logger.warning(
+                log_fn = logger.warning if self._should_log_binding_detail(msg.id, log_message_ids) else logger.debug
+                log_fn(
                     "[Normalizer] 工具回流最终兜底：拆分为独立AI消息 | msg=%s | count=%s",
                     msg.id[:12], len(unmatched_results),
                 )
 
             if bound_count > 0:
+                bound_message_count += 1
+                if self._should_log_binding_detail(msg.id, log_message_ids):
+                    active_detail_count += 1
                 msg.extra["_hidden"] = True
                 msg.extra["_tool_feedback"] = True
-                logger.info(
+                logger.debug(
                     "[Normalizer] 工具回流绑定成功 | msg=%s | bound=%s | user_segs=%s",
                     msg.id[:12], bound_count, len(user_message_segs),
                 )
@@ -332,7 +373,8 @@ class DOMNormalizer:
                 msg.extra["_hidden"] = True
                 msg.extra["_tool_feedback"] = True
                 msg.extra["_fallback_all_split"] = True
-                logger.warning(
+                log_fn = logger.warning if self._should_log_binding_detail(msg.id, log_message_ids) else logger.debug
+                log_fn(
                     "[Normalizer] 工具回流全部拆分为独立AI消息 | msg=%s | tool_results=%s",
                     msg.id[:12], len(tool_result_segs),
                 )
@@ -344,10 +386,24 @@ class DOMNormalizer:
                         user_content, msg.ordinal, conversation_id, round_id,
                     )
                     extra_messages.append(user_msg)
+                    extracted_user_count += 1
+                    if self._should_log_binding_detail(msg.id, log_message_ids):
+                        active_detail_count += 1
 
         if extra_messages:
             messages.extend(extra_messages)
             messages.sort(key=lambda m: m.ordinal)
+
+        if bound_message_count or fallback_message_count or extracted_user_count:
+            log_fn = logger.info if log_message_ids is None or active_detail_count else logger.debug
+            log_fn(
+                "[Normalizer] 工具回流绑定汇总 | bound_msgs=%s | bound_results=%s | fallback_msgs=%s | fallback_results=%s | extracted_users=%s",
+                bound_message_count,
+                bound_result_count,
+                fallback_message_count,
+                fallback_result_count,
+                extracted_user_count,
+            )
 
         for msg in messages:
             if msg.role != "AI":
@@ -365,6 +421,40 @@ class DOMNormalizer:
             if new_hash != old_hash:
                 msg.content_hash = new_hash
                 msg.rev += 1
+
+        for msg in messages:
+            prev = self._processed_cache.get(msg.id)
+            if prev is None:
+                if msg.rev < 1:
+                    msg.rev = 1
+                continue
+            if prev.content_hash == msg.content_hash:
+                msg.rev = prev.rev
+            else:
+                msg.rev = prev.rev + 1
+
+    @staticmethod
+    def _should_log_binding_detail(message_id: str, log_message_ids: Optional[Set[str]]) -> bool:
+        return log_message_ids is None or message_id in log_message_ids
+
+    @staticmethod
+    def _strip_bound_results_from_segment(seg: CanonicalSegment, source_message_id: str) -> bool:
+        """Remove previous bindings from the same feedback message before re-binding it."""
+        bound = seg.extra.get("_bound_results")
+        if not bound:
+            return False
+        kept = [
+            item for item in bound
+            if str((item or {}).get("message_id", "") or "") != source_message_id
+        ]
+        if len(kept) == len(bound):
+            return False
+        if kept:
+            seg.extra["_bound_results"] = kept
+        else:
+            seg.extra.pop("_bound_results", None)
+        seg.content_hash = seg.compute_content_hash()
+        return True
 
     @staticmethod
     def _is_tool_call_anchor(seg: CanonicalSegment) -> bool:
@@ -534,8 +624,9 @@ class DOMNormalizer:
         prev_cached = self._processed_cache.get(message_id)
         if prev_raw_hash == content_hash and prev_cached is not None:
             rev = prev_cached.rev
-            msg = prev_cached
+            msg = copy.deepcopy(prev_cached)
             msg.ordinal = ordinal
+            msg.index = ordinal + 1
         else:
             rev = (prev_cached.rev + 1) if prev_cached else 1
             msg = CanonicalMessage(
@@ -551,6 +642,7 @@ class DOMNormalizer:
                 raw_len=raw_len,
                 index=ordinal + 1,
             )
+        setattr(msg, "_raw_content_hash", content_hash)
         return msg
 
     def _normalize_segment(

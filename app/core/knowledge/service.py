@@ -88,7 +88,7 @@ class KnowledgeServiceV2:
                 pass
         self._collection = None
         self._file_hashes.clear()
-        self.cache.clear()
+        self.cache.invalidate()
         self.db_path = new_db_path
         if not os.path.exists(new_db_path) or not os.listdir(new_db_path):
             logger.info("[KnowledgeService] 向量库为空，将触发全量索引: %s", new_root)

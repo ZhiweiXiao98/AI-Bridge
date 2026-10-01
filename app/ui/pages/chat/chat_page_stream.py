@@ -12,6 +12,7 @@ class ChatPageStreamManager(QObject):
         self._message_area = message_area
         self._stream_manager = None
         self._active_conv_hook = None
+        self._ended_stream_ids = set()
 
     def set_active_conv_hook(self, hook):
         self._active_conv_hook = hook
@@ -40,10 +41,12 @@ class ChatPageStreamManager(QObject):
 
     def _normalize(self, chunk):
         if isinstance(chunk, dict):
-            status = str(chunk.get("status", "") or "").lower()
+            raw_status = chunk.get("status", "")
+            status = str(getattr(raw_status, "value", raw_status) or "").lower()
             return {
                 "stream_id": chunk.get("stream_id", "") or "",
                 "content": chunk.get("content", "") or "",
+                "thinking_content": chunk.get("thinking_content", "") or "",
                 "status": status,
                 "error_message": chunk.get("error_message", "") or "",
                 "conversation_id": chunk.get("conversation_id", "") or "",
@@ -57,6 +60,7 @@ class ChatPageStreamManager(QObject):
         return {
             "stream_id": getattr(chunk, "stream_id", "") or "",
             "content": getattr(chunk, "content", "") or "",
+            "thinking_content": getattr(chunk, "thinking_content", "") or "",
             "status": status,
             "error_message": getattr(chunk, "error_message", "") or "",
             "conversation_id": getattr(chunk, "conversation_id", "") or "",
@@ -74,15 +78,26 @@ class ChatPageStreamManager(QObject):
             logger.warning("[ChatPageStream] stream_manager 未初始化")
             return
 
+        if not data["stream_id"] or data["stream_id"] in self._ended_stream_ids:
+            return
         if data["status"] in (StreamStatus.STARTED.value, "started"):
+            if getattr(self._stream_manager, "_active_stream_id", None) == data["stream_id"]:
+                return
             logger.info(f"[ChatPageStream] 流式开始 | stream_id={data['stream_id']}")
             self._stream_manager.begin_stream(data["stream_id"], data["conversation_id"])
         elif data["status"] in (StreamStatus.STREAMING.value, "streaming"):
-            logger.debug(f"[ChatPageStream] 接收流式数据 | stream_id={data['stream_id']} | len={len(data['content'])}")
-            self._stream_manager.append_text(data["stream_id"], data["content"])
-        elif data["status"] in (StreamStatus.CANCELLED.value, "cancelled"):
-            logger.info(f"[ChatPageStream] 流式被取消 | stream_id={data['stream_id']}")
-            self._stream_manager.end_stream(data["stream_id"], cancelled=True)
+            logger.debug(
+                "[ChatPageStream] 接收流式数据 | stream_id=%s | text_len=%d | thinking_len=%d",
+                data["stream_id"],
+                len(data["content"]),
+                len(data["thinking_content"]),
+            )
+            if data["thinking_content"]:
+                self._stream_manager.append_thinking(data["stream_id"], data["thinking_content"])
+            if data["content"]:
+                self._stream_manager.append_text(data["stream_id"], data["content"])
+        elif data["status"] in {StreamStatus.COMPLETED.value, StreamStatus.ERROR.value, StreamStatus.CANCELLED.value}:
+            self._on_stream_status(chunk)
 
     def _on_stream_status(self, chunk):
         data = self._normalize(chunk)
@@ -96,9 +111,15 @@ class ChatPageStreamManager(QObject):
             logger.warning("[ChatPageStream] stream_manager 未初始化")
             return
 
+        if not data["stream_id"] or data["stream_id"] in self._ended_stream_ids:
+            return
+        if data["status"] in {StreamStatus.COMPLETED.value, StreamStatus.ERROR.value, StreamStatus.CANCELLED.value}:
+            self._ended_stream_ids.add(data["stream_id"])
         if data["status"] in (StreamStatus.COMPLETED.value, "completed"):
             logger.info(f"[ChatPageStream] 流式完成 | stream_id={data['stream_id']}")
             self._stream_manager.end_stream(data["stream_id"])
+        elif data["status"] in (StreamStatus.CANCELLED.value, "cancelled"):
+            self._stream_manager.end_stream(data["stream_id"], cancelled=True)
         elif data["status"] in (StreamStatus.ERROR.value, "error"):
             logger.error(f"[ChatPageStream] 流式错误 | stream_id={data['stream_id']} | error={data['error_message']}")
             self._stream_manager.end_stream(data["stream_id"], error_message=data["error_message"])

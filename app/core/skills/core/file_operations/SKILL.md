@@ -8,6 +8,15 @@ version: 2.2.1
 author: System
 dangerous: false
 enabled: true
+summary: >
+  读写、编辑、列出项目目录内的文件。支持读取（read_file/read_lines/read_file_tail）、
+  写入（write_file/append_file）、精准编辑（replace_in_file/replace_lines/replace_between/
+  replace_section）、插入（insert_after/insert_before/insert_at_line）、
+  删除（delete_lines/delete_text/delete_between/remove_section）、
+  查询（list_files/file_exists/stat_file/search_symbols）。
+  大文件先用 stat_file 获取结构，再用 search_symbols 定位，最后 read_lines 局部读取。
+  写入前必须完整理解上下文，写入后验证 Verified 字段。
+  调用格式：tool_call { "name": "file_operations", "arguments": { "operation": "操作名", ...参数 } }
 ---
 
 # 文件操作
@@ -144,10 +153,10 @@ enabled: true
 4. **原子写入**：`write_file`、插入、替换默认采用原子写入，减少中途中断把文件写坏的风险
 5. **小步编辑**：优先用追加、替换、插入，而不是反复整文件重写
 6. **路径重定向**：支持旧路径自动映射到新路径
-7. **完整读取，绝不盲判**：  
-   - 在做任何覆盖性或结构性修改之前，必须尽可能完整读取目标文件（使用`read_file`或多次`read_lines`分段读取）  
-   - 不允许仅凭片段判断或修改推断，须确保上下文完整性与一致性    
-   - 如单次无法完整读取，需多次分段组合后确认全局结构  
+7. **完整读取，绝不盲判**：
+   - 在做任何覆盖性或结构性修改之前，必须尽可能完整读取目标文件（使用`read_file`或多次`read_lines`分段读取）
+   - 不允许仅凭片段判断或修改推断，须确保上下文完整性与一致性
+   - 如单次无法完整读取，需多次分段组合后确认全局结构
    - 牢记：“No Full Read, No Write” 是唯一安全底线
 8. **先用 `stat_file` 再深入读取**：面对大文件、陌生文件或核心代码文件时，先用 `stat_file` 获取结构摘要，再决定读哪些区段
 9. **高风险操作优先显式确认参数**：若操作可能触发大删除、近空结果、内容坍缩风险，应优先改用更小步操作；确属用户明确要求时，再显式传入 `confirm_large_delete=True` / `allow_near_empty_result=True`
@@ -220,50 +229,50 @@ enabled: true
 ### 场景一：大文件修改操作流程
 
 > 推荐先执行：`stat_file -> search_symbols -> read_lines -> 精准编辑 -> 再验证`。
-> 
+>
 > 对 Python 大文件，`stat_file` 会提示使用 `search_symbols` 获取完整结构：
 > - 所有类、函数、方法的精确行号范围
 > - 类的继承关系和所有方法列表
 > - 无截断、无省略的完整符号索引
-> 
+>
 > 对 Markdown 文档，`search_symbols` 可以：
 > - 提取所有章节标题及其层级
 > - 精确定位每个标题所在行号
 > - 快速了解文档结构
-> 
+>
 > 这样 AI 不必在 2000 行文件里从头盲找实现入口。
 
 针对大文件，**尽量避免一上来就用 `read_file` 读取全文**，默认最大读取 1000 行，且大文件会被截断，截断后盲测猜测极易出错。推荐步骤：
 
-1. 预检文件存在性：  
+1. 预检文件存在性：
    `file_operations(operation="file_exists", path=...)`
 
-2. 快速定位文件大小或结构：  
+2. 快速定位文件大小或结构：
    通过 `stat_file` 获得文件大小等辅助信息
 
-3. 按需分段读取关键区域：  
-   - 先用 `read_lines` 读取目标区域上下文  
+3. 按需分段读取关键区域：
+   - 先用 `read_lines` 读取目标区域上下文
    - 或用 `read_file_tail` 读取文件尾部做定位
 
 4. 精准定位修改点，读取附近上下文确认
 
-5. 采取精准修改操作，如：  
-   - 按行替换：`replace_lines`  
+5. 采取精准修改操作，如：
+   - 按行替换：`replace_lines`
    - 按文本区块替换：`replace_between`
 
 6. 操作后再次验证内容正确性，确认 `validate_code=True` 以保证语法正确
 
 ### 场景二：追加型文件修改流程
 
-1. 预检文件存在性：`file_exists`  
-2. 用 `read_file_tail` 查看文件尾部，避免重复追加  
-3. 用 `append_file` 追加，默认防重复，可用 `allow_duplicate_append=True` 强制追加  
+1. 预检文件存在性：`file_exists`
+2. 用 `read_file_tail` 查看文件尾部，避免重复追加
+3. 用 `append_file` 追加，默认防重复，可用 `allow_duplicate_append=True` 强制追加
 4. 追加后用 `read_file_tail` 验证
 
 ### 其他常见场景
 
-- 指定文本替换，需先用 `read_lines` 定位旧文本  
-- 插入内容用 `insert_after` / `insert_before`，避免插入破坏代码结构  
+- 指定文本替换，需先用 `read_lines` 定位旧文本
+- 插入内容用 `insert_after` / `insert_before`，避免插入破坏代码结构
 - 大范围删除需开启安全确认参数
 
 ---

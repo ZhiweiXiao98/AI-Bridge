@@ -1,9 +1,9 @@
 # filename: app/ui/components/chat.py
 import re
 import json
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, 
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFrame, QPushButton,
                                QLabel, QApplication, QMenu, QSpinBox, QTextBrowser,
-                               QSizePolicy, QCheckBox, QPlainTextEdit)
+                               QSizePolicy, QCheckBox, QPlainTextEdit, QScrollArea)
 from PySide6.QtCore import Qt, Signal, QThread, QTimer
 from PySide6.QtGui import QFont, QColor, QCursor, QDesktopServices
 from .editor import CodeBox
@@ -64,6 +64,10 @@ def _try_build_tool_call_box_from_code_seg(seg):
     if str(seg.get('type', '') or '').strip().lower() != 'code':
         return None
     lang = str(seg.get('language', '') or '').strip().lower()
+    tool_call_id = str(seg.get('tool_call_id') or '').strip()
+    has_bound_results = isinstance(seg.get('_bound_results'), list) and bool(seg.get('_bound_results'))
+    if lang != 'tool_call' and not tool_call_id and not has_bound_results:
+        return None
     raw_text = str(seg.get('content', '') or '').strip()
     if not raw_text:
         return None
@@ -74,9 +78,6 @@ def _try_build_tool_call_box_from_code_seg(seg):
     if not isinstance(parsed, dict):
         return None
     if 'name' not in parsed or 'arguments' not in parsed:
-        return None
-    tool_call_id = str(seg.get('tool_call_id') or '').strip()
-    if lang != 'tool_call' and not tool_call_id and not seg.get('_bound_results'):
         return None
     normalized_seg = {
         'type': 'tool_call',
@@ -89,11 +90,31 @@ def _try_build_tool_call_box_from_code_seg(seg):
     }
     return _build_bound_tool_box(normalized_seg, [])
 
+
+def _code_seg_should_render_as_tool_call(seg):
+    if not isinstance(seg, dict):
+        return False
+    if str(seg.get('type', '') or '').strip().lower() != 'code':
+        return False
+    lang = str(seg.get('language', '') or '').strip().lower()
+    tool_call_id = str(seg.get('tool_call_id') or '').strip()
+    has_bound_results = isinstance(seg.get('_bound_results'), list) and bool(seg.get('_bound_results'))
+    if lang != 'tool_call' and not tool_call_id and not has_bound_results:
+        return False
+    raw_text = str(seg.get('content', '') or '').strip()
+    if not raw_text:
+        return False
+    try:
+        parsed = json.loads(raw_text)
+    except Exception:
+        return False
+    return isinstance(parsed, dict) and 'name' in parsed and 'arguments' in parsed
+
 class ResizableTextBrowser(QTextBrowser):
     def __init__(self, text, parent=None):
         super().__init__(parent)
         self.raw_text = text
-        
+
         self.setReadOnly(True)
         self.setOpenExternalLinks(True)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -103,29 +124,29 @@ class ResizableTextBrowser(QTextBrowser):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.document().setDocumentMargin(0)
         self.textChanged.connect(self.adjust_height)
-        
+
         theme_manager.theme_changed.connect(self.apply_theme)
         self.apply_theme()
-    
+
     def apply_theme(self):
         p = theme_manager.get_palette()
         is_light = p.BG_PRIMARY.upper().startswith("#F")
-        
+
         formatted = self.raw_text.replace("\n", "<br>")
         formatted = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', formatted)
-        
+
         if is_light:
             formatted = re.sub(r'background-color:\s*#[0-9a-fA-F]{6};?', '', formatted)
             formatted = re.sub(r'background-color:\s*rgb\([^)]+\);?', '', formatted)
             formatted = re.sub(r'color:\s*#d1d5db;?', f'color: {p.TEXT_PRIMARY};', formatted)
-        
-        self.setHtml(f"<div style='font-family: Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Segoe UI Symbol, Segoe UI, sans-serif; font-size: 14px; line-height: 1.6; color: {p.TEXT_PRIMARY};'>{formatted}</div>")
+
+        self.setHtml(f"<div style='font-family: Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, Segoe UI Symbol, Segoe UI, sans-serif; font-size: 13px; line-height: 1.45; color: {p.TEXT_PRIMARY};'>{formatted}</div>")
         self.adjust_height()
 
     def adjust_height(self):
         doc_height = self.document().size().height()
-        self.setFixedHeight(int(doc_height + 15)) 
-    
+        self.setFixedHeight(int(doc_height + 10))
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.adjust_height()
@@ -137,12 +158,15 @@ class ResizableTextBrowser(QTextBrowser):
 class ToolCallCard(QFrame):
     def __init__(self, tool_name: str, arguments_text: str, result_text: str = '', status_text: str = '', success: bool | None = None, tool_call_id: str = '', parent=None):
         super().__init__(parent)
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.tool_name = tool_name or 'unknown'
         self.arguments_text = arguments_text or '(无参数)'
         self.result_text = result_text or ''
         self.status_text = status_text or ''
         self.success = success
         self.tool_call_id = str(tool_call_id or '').strip()
+        self.is_expanded = False
         self._init_ui()
         theme_manager.theme_changed.connect(self.apply_theme)
         self.apply_theme()
@@ -153,34 +177,107 @@ class ToolCallCard(QFrame):
         layout.setSpacing(6)
 
         self.header = QFrame()
+        self.header.setMinimumWidth(0)
+        self.header.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         header_layout = QHBoxLayout(self.header)
-        header_layout.setContentsMargins(10, 8, 10, 8)
+        header_layout.setContentsMargins(8, 5, 8, 5)
+        header_layout.setSpacing(4)
 
-        self.title_lbl = QLabel(f'⚙️ 调用工具: {self.tool_name}')
-        header_layout.addWidget(self.title_lbl)
-        header_layout.addStretch()
+        self.toggle_btn = QPushButton('▶')
+        self.toggle_btn.setFixedSize(24, 24)
+        self.toggle_btn.setStyleSheet('font-size: 14px;')
+        self.toggle_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.toggle_btn.clicked.connect(self.toggle_view)
+        header_layout.addWidget(self.toggle_btn)
 
-        self.copy_btn = QPushButton('📋 复制')
+        self.title_lbl = QLabel(self._build_title())
+        self.title_lbl.setMinimumWidth(20)
+        self.title_lbl.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        header_layout.addWidget(self.title_lbl, 1)
+
+        self.copy_btn = QPushButton('📋')
+        self.copy_btn.setFixedSize(24, 24)
+        self.copy_btn.setToolTip('复制')
         self.copy_btn.clicked.connect(self.copy_content)
         header_layout.addWidget(self.copy_btn)
         layout.addWidget(self.header)
 
         self.args_box = QPlainTextEdit()
+        self.args_box.setMinimumWidth(0)
+        self.args_box.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.args_box.setReadOnly(True)
         self.args_box.setPlainText(f'参数:\n{self.arguments_text}')
+        self.args_box.setVisible(False)
         self.args_box.setMaximumHeight(120)
         layout.addWidget(self.args_box)
 
         self.status_lbl = QLabel(self.status_text)
-        self.status_lbl.setVisible(bool(self.status_text.strip()))
+        self.status_lbl.setVisible(False)
         layout.addWidget(self.status_lbl)
 
         self.result_box = QPlainTextEdit()
+        self.result_box.setMinimumWidth(0)
+        self.result_box.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.result_box.setReadOnly(True)
         self.result_box.setPlainText(self.result_text)
-        self.result_box.setVisible(bool(self.result_text.strip()))
+        self.result_box.setVisible(False)
         self.result_box.setMaximumHeight(220)
         layout.addWidget(self.result_box)
+
+    def _build_title(self):
+        # 状态图标
+        if self.success is True:
+            icon = '✅'
+        elif self.success is False:
+            icon = '❌'
+        else:
+            icon = '⏳'
+        # 操作摘要：从参数中提取关键信息
+        summary = self._extract_summary()
+        parts = [f'{icon} {self.tool_name}']
+        if summary:
+            parts.append(summary)
+        if self.status_text:
+            parts.append(self.status_text)
+        return ' · '.join(parts)
+
+    def _extract_summary(self) -> str:
+        """从参数文本中提取简短摘要，让用户一眼看出做了什么"""
+        text = self.arguments_text or ''
+        if not text or text == '(无参数)':
+            return ''
+        # 尝试提取 path / operation 等关键字段
+        summary_parts = []
+        for line in text.split('\n'):
+            line = line.strip().lstrip('- ')
+            if ':' in line:
+                key, _, val = line.partition(':')
+                key = key.strip().lower()
+                val = val.strip()
+                if key == 'operation':
+                    summary_parts.insert(0, val)
+                elif key == 'path':
+                    # 只取文件名部分，避免太长
+                    short_path = val.split('/')[-1] if '/' in val else val
+                    summary_parts.append(short_path)
+                elif key == 'query' and not summary_parts:
+                    summary_parts.append(val[:30])
+        if summary_parts:
+            return ' → '.join(summary_parts[:3])
+        # 兜底：取第一行前 40 字符
+        first_line = text.split('\n')[0].strip().lstrip('- ')
+        return first_line[:40] if first_line else ''
+
+    def _refresh_title(self):
+        self.title_lbl.setText(self._build_title())
+        self.toggle_btn.setText('▼' if self.is_expanded else '▶')
+
+    def toggle_view(self):
+        self.is_expanded = not self.is_expanded
+        self.args_box.setVisible(self.is_expanded)
+        self.status_lbl.setVisible(self.is_expanded and bool(self.status_text.strip()))
+        self.result_box.setVisible(self.is_expanded and bool(self.result_text.strip()))
+        self._refresh_title()
 
     def copy_content(self):
         merged = f'参数:\n{self.arguments_text}'
@@ -195,12 +292,14 @@ class ToolCallCard(QFrame):
     def set_status_text(self, text: str):
         self.status_text = str(text or '').strip()
         self.status_lbl.setText(self.status_text)
-        self.status_lbl.setVisible(bool(self.status_text))
+        self.status_lbl.setVisible(self.is_expanded and bool(self.status_text))
+        self._refresh_title()
 
     def set_result_text(self, text: str):
         self.result_text = str(text or '')
         self.result_box.setPlainText(self.result_text)
-        self.result_box.setVisible(bool(self.result_text.strip()))
+        self.result_box.setVisible(self.is_expanded and bool(self.result_text.strip()))
+        self._refresh_title()
 
     def set_success(self, success):
         self.success = success
@@ -237,8 +336,12 @@ class ToolCallCard(QFrame):
             f'background-color: {p.BG_TERTIARY}; border: none; border-top-left-radius: 8px; border-top-right-radius: 8px;'
         )
         self.title_lbl.setStyleSheet(f'color: {p.ACCENT_PRIMARY}; font-weight: bold; border: none;')
+        self.toggle_btn.setStyleSheet(
+            f'QPushButton {{ border: none; color: {p.ACCENT_PRIMARY}; background: transparent; font-weight: bold; }} '
+            f'QPushButton:hover {{ color: {p.TEXT_PRIMARY}; }}'
+        )
         self.copy_btn.setStyleSheet(
-            f'QPushButton {{ border: none; color: {p.TEXT_SECONDARY}; background: transparent; }} '
+            f'QPushButton {{ border: none; color: {p.TEXT_SECONDARY}; background: transparent; font-size: 10px; }} '
             f'QPushButton:hover {{ color: {p.TEXT_PRIMARY}; }}'
         )
         self.status_lbl.setStyleSheet(f'color: {p.TEXT_SECONDARY}; padding: 2px 8px; border: none;')
@@ -322,8 +425,6 @@ class ToolResultBox(QFrame):
         )
 
 class ChatBubble(QWidget):
-    request_set_snapshot = Signal(int)
-    request_correct_turn = Signal(object, int)
     request_remote_action = Signal(int, int, int)
     request_code_apply = Signal(str, str)
     request_discard_relay = Signal(str, str)
@@ -338,57 +439,103 @@ class ChatBubble(QWidget):
         self.message_id = str(message_data.get('id', '')) if isinstance(message_data, dict) else ''
         self.selection_mode = False
         self.selected = False
-        self.layout = QHBoxLayout(self); self.layout.setContentsMargins(15, 8, 15, 8)
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        self.layout = QHBoxLayout(self); self.layout.setContentsMargins(10, 5, 10, 5)
         self.current_data = None
         self._tool_cards_by_id = {}
         self.container = QFrame()
-        self.c_layout = QVBoxLayout(self.container); self.c_layout.setContentsMargins(12, 12, 12, 12); self.c_layout.setSpacing(8)
+        self.container.setMinimumWidth(0)
+        self.container.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Minimum)
+        self.c_layout = QVBoxLayout(self.container); self.c_layout.setContentsMargins(10, 8, 10, 8); self.c_layout.setSpacing(5)
         self.container.setMaximumWidth(1600)
         self.container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        
+
         self.meta_box = QWidget()
+        self.meta_box.setMinimumWidth(0)
+        self.meta_box.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         meta_layout = QHBoxLayout(self.meta_box); meta_layout.setContentsMargins(0,0,0,0); meta_layout.setSpacing(5)
-        
+
         self.turn_box = QSpinBox()
+        self.turn_box.setMinimumWidth(32)
+        self.turn_box.setMaximumWidth(48)
         self.turn_box.setRange(0, 999999)
         self.turn_box.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
         self.turn_box.setPrefix("Turn ")
-        self.turn_box.setKeyboardTracking(False)
-        self.turn_box.valueChanged.connect(self.on_val_changed)
-        
-        self.ok_btn = QPushButton("✔")
-        self.ok_btn.setFixedSize(20, 20)
-        self.ok_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.ok_btn.clicked.connect(self.on_turn_confirm)
-        
-        self.snap_btn = QPushButton("⛳")
-        self.snap_btn.setFixedSize(20, 20)
-        self.snap_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.snap_btn.clicked.connect(self.on_snap_clicked)
+        self.turn_box.setReadOnly(True)
+        self.turn_box.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.select_box = QCheckBox()
         self.select_box.setVisible(False)
         self.select_box.toggled.connect(self._on_selection_toggled)
 
+        self._content_scroll = None
+        self._expand_btn = None
+        self._copy_btn = None
+        self._is_expanded = False
+        self._COLLAPSE_HEIGHT = 900
+
         if is_user:
-            self.layout.addStretch(1) 
-            self.layout.addWidget(self.container, 3) 
-            meta_layout.addStretch(); meta_layout.addWidget(self.select_box); meta_layout.addWidget(self.turn_box); meta_layout.addWidget(self.ok_btn); meta_layout.addWidget(self.snap_btn)
+            # 用户气泡：用 QScrollArea 包裹 container，支持长消息折叠滚动
+            self._content_scroll = QScrollArea()
+            self._content_scroll.setWidget(self.container)
+            self._content_scroll.setWidgetResizable(True)
+            self._content_scroll.setFrameShape(QFrame.Shape.NoFrame)
+            self._content_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            self._content_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+            self._content_scroll.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+            self._content_scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+
+            # 底部操作栏：展开 + 复制
+            self._expand_btn = QPushButton("展开 ▼")
+            self._expand_btn.setFixedHeight(24)
+            self._expand_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            self._expand_btn.clicked.connect(self._toggle_expand)
+            self._expand_btn.setVisible(False)
+
+            self._copy_btn = QPushButton("复制")
+            self._copy_btn.setFixedHeight(24)
+            self._copy_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            self._copy_btn.clicked.connect(self._copy_user_message)
+            self._copy_btn.setVisible(False)
+
+            action_row = QWidget()
+            action_row_layout = QHBoxLayout(action_row)
+            action_row_layout.setContentsMargins(0, 0, 0, 0)
+            action_row_layout.setSpacing(6)
+            action_row_layout.addWidget(self._expand_btn)
+            action_row_layout.addWidget(self._copy_btn)
+            action_row_layout.addStretch()
+            self._action_row = action_row
+
+            wrapper = QWidget()
+            wrapper.setMinimumWidth(0)
+            wrapper.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+            wrapper_layout = QVBoxLayout(wrapper)
+            wrapper_layout.setContentsMargins(0, 0, 0, 0)
+            wrapper_layout.setSpacing(2)
+            # meta_box 放在滚动区外面，不跟随滚动
+            wrapper_layout.addWidget(self.meta_box)
+            wrapper_layout.addWidget(self._content_scroll)
+            wrapper_layout.addWidget(action_row)
+
+            self.layout.addStretch(1)
+            self.layout.addWidget(wrapper, 3)
+            meta_layout.addStretch(); meta_layout.addWidget(self.select_box); meta_layout.addWidget(self.turn_box)
         else:
-            self.layout.addWidget(self.container, 3) 
-            self.layout.addStretch(1) 
-            meta_layout.addWidget(self.snap_btn); meta_layout.addWidget(self.ok_btn); meta_layout.addWidget(self.turn_box); meta_layout.addWidget(self.select_box); meta_layout.addStretch()
-        
-        self.c_layout.addWidget(self.meta_box)
-        
+            self.layout.addWidget(self.container, 3)
+            self.layout.addStretch(1)
+            meta_layout.addWidget(self.turn_box); meta_layout.addWidget(self.select_box); meta_layout.addStretch()
+            self.c_layout.addWidget(self.meta_box)
+
         theme_manager.theme_changed.connect(self.apply_theme)
         self.apply_theme()
-        
+
         self.update_content(message_data, index)
 
     def apply_theme(self):
         p = theme_manager.get_palette()
-        
+
         if self.is_user:
             bg = p.ACCENT_PRIMARY
             color = "white"
@@ -397,24 +544,69 @@ class ChatBubble(QWidget):
             bg = p.BG_SECONDARY
             color = p.TEXT_PRIMARY
             self.turn_box.setStyleSheet(f"background: transparent; border: none; font-weight: bold; font-family: Consolas; font-size: 10px; color: {p.TEXT_SECONDARY};")
-            
+
         border = p.ACCENT_PRIMARY if self.selected else 'transparent'
-        self.container.setStyleSheet(f"QFrame {{ background-color: {bg}; color: {color}; border-radius: 12px; border: 2px solid {border}; }}")
-        
-        self.ok_btn.setStyleSheet(f"QPushButton {{ border: 1px solid {p.BORDER}; border-radius: 10px; background: {p.BG_TERTIARY}; color: {p.TEXT_SECONDARY}; font-weight: bold; font-size: 10px; }} QPushButton:hover {{ background: {p.BORDER}; color: {p.TEXT_SUCCESS}; }}")
-        self.snap_btn.setStyleSheet(f"QPushButton {{ border: none; background: transparent; color: {p.TEXT_SECONDARY}; }} QPushButton:hover {{ color: {p.TEXT_SUCCESS}; }}")
+        self.container.setStyleSheet(f"QFrame {{ background-color: {bg}; color: {color}; border-radius: 8px; border: 1px solid {border}; }}")
 
-    def on_val_changed(self):
-        p = theme_manager.get_palette()
-        self.ok_btn.setStyleSheet(f"border: 1px solid {p.ACCENT_PRIMARY}; border-radius: 10px; background: {p.BG_TERTIARY}; color: {p.ACCENT_PRIMARY}; font-weight: bold; font-size: 10px;")
+        if self._expand_btn or self._copy_btn:
+            _action_btn_style = f"QPushButton {{ background: {p.BG_TERTIARY}; border: 1px solid {p.BORDER}; border-radius: 4px; color: {p.TEXT_SECONDARY}; font-size: 11px; padding: 2px 10px; }} QPushButton:hover {{ background: {p.BORDER}; color: {p.TEXT_PRIMARY}; }}"
+            if self._expand_btn:
+                self._expand_btn.setStyleSheet(_action_btn_style)
+            if self._copy_btn:
+                self._copy_btn.setStyleSheet(_action_btn_style)
 
-    def on_snap_clicked(self): self.request_set_snapshot.emit(self.index)
-    
-    def on_turn_confirm(self): 
-        self.request_correct_turn.emit(self, self.turn_box.value())
-        p = theme_manager.get_palette()
-        self.ok_btn.setStyleSheet(f"border: 1px solid {p.TEXT_SUCCESS}; border-radius: 10px; background: {p.TEXT_SUCCESS}; color: white; font-weight: bold; font-size: 10px;")
-        QTimer.singleShot(1000, self.apply_theme)
+    def _toggle_expand(self):
+        """切换用户消息的展开/折叠状态。"""
+        if not self._content_scroll:
+            return
+        self._is_expanded = not self._is_expanded
+        if self._is_expanded:
+            # 展开：取消固定高度，让内容完全显示
+            self._content_scroll.setMinimumHeight(0)
+            self._content_scroll.setMaximumHeight(16777215)
+            content_h = self.c_layout.sizeHint().height()
+            margins = self.c_layout.contentsMargins()
+            content_h += margins.top() + margins.bottom()
+            self._content_scroll.setFixedHeight(content_h)
+            self._expand_btn.setText("收起 ▲")
+        else:
+            self._content_scroll.setFixedHeight(self._COLLAPSE_HEIGHT)
+            self._expand_btn.setText("展开 ▼")
+
+    def _copy_user_message(self):
+        """复制用户消息全文到剪贴板。"""
+        text = self._extract_full_message_text(self.current_data)
+        if text:
+            QApplication.clipboard().setText(text)
+
+    def _check_collapse(self):
+        """检查用户消息内容高度，超过阈值则启用折叠。"""
+        if not self._content_scroll or not self.is_user:
+            return
+        # 延迟执行，等布局完成
+        QTimer.singleShot(100, self._do_check_collapse)
+
+    def _do_check_collapse(self):
+        """实际执行折叠检查，基于内容实际高度。"""
+        if not self._content_scroll:
+            return
+        # 获取内容自然高度
+        content_h = self.c_layout.sizeHint().height()
+        margins = self.c_layout.contentsMargins()
+        content_h += margins.top() + margins.bottom()
+        seg_count = self.c_layout.count()
+
+        needs_collapse = content_h > self._COLLAPSE_HEIGHT
+        if needs_collapse:
+            if not self._is_expanded:
+                self._content_scroll.setFixedHeight(self._COLLAPSE_HEIGHT)
+            self._expand_btn.setVisible(True)
+            self._copy_btn.setVisible(True)
+        else:
+            # 不需要折叠：让 scroll area 完全展开到内容高度
+            self._content_scroll.setFixedHeight(max(content_h, 30))
+            self._expand_btn.setVisible(False)
+            self._copy_btn.setVisible(seg_count > 0)
 
     def _on_selection_toggled(self, checked):
         self.selected = bool(checked)
@@ -500,15 +692,28 @@ class ChatBubble(QWidget):
                     return False
             elif seg_type == 'code':
                 if isinstance(widget, CodeBox):
+                    if _code_seg_should_render_as_tool_call(new_seg):
+                        return False
                     old_content = widget.editor.toPlainText() if hasattr(widget, 'editor') else ''
                     if old_content != content:
+                        widget.content = content
                         widget.editor.setPlainText(content)
+                        line_count = content.count('\n') + 1
+                        height = min(400, max(60, line_count * 21 + 20))
+                        widget.editor.setFixedHeight(int(height))
                     new_lang = str(new_seg.get('language', '') or 'Code')
                     tool_meta = new_seg.get('tool_meta') or {}
                     display_title = tool_meta.get('summary') or new_lang
-                    if hasattr(widget, 'title_label'):
-                        widget.title_label.setText(display_title)
+                    widget.language = display_title
+                    if hasattr(widget, '_refresh_toggle_title'):
+                        widget._refresh_toggle_title()
                 elif isinstance(widget, ToolCallCard):
+                    prev_seg = getattr(widget, '_seg_data', {}) if isinstance(getattr(widget, '_seg_data', {}), dict) else {}
+                    if (
+                        _code_seg_should_render_as_tool_call(new_seg)
+                        and str(prev_seg.get('content', '') or '') != content
+                    ):
+                        return False
                     server_bound = new_seg.get('_bound_results') if isinstance(new_seg.get('_bound_results'), list) else []
                     if server_bound:
                         for result in server_bound:
@@ -544,7 +749,8 @@ class ChatBubble(QWidget):
                     widget._seg_data = new_seg
             elif seg_type == 'thinking':
                 if isinstance(widget, ToolResultBox):
-                    widget.content_edit.setPlainText(content)
+                    widget.content = content
+                    widget.body.setPlainText(content)
                 else:
                     return False
 
@@ -587,16 +793,7 @@ class ChatBubble(QWidget):
         self.select_box.setVisible(self.selection_mode)
         if index is not None:
             self.index = index
-            self.turn_box.blockSignals(True); self.turn_box.setValue(index); self.turn_box.blockSignals(False)
-        
-        is_snap = message_data.get('is_snapshot', False) if isinstance(message_data, dict) else False
-        p = theme_manager.get_palette()
-        if is_snap:
-            self.snap_btn.setText("🚩")
-            self.snap_btn.setStyleSheet(f"QPushButton {{ border: 1px solid {p.BTN_WARNING}; background-color: {p.BG_TERTIARY}; border-radius: 10px; color: {p.BTN_WARNING}; }}")
-        else:
-            self.snap_btn.setText("⛳")
-            self.snap_btn.setStyleSheet(f"QPushButton {{ border: none; background: transparent; color: {p.TEXT_SECONDARY}; }} QPushButton:hover {{ color: {p.TEXT_SUCCESS}; }}")
+            self.turn_box.setValue(index)
 
         if self.current_data == message_data:
             return
@@ -616,14 +813,14 @@ class ChatBubble(QWidget):
 
         segments = new_segments
         has_native_blocks = any(isinstance(seg, dict) and seg.get('type') in ['tool_result', 'tool_call', 'thinking'] for seg in segments)
-        
+
         if not has_native_blocks:
             tool_box = self._try_build_tool_result_box(message_data)
             if tool_box is not None:
                 self.c_layout.addWidget(tool_box)
                 return
         if not segments: segments = [{'type': 'text', 'content': "..."}]
-        
+
         total_code_blocks = sum(1 for s in segments if s['type'] == 'code')
         code_count = 0
 
@@ -646,6 +843,24 @@ class ChatBubble(QWidget):
                 tb = ResizableTextBrowser(seg['content'])
                 self.c_layout.addWidget(tb)
             elif seg['type'] == 'code':
+                code_content = str(seg.get('content', '') or '').strip()
+                code_lang = str(seg.get('language', '') or '').strip().lower()
+                if not code_content:
+                    if code_lang == 'tool_call':
+                        tool_call_id = str(seg.get('tool_call_id') or '').strip()
+                        block_key = str(seg.get('block_key') or '').strip()
+                        box = ToolCallCard('', '', tool_call_id=tool_call_id)
+                        if block_key:
+                            self._tool_cards_by_id[block_key] = box
+                        if tool_call_id:
+                            self._tool_cards_by_id[tool_call_id] = box
+                        box._seg_data = seg
+                        self.c_layout.addWidget(box)
+                        code_count += 1
+                    else:
+                        box = CodeBox('代码块内容加载中，稍后展示完整内容。', language=code_lang or 'code', is_ignored=False, is_placeholder=True)
+                        self.c_layout.addWidget(box)
+                    continue
                 tool_call_box = _try_build_tool_call_box_from_code_seg(seg)
                 if tool_call_box is not None:
                     if isinstance(tool_call_box, ToolCallCard):
@@ -733,14 +948,20 @@ class ChatBubble(QWidget):
                     }
                 self.c_layout.addWidget(box)
 
-        # 所有 segments 渲染完毕后，如果只剩 header 控件没有任何内容，隐藏气泡
+        # 所有 segments 渲染完毕后，如果没有任何内容，隐藏气泡
+        # 用户气泡的 meta_box 在 wrapper_layout 中，不在 c_layout 里，阈值为 0
+        # AI 气泡的 meta_box 在 c_layout 中，阈值为 1
         _cc = self.c_layout.count()
         _role = 'User' if self.is_user else 'AI'
-        if _cc <= 1:
+        _empty_threshold = 0 if self.is_user else 1
+        if _cc <= _empty_threshold:
             logger.debug("[诊断] 隐藏空气泡 | idx=%s | role=%s | c_layout_count=%s | seg_count=%s", self.index, _role, _cc, len(segments))
             self.setVisible(False)
         else:
             self.setVisible(True)
+
+        # 用户消息折叠检查
+        self._check_collapse()
 
 
     def find_tool_card(self, tool_call_id: str):

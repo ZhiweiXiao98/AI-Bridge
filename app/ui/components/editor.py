@@ -2,9 +2,9 @@
 import re
 from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout, QLabel, QWidget,
                                QPushButton, QPlainTextEdit, QApplication,
-                               QMessageBox)
+                               QMessageBox, QSizePolicy)
 from PySide6.QtCore import Qt, QSize, Signal, QRect, QTimer
-from PySide6.QtGui import (QColor, QTextCharFormat, QFont, QSyntaxHighlighter, 
+from PySide6.QtGui import (QColor, QTextCharFormat, QFont, QSyntaxHighlighter,
                            QTextCursor, QPainter)
 from app.ui.theme import Theme, Palette, theme_manager
 
@@ -17,7 +17,7 @@ class PythonHighlighter(QSyntaxHighlighter):
     def update_rules(self):
         self.highlighting_rules = []
         p = theme_manager.get_palette()
-        
+
         is_light = p.BG_PRIMARY.upper().startswith("#F") or p.BG_PRIMARY.upper().startswith("#E")
 
         c_keyword = "#C678DD" if not is_light else "#A626A4"
@@ -27,7 +27,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         c_func = "#61AFEF" if not is_light else "#4078F2"
 
         keyword_format = QTextCharFormat()
-        keyword_format.setForeground(QColor(c_keyword)) 
+        keyword_format.setForeground(QColor(c_keyword))
         keyword_format.setFontWeight(QFont.Weight.Bold)
         keywords = [
             "def", "class", "if", "else", "elif", "while", "for", "in", "return",
@@ -39,14 +39,14 @@ class PythonHighlighter(QSyntaxHighlighter):
             self.highlighting_rules.append((pattern, keyword_format))
 
         string_format = QTextCharFormat()
-        string_format.setForeground(QColor(c_string)) 
+        string_format.setForeground(QColor(c_string))
         self.highlighting_rules.append((re.compile(r"\".*\""), string_format))
         self.highlighting_rules.append((re.compile(r"\'.*\'"), string_format))
 
         comment_format = QTextCharFormat()
         comment_format.setForeground(QColor(c_comment))
         self.highlighting_rules.append((re.compile(r"#[^\n]*"), comment_format))
-        
+
         decorator_format = QTextCharFormat()
         decorator_format.setForeground(QColor(c_decorator))
         self.highlighting_rules.append((re.compile(r"@[^\n]*"), decorator_format))
@@ -54,7 +54,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         func_format = QTextCharFormat()
         func_format.setForeground(QColor(c_func))
         self.highlighting_rules.append((re.compile(r"\b[A-Za-z0-9_]+(?=\()"), func_format))
-        
+
         self.rehighlight()
 
     def highlightBlock(self, text):
@@ -76,14 +76,16 @@ class LineNumberArea(QWidget):
 class CodeEditor(QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.setReadOnly(True)
         self.highlighter = PythonHighlighter(self.document())
-        
+
         self.lineNumberArea = LineNumberArea(self)
         self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
         self.updateRequest.connect(self.updateLineNumberArea)
         self.updateLineNumberAreaWidth(0)
-        
+
         theme_manager.theme_changed.connect(self.apply_theme)
         self.apply_theme()
 
@@ -92,10 +94,10 @@ class CodeEditor(QPlainTextEdit):
         is_light = p.BG_PRIMARY.upper().startswith("#F") or p.BG_PRIMARY.upper().startswith("#E")
         bg_color = "#282C34" if not is_light else "#FAFAFA"
         fg_color = "#ABB2BF" if not is_light else "#383A42"
-        
+
         sel_bg = "#3E4451" if not is_light else "#ADD6FF"
         sel_fg = "#FFFFFF" if not is_light else "#000000"
-        
+
         self.setStyleSheet(f"""
             QPlainTextEdit {{
                 background-color: {bg_color};
@@ -127,7 +129,7 @@ class CodeEditor(QPlainTextEdit):
             self.lineNumberArea.scroll(0, dy)
         else:
             self.lineNumberArea.update(0, rect.y(), self.lineNumberArea.width(), rect.height())
-        
+
         if rect.contains(self.viewport().rect()):
             self.updateLineNumberAreaWidth(0)
 
@@ -163,30 +165,32 @@ class CodeEditor(QPlainTextEdit):
             blockNumber += 1
 
 class CodeBox(QFrame):
-    request_ignore = Signal(str) 
-    request_discard = Signal(str, str) 
-    request_undiscard = Signal(str, str) 
+    request_ignore = Signal(str)
+    request_discard = Signal(str, str)
+    request_undiscard = Signal(str, str)
     request_save = Signal(str, str)
     request_remote_toggle = Signal()
     request_apply = Signal(str, str)
 
     def __init__(self, content, filename="code", language="Code", is_ignored=False, is_placeholder=False):
         super().__init__()
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.content = content
         self.language = language
         self.is_ignored_state = is_ignored # 初始化状态
         self.is_placeholder = bool(is_placeholder)
         self._loading_dots = 0
         self._loading_timer = None
-        
+
         if filename == "code":
             self.filename = self._extract_filename(content) or "code"
         else:
             self.filename = filename
-            
-        self.is_expanded = True
+
+        self.is_expanded = bool(self.is_placeholder)
         self.init_ui()
-        
+
         theme_manager.theme_changed.connect(self.apply_theme)
         self.apply_theme()
         if self.is_placeholder:
@@ -207,71 +211,95 @@ class CodeBox(QFrame):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        
+
         self.header = QFrame()
+        self.header.setMinimumWidth(0)
+        self.header.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         h_layout = QHBoxLayout(self.header)
-        h_layout.setContentsMargins(10, 5, 10, 5)
-        
+        h_layout.setContentsMargins(6, 4, 6, 4)
+        h_layout.setSpacing(4)
+
         display_name = self._build_display_name()
-        
-        self.toggle_btn = QPushButton(f"▼ {display_name}")
+
+        self.toggle_btn = QPushButton(f"{'▼' if self.is_expanded else '▶'} {display_name}")
+        self.toggle_btn.setMinimumWidth(60)
+        self.toggle_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.toggle_btn.clicked.connect(self.toggle_view)
-        h_layout.addWidget(self.toggle_btn)
-        
-        h_layout.addStretch()
-        
+        h_layout.addWidget(self.toggle_btn, 1)
+
         self.discard_btn = None
         self.remote_btn = None
         self.apply_btn = None
         self.copy_btn = None
 
         if not self.is_placeholder:
-            btn_text = "♻️ 撤销" if self.is_ignored_state else "🗑️"
+            btn_text = "撤销" if self.is_ignored_state else "删除"
             self.discard_btn = QPushButton(btn_text)
+            self.discard_btn.setMaximumWidth(42)
             self.discard_btn.setToolTip("拉黑/取消拉黑：防止此版本代码再次被识别为更新")
             self.discard_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.discard_btn.clicked.connect(self.on_discard_toggle)
             h_layout.addWidget(self.discard_btn)
 
-            self.remote_btn = QPushButton("🔧")
+            self.remote_btn = QPushButton("远程")
+            self.remote_btn.setMaximumWidth(42)
             self.remote_btn.setToolTip("远程点穴")
             self.remote_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.remote_btn.clicked.connect(lambda: self.request_remote_toggle.emit())
             h_layout.addWidget(self.remote_btn)
 
-            self.apply_btn = QPushButton("⚡ 应用")
+            self.apply_btn = QPushButton("应用")
+            self.apply_btn.setMaximumWidth(42)
             self.apply_btn.setToolTip("应用代码")
             self.apply_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.apply_btn.clicked.connect(self.quick_apply)
             h_layout.addWidget(self.apply_btn)
 
-            self.copy_btn = QPushButton("📋 复制")
+            self.copy_btn = QPushButton("复制")
+            self.copy_btn.setMaximumWidth(42)
             self.copy_btn.setToolTip("复制")
             self.copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.copy_btn.clicked.connect(self.copy_to_clipboard)
             h_layout.addWidget(self.copy_btn)
-        
+
         layout.addWidget(self.header)
-        
+
         self.editor = CodeEditor()
+        self.editor.setMinimumWidth(0)
+        self.editor.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.editor.setPlainText(self.content)
-        
-        doc_height = self.editor.document().size().height()
+
+        # 综合估算高度：行数、字符数、文档渲染高度取最大
         line_count = self.content.count('\n') + 1
-        height = min(400, max(60, line_count * 21 + 20))
+        char_count = len(self.content)
+        by_lines = line_count * 22 + 20
+        # 假设平均每行 80 字符（考虑换行显示）
+        by_chars = max(1, (char_count // 80) + 1) * 22 + 20
+        doc_height = self.editor.document().size().height() + 20
+        height = min(1200, max(100, max(by_lines, by_chars, int(doc_height))))
         self.editor.setFixedHeight(int(height))
-        
+
         layout.addWidget(self.editor)
+        self.editor.setVisible(self.is_expanded)
 
 
     def _build_display_name(self):
-        base = f"💻 {self.language}"
+        base = self.language
         if self.is_placeholder:
             dots = '.' * ((self._loading_dots % 3) + 1)
             return f"{base} · 生成中{dots}"
         if self.filename and self.filename != "code":
-            base += f" | 📄 {self.filename}"
+            base += f" | {self.filename}"
+        line_count = max(1, self.content.count('\n') + 1)
+        char_count = len(self.content)
+        first_line = next((line.strip() for line in self.content.splitlines() if line.strip()), '')
+        if len(first_line) > 56:
+            first_line = first_line[:53].rstrip() + '...'
+        summary = f"{line_count} 行 · {char_count} 字符"
+        if first_line:
+            summary += f" · {first_line}"
+        base += f" | {summary}"
         return base
 
     def _refresh_toggle_title(self):
@@ -289,30 +317,30 @@ class CodeBox(QFrame):
         bg_header = "#21252B" if not is_light else "#E5E5E5"
         border_color = "#181A1F" if not is_light else "#D1D5DB"
         text_color = "#ABB2BF" if not is_light else "#383A42"
-        
+
         self.header.setStyleSheet(f"background-color: {bg_header}; border-top-left-radius: 6px; border-top-right-radius: 6px; border: 1px solid {border_color}; border-bottom: none;")
-        
+
         self.toggle_btn.setStyleSheet(f"""
             QPushButton {{ border: none; color: {text_color}; font-weight: bold; text-align: left; }}
             QPushButton:hover {{ color: {p.ACCENT_PRIMARY}; }}
         """)
-        
+
         if self.discard_btn is not None:
             discard_color = p.TEXT_SUCCESS if self.is_ignored_state else p.TEXT_DANGER
-            self.discard_btn.setStyleSheet(f"border: none; color: {discard_color}; font-size: 14px; margin-right: 10px; font-weight: bold;")
+            self.discard_btn.setStyleSheet(f"border: none; color: {discard_color}; font-size: 11px; margin-right: 4px; font-weight: bold;")
         if self.remote_btn is not None:
-            self.remote_btn.setStyleSheet(f"border: none; color: {p.BTN_WARNING}; font-weight: bold; font-size: 14px; margin-right: 10px;")
+            self.remote_btn.setStyleSheet(f"border: none; color: {p.BTN_WARNING}; font-weight: bold; font-size: 11px; margin-right: 4px;")
         if self.apply_btn is not None:
-            self.apply_btn.setStyleSheet(f"border: none; color: {p.TEXT_SUCCESS}; font-weight: bold; font-size: 11px; margin-right: 10px;")
+            self.apply_btn.setStyleSheet(f"border: none; color: {p.TEXT_SUCCESS}; font-weight: bold; font-size: 11px; margin-right: 4px;")
         if self.copy_btn is not None:
             self.copy_btn.setStyleSheet(f"border: none; color: {p.TEXT_SECONDARY}; font-size: 11px;")
-        
+
         self.editor.setStyleSheet(self.editor.styleSheet() + f"border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; border: 1px solid {border_color}; border-top: none;")
 
     def copy_to_clipboard(self):
         QApplication.clipboard().setText(self.content)
         if self.copy_btn is not None:
-            self.copy_btn.setText(f"✅ 已复制")
+            self.copy_btn.setText("已复制")
         QApplication.processEvents()
 
     def toggle_view(self):
@@ -324,26 +352,26 @@ class CodeBox(QFrame):
         if self.filename == "code":
             self.filename = self._extract_filename(self.content) or "code"
         self.request_apply.emit(self.filename, self.content)
-    
+
     def on_discard_toggle(self):
         if self.filename == "code":
             self.filename = self._extract_filename(self.content) or "code"
-            
+
         p = theme_manager.get_palette()
-        
+
         if not self.is_ignored_state:
             # 状态翻转：执行拉黑
             self.is_ignored_state = True
             self.request_discard.emit(self.filename, self.content)
-            
+
             # 即时 UI 反馈
-            self.discard_btn.setText("♻️ 撤销")
-            self.discard_btn.setStyleSheet(f"border: none; color: {p.TEXT_SUCCESS}; font-size: 11px; margin-right: 10px; font-weight: bold;")
+            self.discard_btn.setText("撤销")
+            self.discard_btn.setStyleSheet(f"border: none; color: {p.TEXT_SUCCESS}; font-size: 11px; margin-right: 4px; font-weight: bold;")
         else:
             # 状态翻转：执行撤销
             self.is_ignored_state = False
             self.request_undiscard.emit(self.filename, self.content)
-            
+
             # 即时 UI 反馈
-            self.discard_btn.setText("🗑️")
-            self.discard_btn.setStyleSheet(f"border: none; color: {p.TEXT_DANGER}; font-size: 14px; margin-right: 10px;")
+            self.discard_btn.setText("删除")
+            self.discard_btn.setStyleSheet(f"border: none; color: {p.TEXT_DANGER}; font-size: 11px; margin-right: 4px;")

@@ -2,8 +2,11 @@
 import pytest
 from app.core.docker_manager import DockerManager
 
+pytestmark = [pytest.mark.docker, pytest.mark.slow]
+
+
 class TestDockerSandbox:
-    
+
     @pytest.fixture
     def manager(self):
         return DockerManager()
@@ -12,10 +15,10 @@ class TestDockerSandbox:
         """测试核心：Base64 注入执行"""
         if not manager.container:
             pytest.skip("Container not running")
-            
+
         # 这段代码完全不依赖挂载，直接在内存中传输
         code = "print('I am running inside Docker without mounting!')"
         exit_code, output = manager.execute_code(code)
-        
+
         assert exit_code == 0
         assert "without mounting" in output

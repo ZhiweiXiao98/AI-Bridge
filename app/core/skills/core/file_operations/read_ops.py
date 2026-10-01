@@ -17,7 +17,7 @@ def _format_numbered_lines(lines: list[str], start_line: int = 1) -> str:
     return chr(10).join(numbered)
 
 
-def _count_python_symbols(text: str) -> dict:
+def _count_python_symbols(text: str, filename: str = "<file-ops-read>") -> dict:
     result = {
         "classes": [],
         "functions": [],
@@ -28,7 +28,7 @@ def _count_python_symbols(text: str) -> dict:
         "total_imports": 0,
     }
     try:
-        tree = ast.parse(text)
+        tree = ast.parse(text, filename=filename)
     except Exception:
         return result
 
@@ -42,19 +42,19 @@ def _extract_markdown_structure(text: str) -> dict:
         'headings': [],
         'total_headings': 0,
     }
-    
+
     for idx, line in enumerate(text.splitlines(), start=1):
         stripped = line.lstrip()
         if not stripped.startswith('#'):
             continue
-        
+
         level = 0
         for ch in stripped:
             if ch == '#':
                 level += 1
             else:
                 break
-        
+
         title = stripped[level:].strip()
         if title:
             result['headings'].append({
@@ -63,54 +63,6 @@ def _extract_markdown_structure(text: str) -> dict:
                 'line': idx,
             })
             result['total_headings'] += 1
-    
-    return result
-
-    for node in tree.body:
-        if isinstance(node, ast.ClassDef):
-            methods = []
-            for item in node.body:
-                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    methods.append(
-                        {
-                            "name": item.name,
-                            "line": getattr(item, "lineno", None),
-                            "async": isinstance(item, ast.AsyncFunctionDef),
-                        }
-                    )
-            result["classes"].append(
-                {
-                    "name": node.name,
-                    "line": getattr(node, "lineno", None),
-                    "end_line": getattr(node, "end_lineno", None),
-                    "bases": [
-                        ast.unparse(base) if hasattr(ast, "unparse") else type(base).__name__
-                        for base in node.bases
-                    ],
-                    "methods": methods,
-                }
-            )
-            result["total_classes"] += 1
-            result["total_methods"] += len(methods)
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            result["functions"].append(
-                {
-                    "name": node.name,
-                    "line": getattr(node, "lineno", None),
-                    "end_line": getattr(node, "end_lineno", None),
-                    "async": isinstance(node, ast.AsyncFunctionDef),
-                }
-            )
-            result["total_functions"] += 1
-        elif isinstance(node, ast.Import):
-            for alias in node.names:
-                result["imports"].append({"module": alias.name, "line": getattr(node, "lineno", None)})
-                result["total_imports"] += 1
-        elif isinstance(node, ast.ImportFrom):
-            mod = node.module or ""
-            imported = ", ".join(alias.name for alias in node.names)
-            result["imports"].append({"module": f"from {mod} import {imported}", "line": getattr(node, "lineno", None)})
-            result["total_imports"] += 1
 
     return result
 
@@ -139,14 +91,14 @@ def _count_markdown_headings(text: str) -> dict:
 def _safe_structure_overview(path: str, text: str) -> dict:
     suffix = Path(path).suffix.lower()
     if suffix == ".py":
-        return _count_python_symbols(text)
+        return _count_python_symbols(text, path)
     if suffix == ".md":
         return _count_markdown_headings(text)
     return {}
 
 
 def read_file(path: str, max_lines: int = 1000) -> str:
-    with open(path, 'r', encoding='utf-8', errors='replace') as f:
+    with open(path, 'r', encoding='utf-8-sig', errors='replace') as f:
         content = f.read()
     lines = content.splitlines()
     total_lines = len(lines)
@@ -169,7 +121,7 @@ def read_lines(path: str, start_line: int = 1, end_line: int = 1) -> str:
     if end_line < start_line:
         return f"❌ Error: end_line 必须 >= start_line"
 
-    with open(path, 'r', encoding='utf-8', errors='replace') as f:
+    with open(path, 'r', encoding='utf-8-sig', errors='replace') as f:
         content = f.read()
 
     lines = content.splitlines()
@@ -230,16 +182,16 @@ def _safe_structure_overview(path: str, text: str) -> dict:
     安全地提取文件结构概览，支持 Python 和 Markdown 文件。
     """
     suffix = Path(path).suffix.lower()
-    
+
     if suffix == '.py':
-        return _extract_python_structure(text)
+        return _extract_python_structure(text, path)
     elif suffix == '.md':
         return _extract_markdown_structure(text)
     else:
         return {}
 
 
-def _extract_python_structure(text: str) -> dict:
+def _extract_python_structure(text: str, filename: str = "<file-ops-read>") -> dict:
     """
     提取 Python 文件的结构信息。
     """
@@ -252,12 +204,12 @@ def _extract_python_structure(text: str) -> dict:
         'total_methods': 0,
         'total_imports': 0,
     }
-    
+
     try:
-        tree = ast.parse(text)
+        tree = ast.parse(text, filename=filename)
     except Exception:
         return result
-    
+
     for node in tree.body:
         if isinstance(node, ast.ClassDef):
             bases = []
@@ -266,7 +218,7 @@ def _extract_python_structure(text: str) -> dict:
                     bases.append(ast.unparse(base) if hasattr(ast, 'unparse') else type(base).__name__)
                 except Exception:
                     bases.append(type(base).__name__)
-            
+
             methods = []
             for item in node.body:
                 if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -275,7 +227,7 @@ def _extract_python_structure(text: str) -> dict:
                         'line': getattr(item, 'lineno', None),
                         'end_line': getattr(item, 'end_lineno', None),
                     })
-            
+
             result['classes'].append({
                 'name': node.name,
                 'line': getattr(node, 'lineno', None),
@@ -285,7 +237,7 @@ def _extract_python_structure(text: str) -> dict:
             })
             result['total_classes'] += 1
             result['total_methods'] += len(methods)
-        
+
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             result['functions'].append({
                 'name': node.name,
@@ -294,7 +246,7 @@ def _extract_python_structure(text: str) -> dict:
                 'async': isinstance(node, ast.AsyncFunctionDef),
             })
             result['total_functions'] += 1
-        
+
         elif isinstance(node, ast.Import):
             for alias in node.names:
                 result['imports'].append({
@@ -302,7 +254,7 @@ def _extract_python_structure(text: str) -> dict:
                     'line': getattr(node, 'lineno', None),
                 })
                 result['total_imports'] += 1
-        
+
         elif isinstance(node, ast.ImportFrom):
             mod = node.module or ''
             imported = ', '.join(alias.name for alias in node.names)
@@ -311,7 +263,7 @@ def _extract_python_structure(text: str) -> dict:
                 'line': getattr(node, 'lineno', None),
             })
             result['total_imports'] += 1
-    
+
     return result
 
 
@@ -331,15 +283,15 @@ def stat_file(path: str, output_format: str = 'text'):
     }
 
     if os.path.isfile(path):
-        text = Path(path).read_text(encoding='utf-8', errors='replace')
+        text = Path(path).read_text(encoding='utf-8-sig', errors='replace')
         info.update(summarize_text(text))
         info['Suffix'] = Path(path).suffix.lower()
         info['Parent'] = str(Path(path).parent)
         info['Name'] = Path(path).name
-        
+
         structure = _safe_structure_overview(path, text)
         info['StructureOverview'] = structure
-        
+
         is_large = info.get('Lines', 0) > 500
         info['IsLargeFile'] = is_large
         if is_large:
@@ -366,22 +318,22 @@ def stat_file(path: str, output_format: str = 'text'):
             f"Suffix: {info.get('Suffix', '')}",
             f"Parent: {info.get('Parent', '')}",
         ])
-        
+
         if info.get('IsLargeFile'):
             lines.append(f"⚠️ {info.get('Suggestion', '')}")
             lines.append("")
-        
+
         structure = info.get('StructureOverview') or {}
-        
+
         if 'total_classes' in structure:
             lines.append(f"Total Classes: {structure.get('total_classes', 0)}")
             lines.append(f"Total Functions: {structure.get('total_functions', 0)}")
             lines.append(f"Total Methods: {structure.get('total_methods', 0)}")
             lines.append(f"Total Imports: {structure.get('total_imports', 0)}")
-            
+
             classes = structure.get('classes', [])
             functions = structure.get('functions', [])
-            
+
             if classes:
                 lines.append('Classes:')
                 display_limit = 3 if info.get('IsLargeFile') else 10
@@ -399,7 +351,7 @@ def stat_file(path: str, output_format: str = 'text'):
                         lines.append(f"      ... and {len(methods) - method_limit} more methods")
                 if len(classes) > display_limit:
                     lines.append(f"  ... and {len(classes) - display_limit} more classes")
-            
+
             if functions:
                 lines.append('TopLevelFunctions:')
                 display_limit = 10 if info.get('IsLargeFile') else 50
@@ -409,7 +361,7 @@ def stat_file(path: str, output_format: str = 'text'):
                     lines.append(f"  - {prefix}{item['name']} (lines {item['line']}-{f_end})")
                 if len(functions) > display_limit:
                     lines.append(f"  ... and {len(functions) - display_limit} more functions")
-        
+
         elif 'total_headings' in structure:
             lines.append(f"Total Headings: {structure.get('total_headings', 0)}")
             headings = structure.get('headings', [])
@@ -433,7 +385,7 @@ def stat_file(path: str, output_format: str = 'text'):
 
 
 def read_file_tail(path: str, max_lines: int = 100) -> str:
-    with open(path, 'r', encoding='utf-8', errors='replace') as f:
+    with open(path, 'r', encoding='utf-8-sig', errors='replace') as f:
         content = f.read()
     lines = content.splitlines()
     total_lines = len(lines)

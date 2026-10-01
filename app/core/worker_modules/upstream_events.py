@@ -43,7 +43,9 @@ class UpstreamEvent:
     profile_key: str = ""
     stream_id: str = ""
     text_delta: str = ""
+    thinking_delta: str = ""
     accumulated_text: str = ""
+    accumulated_thinking: str = ""
     segments: list[dict[str, Any]] = field(default_factory=list)
     raw_message: dict[str, Any] | None = None
     diagnostics: dict[str, Any] = field(default_factory=dict)
@@ -58,7 +60,9 @@ class UpstreamEvent:
             "profile_key": self.profile_key,
             "stream_id": self.stream_id,
             "text_delta": self.text_delta,
+            "thinking_delta": self.thinking_delta,
             "accumulated_text": self.accumulated_text,
+            "accumulated_thinking": self.accumulated_thinking,
             "segments": list(self.segments or []),
             "raw_message": dict(self.raw_message or {}) if self.raw_message else None,
             "diagnostics": dict(self.diagnostics or {}),
@@ -71,8 +75,11 @@ class UpstreamEvent:
         return {
             "stream_id": self.stream_id,
             "content": self.text_delta,
+            "thinking_content": self.thinking_delta,
             "status": status,
             "accumulated": self.accumulated_text,
+            "accumulated_thinking": self.accumulated_thinking,
+            "delta_type": self.diagnostics.get("delta_type", "content"),
             "error_message": self.error_message,
             "conversation_id": self.conversation_id,
             "request_id": self.request_id,

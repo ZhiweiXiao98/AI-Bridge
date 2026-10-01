@@ -21,13 +21,13 @@ class FileService:
         self.config = config_ref if config_ref is not None else ConfigManager.load()
         self.project_root = ProjectContext.get().get_project_root()
         self.saved_hashes = {}
-        self.ignored_content_hashes = set() 
-        
+        self.ignored_content_hashes = set()
+
         # [New] 用于记录已经报过错的残缺代码指纹，防止刷屏
         self._failed_hashes = set()
-        
+
         self._ensure_dirs()
-        self._load_ignored_blocks() 
+        self._load_ignored_blocks()
 
     def on_project_switched(self, new_root: str, new_db_path: str):
         old_root = self.project_root
@@ -45,30 +45,44 @@ class FileService:
         """
         try:
             # 1. 解析绝对路径
-            abs_path = os.path.abspath(os.path.join(self.project_root, path))
-            
+            project_root = os.path.abspath(self.project_root)
+            abs_path = self.resolve_path(path)
+
             # 2. 检查公共前缀 (防止穿越)
-            return os.path.commonpath([self.project_root, abs_path]) == self.project_root
+            return os.path.commonpath([project_root, abs_path]) == project_root
         except Exception:
             return False
 
+    def resolve_path(self, path: str) -> str:
+        if os.path.isabs(path):
+            return os.path.abspath(path)
+        return os.path.abspath(os.path.join(self.project_root, path))
+
+    def _resolve_project_config_path(self, config_key: str, default: str) -> str:
+        configured = self.config.get(config_key, default)
+        if os.path.isabs(configured):
+            return os.path.abspath(configured)
+        return os.path.abspath(os.path.join(self.project_root, configured))
+
     def _ensure_dirs(self):
-        code_dir = self.config.get("export_code_path", "export/code")
-        img_dir = self.config.get("export_image_path", "export/images")
+        code_dir = self._resolve_project_config_path("export_code_path", "export/code")
+        img_dir = self._resolve_project_config_path("export_image_path", "export/images")
         os.makedirs(code_dir, exist_ok=True)
         os.makedirs(img_dir, exist_ok=True)
         return code_dir, img_dir
 
     def _load_ignored_blocks(self):
-        if os.path.exists(IGNORED_BLOCKS_FILE):
+        ignored_blocks_path = self.resolve_path(IGNORED_BLOCKS_FILE)
+        if os.path.exists(ignored_blocks_path):
             try:
-                with open(IGNORED_BLOCKS_FILE, 'r', encoding='utf-8') as f:
+                with open(ignored_blocks_path, 'r', encoding='utf-8') as f:
                     self.ignored_content_hashes = set(json.load(f))
             except: pass
 
     def _save_ignored_blocks(self):
         try:
-            with open(IGNORED_BLOCKS_FILE, 'w', encoding='utf-8') as f:
+            ignored_blocks_path = self.resolve_path(IGNORED_BLOCKS_FILE)
+            with open(ignored_blocks_path, 'w', encoding='utf-8') as f:
                 json.dump(list(self.ignored_content_hashes), f)
         except Exception as e:
             print(f"❌ Failed to save ignore list: {e}")
@@ -77,24 +91,24 @@ class FileService:
         content_hash = hashlib.md5(content.encode('utf-8')).hexdigest()
         if content_hash in self.ignored_content_hashes:
             return True, "已存在于黑名单"
-            
+
         self.ignored_content_hashes.add(content_hash)
         self._save_ignored_blocks()
 
         code_dir, _ = self._ensure_dirs()
         full_path = os.path.join(code_dir, filename)
-        
+
         msg = "该代码版本已加入指纹黑名单"
         if os.path.exists(full_path):
             try:
                 with open(full_path, 'r', encoding='utf-8') as f:
                     existing_content = f.read()
-                
+
                 if hashlib.md5(existing_content.encode('utf-8')).hexdigest() == content_hash:
                     os.remove(full_path)
                     msg = "已删除暂存文件并永久屏蔽该版本"
             except: pass
-            
+
         return True, msg
 
     def remove_ignored_content(self, content):
@@ -117,7 +131,7 @@ class FileService:
                     content = seg.get('content', '')
                     if self.is_content_ignored(content):
                         seg['is_ignored'] = True
-                
+
                 elif seg['type'] == 'image':
                     content = seg.get('content', '')
                     if content.startswith('data:image'):
@@ -146,9 +160,9 @@ class FileService:
                         except: pass
         return messages
 
-    def validate_python_code(self, content):
+    def validate_python_code(self, content, filename="<file-service-validation>"):
         try:
-            ast.parse(content)
+            ast.parse(content, filename=filename)
             return True, None
         except SyntaxError as e:
             return False, f"SyntaxError: line {e.lineno}"
@@ -187,17 +201,17 @@ class FileService:
             return False, "Ignored by content hash"
 
         content_hash = hashlib.md5(content.encode('utf-8')).hexdigest()
-        
+
         # 如果这个指纹之前失败过，且内容没变，直接跳过，不再报错
         if content_hash in self._failed_hashes:
-            return False, None 
+            return False, None
 
         if self.saved_hashes.get(name) == content_hash: return False, None
 
         code_dir, _ = self._ensure_dirs()
         full_path = os.path.join(code_dir, name)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        
+
         if name == "AI_JOURNAL.md":
             mode = "a" if os.path.exists(full_path) else "w"
             if mode == "a":
@@ -210,7 +224,7 @@ class FileService:
             return True, "Journal Updated"
 
         if name.endswith(".py"):
-            is_valid, err = self.validate_python_code(content)
+            is_valid, err = self.validate_python_code(content, name)
             if not is_valid:
                 # [Mod] 报警抑制：仅在第一次遇到此错误时打印，之后静默
                 print(f"⚠️ [FileService] 拦截到残缺代码 {name}: {err} (Added to suppression list)")
@@ -222,10 +236,10 @@ class FileService:
             with open(tmp, "w", encoding='utf-8') as f: f.write(content)
             if os.path.exists(full_path): os.remove(full_path)
             os.rename(tmp, full_path)
-            
+
             # [RAG 实时同步] 仅在保存成功后进行物理增量索引
             knowledge_engine.update_file_index(name, content)
-            
+
             self.saved_hashes[name] = content_hash
             # 如果曾经失败过，现在成功了，从失败名单移除
             if content_hash in self._failed_hashes:

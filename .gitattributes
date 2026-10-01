@@ -1,0 +1,4 @@
+# 已核验的许可证和继承资源必须保留 Git blob 中的原始字节。
+# 禁止 Windows autocrlf 改写换行；不对上游原文做重新规范化。
+licenses/** -text
+lib/** -text

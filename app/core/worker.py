@@ -2,18 +2,16 @@
 import os
 import time
 import hashlib
-import sys
-import subprocess
 import re
 import json
 import threading
 import collections
-import shutil
 import traceback
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from PySide6.QtCore import QThread, Signal, QMutex
 
-from app.core.driver import ChromeConnector
+from app.core.driver.factory import create_browser_connector
 from app.core.config import ConfigManager
 from app.core.project_context import ProjectContext
 from app.core.services.file_service import FileService
@@ -24,9 +22,8 @@ from app.core.engine.conversation_engine import ConversationEngine
 from app.core.agent_manager import AgentManager
 from app.core.docker_manager import DockerManager
 from app.core.services.knowledge_service import KnowledgeService
-from app.core.utils.error_reporter import ErrorReporter
 from app.core.services.context_pack_service import ContextPackService
-from app.core.app_constants import CHROME_PORT, MAX_WORKERS, DEFAULT_SYSTEM_BUDGET
+from app.core.app_constants import MAX_WORKERS
 from app.core.services.tool_router_service import ToolRouterService
 from app.core.tool_runtime.models import ToolRoundResult
 from app.core.round_state import BrowserRoundStateMachine, RoundStateEvent, BrowserRoundState
@@ -69,16 +66,20 @@ class WorkerThread(QThread):
     mode_changed_signal = Signal(str)       # 模式切换通知
     code_execution_completed = Signal()     # 代码执行完成
 
+    agent_runtime_options_signal = Signal(object)
+    agent_runtime_approval_signal = Signal(object)
     api_stream_chunk_signal = Signal(object)  # 流式文本块信号
     api_stream_status_signal = Signal(object)  # 流式状态信号
     api_round_state_signal = Signal(object)  # API 单回合状态信号
     knowledge_health_signal = Signal(object)  # 知识检索健康状态
-    daemon_suggestion_signal = Signal(object)  # 守护进程回复建议
+    subagent_suggestion_signal = Signal(object)  # Subagent回复建议
+    daemon_suggestion_signal = Signal(object)
+    pending_message_consumed_signal = Signal()  # 待发消息被消费（工具回流或idle发送）
 
-    def __init__(self):
+    def __init__(self, startup_mode=None):
         super().__init__()
         self.config = ConfigManager.load()
-        self.connector = ChromeConnector(port=self.config.get("chrome_port", CHROME_PORT))
+        self.connector = create_browser_connector(self.config)
         self.file_service = FileService(self.config)
         self.scheduler = SchedulerService()
         self.update_service = UpdateService(self.config, self.file_service)
@@ -87,7 +88,7 @@ class WorkerThread(QThread):
 
         # 初始化 Docker 管理器
         self.docker_manager = DockerManager()
-        
+
         # 初始化知识服务
         self.knowledge_service = KnowledgeService()
 
@@ -107,21 +108,46 @@ class WorkerThread(QThread):
         # 初始化流式桥接器
         from app.core.worker_modules.worker_api_stream import WorkerStreamBridge
         from app.core.worker_modules.worker_knowledge_tasks import WorkerKnowledgeTaskBridge
-        from app.core.worker_modules.worker_daemon_bridge import WorkerDaemonBridge
+        from app.core.worker_modules.worker_subagent_bridge import WorkerSubagentBridge
         from app.core.worker_modules.worker_project_switch import WorkerProjectSwitchBridge
         from app.core.worker_modules.worker_browser_stateless import WorkerBrowserStatelessBridge
         from app.core.worker_modules.worker_api_conversation import WorkerApiConversationBridge
         from app.core.worker_modules.worker_api_mode import WorkerApiModeBridge
+        from app.core.worker_modules.worker_agent_runtime import WorkerAgentRuntimeBridge
         from app.core.worker_modules.worker_git_bridge import WorkerGitBridge
-        self.stream_bridge = WorkerStreamBridge()
+        from app.core.worker_modules.worker_context_workspace import WorkerContextWorkspaceBridge
+        from app.core.worker_modules.worker_runtime_monitor import WorkerRuntimeMonitorBridge
+        from app.core.worker_modules.worker_browser_tool_input import WorkerBrowserToolInputBridge
+        from app.core.worker_modules.worker_browser_message_sync import WorkerBrowserMessageSyncBridge
+        from app.core.worker_modules.worker_agent_sidecar import WorkerAgentSidecarBridge
+        from app.core.worker_modules.worker_test_runner import WorkerTestRunnerBridge
+        from app.core.worker_modules.worker_browser_commands import WorkerBrowserCommandBridge
+        from app.core.worker_modules.worker_code_workspace import WorkerCodeWorkspaceBridge
+        from app.core.worker_modules.worker_skills import WorkerSkillsBridge
+        from app.core.worker_modules.worker_subagent_notify import WorkerSubagentNotifyBridge
+        self.stream_bridge = WorkerStreamBridge(worker=self)
         self.knowledge_task_bridge = WorkerKnowledgeTaskBridge(self.knowledge_service)
         self.api_conversation_bridge = WorkerApiConversationBridge(self)
         self.api_mode_bridge = WorkerApiModeBridge(self)
+        self.agent_runtime_bridge = WorkerAgentRuntimeBridge(self)
         self.browser_stateless_bridge = WorkerBrowserStatelessBridge(self)
         self.git_bridge = WorkerGitBridge(self)
-        self.daemon_bridge = WorkerDaemonBridge()
-        self.daemon_bridge.daemon_suggestion_signal.connect(self.daemon_suggestion_signal.emit)
-        self.daemon_bridge.start()
+        self.context_workspace_bridge = WorkerContextWorkspaceBridge(self)
+        self.runtime_monitor_bridge = WorkerRuntimeMonitorBridge(self)
+        self.browser_tool_input_bridge = WorkerBrowserToolInputBridge(self)
+        self.browser_message_sync_bridge = WorkerBrowserMessageSyncBridge(self)
+        self.agent_sidecar_bridge = WorkerAgentSidecarBridge(self)
+        self.test_runner_bridge = WorkerTestRunnerBridge(self)
+        self.browser_command_bridge = WorkerBrowserCommandBridge(self)
+        self.code_workspace_bridge = WorkerCodeWorkspaceBridge(self)
+        self.skills_bridge = WorkerSkillsBridge(self)
+        self.subagent_notify_bridge = WorkerSubagentNotifyBridge(self)
+        self.subagent_bridge = WorkerSubagentBridge()
+        self.subagent_bridge.subagent_suggestion_signal.connect(self.subagent_suggestion_signal.emit)
+        self.subagent_bridge.subagent_suggestion_signal.connect(self.daemon_suggestion_signal.emit)
+        self.daemon_notify_bridge = self.subagent_notify_bridge
+        self.daemon_bridge = self.subagent_bridge
+        self.subagent_bridge.start()
         self.project_switch_bridge = WorkerProjectSwitchBridge(self)
 
         ctx = ProjectContext.get()
@@ -129,10 +155,6 @@ class WorkerThread(QThread):
         ctx.project_switched.connect(self.docker_manager.on_project_switched)
         ctx.project_switched.connect(self.knowledge_service.on_project_switched)
         ctx.project_switched.connect(self.file_service.on_project_switched)
-        self._runtime_tool_tasks = {}
-        self._runtime_task_order = []
-        self._tool_runtime_callback_stack = []
-
         executor_v2 = getattr(self.knowledge_service, '_v2', None)
         executor_obj = getattr(executor_v2, '_executor', None) if executor_v2 else None
         if executor_obj and hasattr(executor_obj, '_on_task_state_change'):
@@ -148,7 +170,9 @@ class WorkerThread(QThread):
         }
 
         # === 双消息源 ===
-        self.mode = "browser"  # "browser" | "api"
+        configured_mode = startup_mode or self.config.get("startup_mode", "browser")
+        configured_mode = str(configured_mode or "browser").strip().lower()
+        self.mode = configured_mode if configured_mode in {"browser", "api"} else "browser"
         self.api_source = None  # 延迟初始化
         self._api_pending_text = None
         self._api_streaming = False
@@ -189,214 +213,110 @@ class WorkerThread(QThread):
     def init_api_stream_bridge(self):
         """在 _init_api_source 完成后调用，注入流式桥接"""
         if self.api_source and self.stream_bridge:
-            self.stream_bridge.init_handler(self.api_source)
+            self.stream_bridge.init_handler(self.api_source, tool_router=getattr(self, "tool_router", None))
 
             # 将桥接信号转发到 WorkerThread 级别信号，供 server.SignalBridge 分发
-            try:
-                self.stream_bridge.stream_chunk_signal.disconnect(self.api_stream_chunk_signal.emit)
-            except Exception as e:
-                logger.warning(e)
-            try:
-                self.stream_bridge.stream_status_signal.disconnect(self.api_stream_status_signal.emit)
-            except Exception as e:
-                logger.warning(e)
+            # 仅在已连接过的情况下才 disconnect，避免 PySide6 C++ 层 RuntimeWarning
+            if getattr(self, '_stream_signals_connected', False):
+                try:
+                    self.stream_bridge.stream_chunk_signal.disconnect(self.api_stream_chunk_signal.emit)
+                except (RuntimeError, TypeError):
+                    pass
+                try:
+                    self.stream_bridge.stream_status_signal.disconnect(self.api_stream_status_signal.emit)
+                except (RuntimeError, TypeError):
+                    pass
 
-            self.stream_bridge.stream_chunk_signal.connect(self.api_stream_chunk_signal.emit)
-            self.stream_bridge.stream_status_signal.connect(self.api_stream_status_signal.emit)
+            if not getattr(self.stream_bridge, "uses_upstream_consumer", False):
+                self.stream_bridge.stream_chunk_signal.connect(self.api_stream_chunk_signal.emit)
+                self.stream_bridge.stream_status_signal.connect(self.api_stream_status_signal.emit)
+                self._stream_signals_connected = True
 
-        self.daemon_bridge.daemon_suggestion_signal.connect(self.daemon_suggestion_signal.emit)
-        self.daemon_bridge.start()
+        if not self.subagent_bridge.subagent_thread.isRunning():
+            self.subagent_bridge.start()
     def _build_context_workspace_payload(self):
-        if self.mode == "api" and self.api_source:
-            return self.api_source.get_context_workspace_payload()
-        return {
-            "mode": self.mode,
-            "conversation_title": "当前模式暂未接入上下文工作台",
-            "conversation_id": None,
-            "system": {
-                "inject_skills_prompt": False,
-                "conversation_system_prompt": "",
-                "final_system_prompt": "当前仅 API 模式已接入上下文工作台 V1",
-                "final_tokens": 0,
-                "system_budget": DEFAULT_SYSTEM_BUDGET,
-                "over_budget": False,
-                "blocks": []
-            },
-            "working_memory": {},
-            "long_term": {"fragments": [], "count": 0},
-            "context_config": {},
-            "compact": {},
-            "usage": {},
-            "history_preview": []
-        }
+        return self.context_workspace_bridge.build_payload()
 
     def _emit_context_workspace_payload(self, client_id=None, user_role=None, conversation_id=None):
-        if conversation_id is not None and self.api_source:
-            payload = self.api_source.get_context_workspace_payload(conversation_id=conversation_id)
-        else:
-            payload = self._build_context_workspace_payload()
-        try:
-            self.context_workspace_signal.emit(payload)
-        except Exception as e:
-            logger.warning(e)
-        if client_id:
-            remote_payload = dict(payload)
-            remote_payload["target_client_id"] = client_id
-            remote_payload["target_group"] = "admin" if user_role == "developer" else "user"
-            self.context_workspace_signal.emit(remote_payload)
-        return payload
+        return self.context_workspace_bridge.emit_payload(
+            client_id=client_id,
+            user_role=user_role,
+            conversation_id=conversation_id,
+        )
 
     def get_context_workspace_payload(self, conversation_id=None, client_id="Host", user_role=None, **kwargs):
-        return self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=conversation_id)
+        return self.context_workspace_bridge.get_payload(
+            conversation_id=conversation_id,
+            client_id=client_id,
+            user_role=user_role,
+            **kwargs,
+        )
 
     def update_context_workspace_system_prompt(self, content, conversation_id=None, client_id="Host", user_role=None, **kwargs):
-        if self.api_source:
-            ok = self.api_source.update_conversation_system_prompt(content, conversation_id=conversation_id)
-            self.context_status_signal.emit(self.api_source.get_context_status(conversation_id=conversation_id))
-            self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=conversation_id)
-            return ok
-        self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=conversation_id)
-        return False
+        return self.context_workspace_bridge.update_system_prompt(
+            content,
+            conversation_id=conversation_id,
+            client_id=client_id,
+            user_role=user_role,
+            **kwargs,
+        )
 
     def update_context_workspace_working_memory(self, data, conversation_id=None, client_id="Host", user_role=None, **kwargs):
-        if self.api_source:
-            ok = self.api_source.set_working_memory(data, conversation_id=conversation_id)
-            self.context_status_signal.emit(self.api_source.get_context_status(conversation_id=conversation_id))
-            self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=conversation_id)
-            return ok
-        self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=conversation_id)
-        return False
+        return self.context_workspace_bridge.update_working_memory(
+            data,
+            conversation_id=conversation_id,
+            client_id=client_id,
+            user_role=user_role,
+            **kwargs,
+        )
 
     def clear_context_workspace_working_memory(self, conversation_id=None, client_id="Host", user_role=None, **kwargs):
-        if self.api_source:
-            ok = self.api_source.clear_working_memory(conversation_id=conversation_id)
-            self.context_status_signal.emit(self.api_source.get_context_status(conversation_id=conversation_id))
-            self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=conversation_id)
-            return ok
-        self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=conversation_id)
-        return False
+        return self.context_workspace_bridge.clear_working_memory(
+            conversation_id=conversation_id,
+            client_id=client_id,
+            user_role=user_role,
+            **kwargs,
+        )
 
     def clear_context_workspace_long_term(self, conversation_id=None, client_id="Host", user_role=None, **kwargs):
-        if self.api_source:
-            ok = self.api_source.clear_long_term(conversation_id=conversation_id)
-            self.context_status_signal.emit(self.api_source.get_context_status(conversation_id=conversation_id))
-            self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=conversation_id)
-            return ok
-        self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=conversation_id)
-        return False
+        return self.context_workspace_bridge.clear_long_term(
+            conversation_id=conversation_id,
+            client_id=client_id,
+            user_role=user_role,
+            **kwargs,
+        )
 
     def get_last_request_snapshot(self, conversation_id=None, client_id="Host", user_role=None, **kwargs):
-        """获取最近一次请求的完整上下文快照（用于调试浮窗）。"""
-        snap = None
-        if self.api_source:
-            snap = self.api_source.get_last_request_snapshot(conversation_id=conversation_id)
-        payload = snap or {}
-        if client_id:
-            payload = dict(payload) if payload else {}
-            payload['target_client_id'] = client_id
-            payload['target_group'] = 'admin' if user_role == 'developer' else 'user'
-        try:
-            self.context_snapshot_signal.emit(payload)
-        except Exception as e:
-            logger.warning(e)
-        return snap
+        return self.context_workspace_bridge.get_last_request_snapshot(
+            conversation_id=conversation_id,
+            client_id=client_id,
+            user_role=user_role,
+            **kwargs,
+        )
 
     def trigger_api_manual_compact(self, conversation_id=None, client_id='Host', user_role=None, **kwargs):
-        group = 'admin' if user_role == 'developer' else 'user'
-        if not self.api_source:
-            self._init_api_source()
-        payload = {
-            'ok': False,
-            'reason': 'api_source_unavailable',
-            'conversation_id': conversation_id or '',
-            'target_client_id': client_id,
-            'target_group': group,
-        }
-        if self.api_source:
-            result = self.api_source.trigger_manual_compact(conversation_id=conversation_id)
-            payload.update(result or {})
-            payload['target_client_id'] = client_id
-            payload['target_group'] = group
-            effective_conv_id = payload.get('conversation_id') or conversation_id or ''
-            try:
-                self.context_status_signal.emit(self.api_source.get_context_status(conversation_id=effective_conv_id or None))
-            except Exception as e:
-                logger.warning(e)
-            try:
-                self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=effective_conv_id or None)
-            except Exception as e:
-                logger.warning(e)
-        try:
-            self.api_manual_compact_signal.emit(payload)
-        except Exception as e:
-            logger.warning(e)
-        return payload
+        return self.context_workspace_bridge.trigger_manual_compact(
+            conversation_id=conversation_id,
+            client_id=client_id,
+            user_role=user_role,
+            **kwargs,
+        )
 
     def get_api_conversations(self, client_id="Host", user_role=None, **kwargs):
-        group = "admin" if user_role == "developer" else "user"
-        if self.api_source:
-            conversations = self.api_source.get_api_conversations()
-            payload = {
-                "items": conversations,
-                "target_client_id": client_id,
-                "target_group": group,
-            }
-            try:
-                self.api_conversations_signal.emit(payload)
-            except Exception as e:
-                logger.warning(e)
-            return conversations
-        payload = {
-            "items": [],
-            "target_client_id": client_id,
-            "target_group": group,
-        }
-        try:
-            self.api_conversations_signal.emit(payload)
-        except Exception as e:
-            logger.warning(e)
-        return []
+        return self.context_workspace_bridge.get_api_conversations(
+            client_id=client_id,
+            user_role=user_role,
+            **kwargs,
+        )
 
     def delete_api_messages(self, indexes, conversation_id=None, client_id="Host", user_role=None, **kwargs):
-        group = "admin" if user_role == "developer" else "user"
-        if not self.api_source:
-            self._init_api_source()
-        removed = 0
-        payload = {
-            "removed": 0,
-            "conversation_id": conversation_id or '',
-            "indexes": list(indexes or []),
-            "target_client_id": client_id,
-            "target_group": group,
-        }
-        if self.api_source:
-            removed = self.api_source.delete_messages(indexes or [], conversation_id=conversation_id)
-            effective_conv_id = conversation_id or (self.api_source.conv_store.active_id if self.api_source and self.api_source.conv_store else '')
-            payload.update({
-                "removed": removed,
-                "conversation_id": effective_conv_id or '',
-            })
-            try:
-                if conversation_id and effective_conv_id != (self.api_source.conv_store.active_id if self.api_source and self.api_source.conv_store else None):
-                    msgs = self.api_source.get_history_as_messages_for(effective_conv_id)
-                else:
-                    msgs = self.api_source.get_history_as_messages()
-                self.messages_signal.emit(msgs if msgs else [])
-            except Exception as e:
-                logger.warning(e)
-            try:
-                self.context_status_signal.emit(self.api_source.get_context_status(conversation_id=effective_conv_id or None))
-            except Exception as e:
-                logger.warning(e)
-            try:
-                self._emit_context_workspace_payload(client_id=client_id, user_role=user_role, conversation_id=effective_conv_id or None)
-            except Exception as e:
-                logger.warning(e)
-        try:
-            self.api_messages_deleted_signal.emit(payload)
-        except Exception as e:
-            logger.warning(e)
-        return removed
+        return self.context_workspace_bridge.delete_api_messages(
+            indexes,
+            conversation_id=conversation_id,
+            client_id=client_id,
+            user_role=user_role,
+            **kwargs,
+        )
 
     def set_session_role(self, index, role, **kwargs):
         self.agent.set_role(index, role)
@@ -409,7 +329,7 @@ class WorkerThread(QThread):
             return
 
         # 1. 检查是否为运行中的 runtime tool task
-        runtime_task = self._runtime_tool_tasks.get(task_id)
+        runtime_task = self.runtime_monitor_bridge.runtime_tool_tasks.get(task_id)
         if runtime_task:
             runtime_task['status'] = 'cancel_requested'
             logger.info("[任务取消] 已标记运行中工具任务为 cancel_requested | task_id=%s | tool_name=%s",
@@ -429,24 +349,7 @@ class WorkerThread(QThread):
                 self.safe_emit_status(f"⚠️ 无法取消: 任务可能已开始或不可撤销")
 
     def request_auto_fix(self, error_report, client_id="Host", **kwargs):
-        username = kwargs.get('username', 'Unknown')
-        mechanic_idx = self.agent.get_mechanic_index()
-        return_idx = self.current_physical_index
-
-        if mechanic_idx is None:
-            self.safe_emit_status(f"⚠️ 未找到侧车会话，正在自动创建 (User: {username})...")
-            self.scheduler.add_task(client_id, "new_chat_task", **kwargs)
-            mechanic_idx = 0
-            if return_idx is not None:
-                return_idx += 1
-        else:
-            self.scheduler.add_task(client_id, "switch_session_task", mechanic_idx, **kwargs)
-
-        self.safe_emit_status(f"🚑 启动 Agent 模式 -> 会话 {mechanic_idx} [Req: {username}]")
-        
-        system_prompt = self.agent.construct_system_prompt(error_report)
-        self.scheduler.add_task(client_id, "real_send_text", "div.aa-chat-input textarea", system_prompt, **kwargs)
-        self.scheduler.add_task(client_id, "task_agent_loop", return_idx, 10, **kwargs)
+        return self.agent_sidecar_bridge.request_auto_fix(error_report, client_id=client_id, **kwargs)
 
     def _execute_task(self, task):
         try:
@@ -468,112 +371,7 @@ class WorkerThread(QThread):
             self.safe_emit_status(f"🔥 任务出错: {e}")
 
     def _execute_agent_loop_task(self, task):
-        return_idx = task.args[0]
-        turns_left = task.args[1]
-
-        if self.connector.is_busy():
-            self.safe_emit_status("⏳ Agent 思考中...")
-            self.scheduler.add_task(task.client_id, "task_agent_loop", return_idx, turns_left, username=self.current_user)
-            time.sleep(1.0)
-            return
-
-        raw_msgs, _ = self.connector.get_chat_content(self.target_class, auto_wake=True)
-        if not raw_msgs:
-            self.scheduler.add_task(task.client_id, "task_agent_loop", return_idx, turns_left, username=self.current_user)
-            time.sleep(1.0)
-            return
-
-        last_msg = raw_msgs[-1]
-        full_text = "\n".join(
-            [s['content'] for s in last_msg.get('segments', []) if s['type'] == 'text']
-        )
-
-        if "```tool_call" in full_text or "```python" in full_text:
-            block_code = full_text.split("```python")[-1].strip()
-            if not re.match(r"^\s*(#|//|<!--)\s*filename\s*:", block_code, re.IGNORECASE):
-                self.safe_emit_status("🤖 [Agent] 正在执行代码 (Docker)...")
-
-                # 统一去重：优先用 message_id，fallback 到内容指纹
-                msg_id = str(last_msg.get('id', '') or '').strip()
-                with self._processed_lock:
-                    if msg_id:
-                        _agent_fp = f"{self.current_chat_id}|mid:{msg_id}"
-                    else:
-                        _agent_fp = f"{self.current_chat_id}|fp:{hashlib.md5(full_text.encode('utf-8')).hexdigest()}"
-                    if _agent_fp in self._processed_tool_fingerprints:
-                        return  # 已处理过，跳过
-                    self._processed_tool_fingerprints.add(_agent_fp)
-                    self._processed_fp_order.append(_agent_fp)
-
-                fake_msgs = [{"role": "AI", "index": 9999, "segments": [{"type": "text", "content": full_text}]}]
-
-                result = self.tool_router.maybe_handle_tool_from_messages(
-                    chat_id=self.current_chat_id,
-                    messages=fake_msgs,
-                    allow=True
-                )
-                result_text = self._build_browser_tool_feedback_text(result)
-
-                if result_text:
-                    pending = self.get_and_clear_pending_message()
-                    if pending:
-                        pending_text = str(pending.get("text", "") or "").strip()
-                        if pending_text:
-                            result_text = result_text + f"\n\n[USER_MESSAGE_BEGIN]\n{pending_text}\n[USER_MESSAGE_END]"
-                            self.safe_emit_status("✅ 已附加用户待发消息")
-
-                    self.connector.send_message(
-                        "div.aa-chat-input textarea",
-                        f"{result_text}\n\nNext Step?"
-                    )
-                    self.scheduler.add_task(task.client_id, "task_agent_loop", return_idx, turns_left - 1, username=self.current_user)
-                    return
-
-        intent, data = self.agent.parse_agent_response(full_text)
-
-        if intent == "TOOL":
-            self.safe_emit_status("🔧 [Agent] 检测到工具调用意图，交由 ToolRouter 处理...")
-            if turns_left > 0:
-                self.scheduler.add_task(task.client_id, "task_agent_loop", return_idx, turns_left - 1, username=self.current_user)
-            return
-
-        elif intent == "CODE":
-            self.safe_emit_status("🛡️ 检测到代码变更，正在安全验证...")
-            success, changed_files, log = self.agent.safe_apply_and_test(
-                last_msg.get('segments', [])
-            )
-            if success:
-                self.safe_emit_status("🎉 修复成功！测试通过！")
-                self.safe_emit_status("🔙 返回主会话...")
-                self.scheduler.add_task(task.client_id, "switch_session_task", return_idx, username=self.current_user)
-                
-                needs_restart = any(
-                    self.update_service.get_file_category(f) in ["CRITICAL", "CLIENT_ONLY"]
-                    for f in changed_files
-                )
-                if needs_restart:
-                    self.scheduler.add_task(task.client_id, "task_restart_if_needed", username=self.current_user)
-                return
-            else:
-                if turns_left > 0:
-                    self.safe_emit_status("❌ 验证失败(已回滚)，反馈报错...")
-                    report = ErrorReporter.generate_report(log)
-                    prompt = (
-                        "❌ 代码导致测试失败 (环境已回滚)。\n\n"
-                        f"【New Traceback】\n{report}\n\n请重新分析并修复。"
-                    )
-                    self.connector.send_message("div.aa-chat-input textarea", prompt)
-                    self.scheduler.add_task(task.client_id, "task_agent_loop", return_idx, turns_left - 1, username=self.current_user)
-                    return
-                else:
-                    self.safe_emit_status("❌ 次数耗尽，修复中止")
-                    self.scheduler.add_task(task.client_id, "switch_session_task", return_idx, username=self.current_user)
-                    return
-
-        if turns_left > 0:
-            self.scheduler.add_task(task.client_id, "task_agent_loop", return_idx, turns_left - 1, username=self.current_user)
-        else:
-            self.scheduler.add_task(task.client_id, "switch_session_task", return_idx, username=self.current_user)
+        return self.agent_sidecar_bridge.execute_agent_loop_task(task)
 
     def _execute_task_sync(self, task):
         self.safe_emit_status(f"🟢 执行: {task.action} (User: {getattr(task, 'username', 'Unknown')})")
@@ -661,6 +459,10 @@ class WorkerThread(QThread):
 
         elif task.action == "task_wake_up":
             self.connector.force_scroll()
+            if self.mode == "browser":
+                self.browser_message_sync_bridge.emit_browser_messages_snapshot(
+                    reason="wake_up"
+                )
 
     def _execute_task_bg(self, task):
         try:
@@ -673,245 +475,35 @@ class WorkerThread(QThread):
             traceback.print_exc()
 
     def ignore_block_content(self, filename, content, client_id="Host", **kwargs):
-        threading.Thread(target=self._do_ignore_block, args=(filename, content)).start()
+        return self.code_workspace_bridge.ignore_block_content(
+            filename,
+            content,
+            client_id=client_id,
+            **kwargs,
+        )
 
     def _do_ignore_block(self, filename, content):
-        ok, msg = self.file_service.add_ignored_content(filename, content)
-        self.safe_emit_status(f"🗑️ {msg}")
+        return self.code_workspace_bridge.do_ignore_block(filename, content)
 
     def unignore_block_content(self, filename, content, client_id="Host", **kwargs):
-        threading.Thread(target=self._do_unignore_block, args=(filename, content)).start()
+        return self.code_workspace_bridge.unignore_block_content(
+            filename,
+            content,
+            client_id=client_id,
+            **kwargs,
+        )
 
     def _do_unignore_block(self, filename, content):
-        if hasattr(self.file_service, 'remove_ignored_content'):
-            ok, msg = self.file_service.remove_ignored_content(content)
-            self.safe_emit_status(f"♻️ {msg}")
-            
-            if ok:
-                self.safe_emit_status("🔄 正在回溯并重新扫描代码...")
-                try:
-                    self.process_batch(self.last_messages_snapshot)
-                    self.do_server_scan()
-                except Exception as e:
-                    self.safe_emit_status(f"⚠️ 回溯扫描失败: {e}")
-        else:
-            self.safe_emit_status("❌ FileService 不支持撤销操作")
+        return self.code_workspace_bridge.do_unignore_block(filename, content)
 
     def run_remote_tests(self, client_id="Host", **kwargs):
-        self.safe_emit_status(f"🧪 [测试] 正在后台运行 pytest...")
-        self._run_tests_bg(client_id)
+        return self.test_runner_bridge.run_remote_tests(client_id=client_id, **kwargs)
 
     def _run_tests_bg(self, client_id):
-        cwd = ProjectContext.get().get_project_root()
-        cmd = [sys.executable, "-m", "pytest", "tests/", "-v"]
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
+        return self.test_runner_bridge.run_tests_bg(client_id)
 
-        try:
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding='utf-8',
-                errors='replace',
-                bufsize=1,
-                cwd=cwd,
-                env=env,
-                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
-            )
-
-            full_log = []
-            logger.info("TestRunner: 开始执行 pytest...")
-            
-            for line in process.stdout:
-                line = line.strip()
-                if not line: continue
-                logger.debug("测试日志: %s", line)
-                full_log.append(line)
-            
-            process.wait()
-            
-            full_text = "\n".join(full_log)
-            passed = full_text.count("PASSED")
-            failed = full_text.count("FAILED")
-            error = full_text.count("ERROR")
-            
-            duration = "0"
-            m = re.search(r"in ([\d\.]+)s", full_text.splitlines()[-1] if full_log else "")
-            if m: duration = m.group(1)
-            
-            result_payload = {
-                "target_client_id": client_id,
-                "passed": passed,
-                "failed": failed + error,
-                "duration": duration,
-                "full_log": full_text
-            }
-            
-            self.test_result_signal.emit(result_payload)
-            self.safe_emit_status(f"✅ [测试完成] Pass: {passed}, Fail: {failed}")
-
-        except Exception as e:
-            err_msg = f"测试启动失败: {e}"
-            logger.error(err_msg)
-            self.test_result_signal.emit({
-                "target_client_id": client_id,
-                "passed": 0,
-                "failed": 1,
-                "duration": "0",
-                "full_log": err_msg
-            })
-
-    def _notify_daemon_reply_completed(self, mode: str, chat_id: str = ""):
-        try:
-            logger.info(
-                "[DaemonWorker] 进入回复完成通知: mode=%s chat_id=%s has_connector=%s has_api_source=%s has_daemon_bridge=%s",
-                mode,
-                chat_id,
-                bool(getattr(self, 'connector', None)),
-                bool(getattr(self, 'api_source', None)),
-                bool(getattr(self, 'daemon_bridge', None)),
-            )
-
-            reply_text = ""
-            recent_context = ""
-            history_count = 0
-            assistant_count = 0
-
-            def _extract_text(msg):
-                if not isinstance(msg, dict):
-                    return ""
-                if mode == "browser":
-                    text_parts = []
-                    for seg in (msg.get("segments") or []):
-                        if not isinstance(seg, dict):
-                            continue
-                        content = str(seg.get("content", "") or "")
-                        if not content.strip():
-                            continue
-                        if seg.get("type") == "code":
-                            lang = str(seg.get("language", "") or "text").strip() or "text"
-                            if content.strip().startswith("```"):
-                                text_parts.append(content)
-                            else:
-                                text_parts.append(f"```{lang}\n{content}\n```")
-                        else:
-                            text_parts.append(content)
-                    if not text_parts:
-                        fallback_text = str(msg.get("content", "") or msg.get("text", "") or "")
-                        if fallback_text.strip():
-                            text_parts.append(fallback_text)
-                    return "\n\n".join(text_parts).strip()
-                text = str(
-                    msg.get("content", "")
-                    or msg.get("text", "")
-                    or msg.get("raw_content", "")
-                    or ""
-                ).strip()
-                if text:
-                    return text
-                text_parts = []
-                for seg in (msg.get("segments") or []):
-                    if not isinstance(seg, dict):
-                        continue
-                    content = str(seg.get("content", "") or "")
-                    if content.strip():
-                        text_parts.append(content)
-                return "\n\n".join(text_parts).strip()
-
-            def _normalize_role(msg):
-                if not isinstance(msg, dict):
-                    return ""
-                role = str(msg.get("role", "") or "").strip().lower()
-                if role == "ai":
-                    return "assistant"
-                return role
-
-            def _build_recent_context(entries, reply_index):
-                if reply_index is None or reply_index <= 0:
-                    return ""
-                start_index = max(0, reply_index - 5)
-                context_lines = []
-                for item in entries[start_index:reply_index]:
-                    role = item.get("role", "")
-                    text = str(item.get("text", "") or "").strip()
-                    if not text:
-                        continue
-                    label = "用户" if role == "user" else "AI" if role in ("assistant", "ai") else role or "未知"
-                    context_lines.append(f"{label}：{text}")
-                return "\n".join(context_lines).strip()
-
-            message_entries = []
-            if mode == "api" and self.api_source:
-                logger.info("[DaemonWorker] API 准备读取历史消息")
-                history = self.api_source.get_history_as_messages() or []
-                history_count = len(history)
-                logger.info("[DaemonWorker] API 历史消息读取完成: count=%d", history_count)
-                for msg in history:
-                    if not isinstance(msg, dict):
-                        continue
-                    role = _normalize_role(msg)
-                    text = _extract_text(msg)
-                    if not text:
-                        continue
-                    message_entries.append({"role": role, "text": text})
-            elif mode == "browser" and self.connector:
-                logger.info("[DaemonWorker] Browser 准备读取结构化消息")
-                if hasattr(self.connector, "get_chat_content"):
-                    raw_msgs, _is_at_bottom = self.connector.get_chat_content(auto_wake=False)
-                else:
-                    logger.warning("[DaemonWorker] Browser connector 不支持 get_chat_content，无法读取回复文本")
-                    raw_msgs = []
-                raw_msgs = raw_msgs or []
-                history_count = len(raw_msgs)
-                logger.info("[DaemonWorker] Browser 消息读取完成: count=%d type=%s", history_count, type(raw_msgs).__name__)
-                for msg in raw_msgs:
-                    if not isinstance(msg, dict):
-                        continue
-                    role = _normalize_role(msg)
-                    text = _extract_text(msg)
-                    if not text:
-                        continue
-                    message_entries.append({"role": role, "text": text})
-            else:
-                logger.warning(
-                    "[DaemonWorker] 回复完成通知缺少可用消息源: mode=%s has_connector=%s has_api_source=%s",
-                    mode,
-                    bool(getattr(self, 'connector', None)),
-                    bool(getattr(self, 'api_source', None)),
-                )
-
-            reply_index = None
-            for idx in range(len(message_entries) - 1, -1, -1):
-                role = message_entries[idx].get("role", "")
-                if role in ("assistant", "ai"):
-                    reply_index = idx
-                    reply_text = str(message_entries[idx].get("text", "") or "").strip()
-                    assistant_count += 1
-                    logger.info("[DaemonWorker] 命中 assistant 消息: reverse_idx=%d reply_len=%d", len(message_entries) - idx, len(reply_text or ""))
-                    break
-
-            recent_context = _build_recent_context(message_entries, reply_index)
-
-            logger.info(
-                "[DaemonWorker] 回复完成检查: mode=%s chat_id=%s history_count=%d assistant_count=%d reply_len=%d recent_context_len=%d has_daemon_bridge=%s",
-                mode,
-                chat_id,
-                history_count,
-                assistant_count,
-                len(reply_text or ""),
-                len(recent_context or ""),
-                bool(getattr(self, 'daemon_bridge', None)),
-            )
-            if reply_text:
-                logger.info("[DaemonWorker] 触发守护通知: mode=%s chat_id=%s", mode, chat_id)
-                self.daemon_bridge.on_reply_completed(reply_text, mode, chat_id, recent_context=recent_context)
-            else:
-                logger.info("[DaemonWorker] 未获取到 assistant 回复文本，跳过守护通知")
-        except Exception as e:
-            logger.warning("[DaemonWorker] 守护进程通知异常: %s", e)
-            traceback.print_exc()
+    def _notify_subagent_reply_completed(self, mode: str, chat_id: str = ""):
+        return self.subagent_notify_bridge.notify_reply_completed(mode, chat_id)
 
     def _background_process_ai_response(self):
         try:
@@ -1012,53 +604,7 @@ class WorkerThread(QThread):
             self._round_sm.handle_event(RoundStateEvent.ERROR_RESET)
 
     def _emit_browser_messages_snapshot(self, reason='background_sync'):
-        """浏览器模式：主动抓取当前稳定消息并推送给 UI，避免修复完成后仍停留旧视图。
-        使用增量提取器，由状态机事件驱动缓存失效。"""
-        if not self.connector.interact:
-            return False
-        try:
-            # [诊断] 记录推送前的 code_fingerprint 快照
-            old_fps = {}
-            if reason == 'after_autofix' and self.last_messages_snapshot:
-                for msg in self.last_messages_snapshot:
-                    msg_id = str(msg.get('id', '') or '')[:12]
-                    for seg in (msg.get('segments') or []):
-                        if isinstance(seg, dict) and seg.get('type') == 'code':
-                            fp = str(seg.get('code_fingerprint', '') or '')
-                            old_fps[f"{msg_id}:{seg.get('block_index', '?')}"] = fp
-
-            raw_msgs, _, _ = self.connector.get_chat_content_incremental(
-                transient_last_ai=False
-            )
-
-            # [诊断] 对比 AutoFix 前后 code_fingerprint 变化
-            if reason == 'after_autofix' and old_fps:
-                new_fps = {}
-                for msg in raw_msgs:
-                    msg_id = str(msg.get('id', '') or '')[:12]
-                    for seg in (msg.get('segments') or []):
-                        if isinstance(seg, dict) and seg.get('type') == 'code':
-                            fp = str(seg.get('code_fingerprint', '') or '')
-                            new_fps[f"{msg_id}:{seg.get('block_index', '?')}"] = fp
-                changed_keys = []
-                for k in set(list(old_fps.keys()) + list(new_fps.keys())):
-                    old_fp = old_fps.get(k, '<无>')
-                    new_fp = new_fps.get(k, '<无>')
-                    if old_fp != new_fp:
-                        changed_keys.append(f"{k}: fp {old_fp[:12]}→{new_fp[:12]}")
-                if changed_keys:
-                    logger.info("[snapshot-诊断] AutoFix后代码内容变化 | reason=%s | 变化数=%s | 详情=%s",
-                                reason, len(changed_keys), changed_keys)
-                else:
-                    logger.debug("[snapshot-诊断] AutoFix后代码内容无变化 | reason=%s", reason)
-
-            self._do_push_extracted_messages(raw_msgs, reason=f'snapshot_{reason}')
-            self.state_service.save_states()
-            self._check_and_emit_sync()
-            return True
-        except Exception as e:
-            logger.warning(f"浏览器稳定消息同步失败: {e}")
-            return False
+        return self.browser_message_sync_bridge.emit_browser_messages_snapshot(reason)
 
     def _get_last_ai_fingerprint(self, live=False):
         """获取最后一条 AI 消息的指纹。live=True 时从浏览器实时获取"""
@@ -1212,13 +758,20 @@ class WorkerThread(QThread):
                     self._processed_fp_order.append(send_key)
 
                 # 用户待发消息拼接到工具结果末尾，浏览器一问一答限制下必须同轮发出
+                # 只有用户主动点击「随工具发送」后 pending_user_message 才会被设置
+                # idle 自动发送路径不经过此处，两条路径互斥，不会重复发送
                 pending = self.get_and_clear_pending_message()
+                logger.info("[工具路由] get_and_clear_pending_message 结果: %s", pending)
                 if pending:
                     pending_text = str(pending.get("text", "") or "").strip()
+                    logger.info("[工具路由] pending_text 长度: %d", len(pending_text))
                     if pending_text:
                         response_text = response_text + f"\n\n[USER_MESSAGE_BEGIN]\n{pending_text}\n[USER_MESSAGE_END]"
                         self.safe_emit_status("✅ 已附加用户待发消息")
-                        logger.info("[工具路由] 用户待发消息已附加到工具结果")
+                        logger.info("[工具路由] 用户待发消息已附加到工具结果，通知 UI 清除排队")
+                        self.pending_message_consumed_signal.emit()
+                else:
+                    logger.info("[工具路由] 无待发消息，跳过 pending 附加")
 
                 self._round_sm.handle_event(RoundStateEvent.TOOL_RESULT_READY)
                 self.scheduler.add_task(
@@ -1269,44 +822,33 @@ class WorkerThread(QThread):
         )
 
     def get_staging_file_content(self, rel_path, client_id="Host", **kwargs):
-        staging_dir = self.config.get("export_code_path", "export/code")
-        new_path = os.path.join(staging_dir, rel_path)
-        new_content = "File not found"
-        try:
-            if os.path.exists(new_path):
-                with open(new_path, 'r', encoding='utf-8') as f:
-                    new_content = f.read()
-        except Exception as e:
-            new_content = f"Error reading staging: {e}"
-        project_root = ProjectContext.get().get_project_root()
-        old_path = os.path.join(project_root, rel_path)
-        old_content = None
-        try:
-            if os.path.exists(old_path):
-                with open(old_path, 'r', encoding='utf-8') as f:
-                    old_content = f.read()
-        except Exception as e:
-            logger.warning(f"读取旧文件内容失败: {e}")
-        self.file_preview_signal.emit({
-            "target_client_id": client_id,
-            "rel_path": rel_path,
-            "content": new_content,
-            "old_content": old_content
-        })
+        return self.code_workspace_bridge.get_staging_file_content(
+            rel_path,
+            client_id=client_id,
+            **kwargs,
+        )
 
     def handle_sync_request(self, client_id="Host", **kwargs):
-        self.safe_emit_status(f"🔄 [Sync] {client_id} 请求同步...")
-        sync_data = self.update_service.pack_client_code()
-        self.ota_sync_signal.emit(sync_data)
+        return self.code_workspace_bridge.handle_sync_request(client_id=client_id, **kwargs)
 
     def handle_compound_send(self, text, file_paths, client_id="Host", **kwargs):
-        self.scheduler.add_task(client_id, "compound_send_task", text, file_paths, **kwargs)
+        return self.browser_command_bridge.handle_compound_send(
+            text,
+            file_paths,
+            client_id=client_id,
+            **kwargs,
+        )
 
     def send_compound(self, text, file_paths, client_id="Host", **kwargs):
-        self.handle_compound_send(text, file_paths, client_id, **kwargs)
+        return self.browser_command_bridge.send_compound(
+            text,
+            file_paths,
+            client_id=client_id,
+            **kwargs,
+        )
 
     def upload_file(self, file_path, client_id="Host", **kwargs):
-        self.scheduler.add_task(client_id, "upload_file_task", file_path, **kwargs)
+        return self.browser_command_bridge.upload_file(file_path, client_id=client_id, **kwargs)
 
     def _build_browser_tool_feedback_text(self, payload) -> str:
         import json
@@ -1380,70 +922,37 @@ class WorkerThread(QThread):
         return '\n'.join(blocks)
 
     def send_text(self, selector, text, client_id="Host", **kwargs):
-        self.scheduler.add_task(client_id, "real_send_text", selector, text, **kwargs)
+        return self.browser_command_bridge.send_text(selector, text, client_id=client_id, **kwargs)
 
     def run_remote_script(self, code, client_id="Host", **kwargs):
-        prompt = f"请执行/解释以下代码:\n```python\n{code}\n```"
-        self.scheduler.add_task(
-            client_id,
-            "real_send_text",
-            "div.aa-chat-input textarea",
-            prompt,
-            **kwargs
-        )
+        return self.browser_command_bridge.run_remote_script(code, client_id=client_id, **kwargs)
 
     def request_switch_session(self, index, client_id="Host", **kwargs):
-        self.scheduler.add_task(client_id, "switch_session_task", index, **kwargs)
+        return self.browser_command_bridge.request_switch_session(index, client_id=client_id, **kwargs)
 
     def new_chat(self, client_id="Host", **kwargs):
-        self.scheduler.add_task(client_id, "new_chat_task", **kwargs)
+        return self.browser_command_bridge.new_chat(client_id=client_id, **kwargs)
 
     def request_wake_up(self, client_id="Host", **kwargs):
-        self.scheduler.add_task(client_id, "task_wake_up", **kwargs)
+        return self.browser_command_bridge.request_wake_up(client_id=client_id, **kwargs)
 
     def request_fix_all(self, client_id="Host", **kwargs):
-        self.scheduler.add_task(client_id, "task_fix_all", **kwargs)
+        return self.browser_command_bridge.request_fix_all(client_id=client_id, **kwargs)
 
     def trigger_manual_toggle(self, msg_index, blk_idx, total, client_id="Host", **kwargs):
-        fingerprint = None
-        try:
-            target_msgs = [m for m in self.last_messages_snapshot if m.get('index') == msg_index]
-            if target_msgs:
-                msg_obj = target_msgs[0]
-                full_text = self.engine.get_msg_text(msg_obj)
-                fingerprint = full_text[:30].replace("\n", "").strip()
-        except Exception as e:
-            logger.warning(f"获取指纹失败: {e}")
-        self.scheduler.add_task(
-            client_id,
-            "task_manual_toggle",
+        return self.browser_command_bridge.trigger_manual_toggle(
             msg_index,
             blk_idx,
             total,
-            fingerprint=fingerprint,
-            **kwargs
+            client_id=client_id,
+            **kwargs,
         )
 
     def do_server_scan(self, **kwargs):
-        if not self.rpc_lock.tryLock():
-            return
-        try:
-            changes = self.update_service.scan()
-            self.update_list_signal.emit(changes)
-        finally:
-            self.rpc_lock.unlock()
+        return self.code_workspace_bridge.do_server_scan(**kwargs)
 
     def do_server_apply(self, paths, **kwargs):
-        if not self.rpc_lock.tryLock():
-            return
-        try:
-            self.update_service.process_updates(
-                paths,
-                self.safe_emit_status,
-                self.ota_sync_signal.emit
-            )
-        finally:
-            self.rpc_lock.unlock()
+        return self.code_workspace_bridge.do_server_apply(paths, **kwargs)
 
     def get_git_workbench_state(self, limit=30, client_id="Host", user_role=None, **kwargs):
         return self.git_bridge.get_workbench_state(limit=limit, client_id=client_id, user_role=user_role)
@@ -1483,59 +992,27 @@ class WorkerThread(QThread):
     def _on_knowledge_reindex_progress(self, info):
         return self.git_bridge.on_knowledge_reindex_progress(info)
     def request_generate_snapshot(self, *args, **kwargs):
-        self.safe_emit_status("⏳ 正在生成项目快照...")
-        try:
-            result = subprocess.run(
-                [sys.executable, "dump_code.py"],
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
-            )
-            if result.returncode == 0:
-                if os.path.exists("FULL_PROJECT_CONTEXT.txt"):
-                    with open("FULL_PROJECT_CONTEXT.txt", "r", encoding="utf-8") as f:
-                        content = f.read()
-                    self.snapshot_ready_signal.emit(content)
-                    self.safe_emit_status("✅ 快照生成完毕")
-                else:
-                    self.safe_emit_status("❌ 错误: 未找到快照文件")
-            else:
-                self.safe_emit_status(f"❌ 生成失败: {result.stderr}")
-        except Exception as e:
-            self.safe_emit_status(f"❌ 执行异常: {e}")
+        return self.code_workspace_bridge.request_generate_snapshot(*args, **kwargs)
 
     def do_server_clear_cache(self, **kwargs):
-        staging_dir = self.config.get("export_code_path", "export/code")
-        if not os.path.exists(staging_dir):
-            self.safe_emit_status("⚠️ 服务端暂存区已为空")
-            return
+        return self.code_workspace_bridge.do_server_clear_cache(**kwargs)
 
-        try:
-            count = 0
-            for filename in os.listdir(staging_dir):
-                file_path = os.path.join(staging_dir, filename)
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                    count += 1
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-                    count += 1
-
-            self.safe_emit_status(f"🗑️ 服务端暂存区已清空 ({count} items)")
-            self.do_server_scan()
-        except Exception as e:
-            self.safe_emit_status(f"❌ 服务端清空失败: {e}")
+    def set_exec_mode(self, mode: str, local_python: str = "", **kwargs):
+        """代理方法：将执行环境切换请求转发给 docker_manager。供 RPC 调用。"""
+        if self.docker_manager:
+            self.docker_manager.set_exec_mode(mode, local_python)
+        else:
+            logger.warning("[set_exec_mode] docker_manager 未初始化，忽略切换请求")
 
     def update_config(self, cfg, **kwargs):
         self.config = cfg
         self.file_service.config = cfg
         self.update_service.config = cfg
-        if hasattr(self, 'daemon_bridge') and self.daemon_bridge:
+        if hasattr(self, 'subagent_bridge') and self.subagent_bridge:
             try:
-                self.daemon_bridge.reload()
+                self.subagent_bridge.reload()
             except Exception as e:
-                logger.debug("守护进程配置热重载异常: %s", e)
+                logger.debug("Subagent配置热重载异常: %s", e)
 
 
     def reload_api_runtime_config(self, **kwargs):
@@ -1554,8 +1031,14 @@ class WorkerThread(QThread):
             self.safe_emit_status(f"⚠️ API 配置热应用失败: {e}")
             return False
 
+    def api_probe_tool_support(self, **kwargs):
+        return self.api_mode_bridge.api_probe_tool_support(**kwargs)
+
+    def api_probe_models(self, **kwargs):
+        return self.api_mode_bridge.api_probe_models(**kwargs)
+
     def manual_save(self, f, c, **kwargs):
-        self.file_service.save_code(f, c)
+        return self.code_workspace_bridge.manual_save(f, c, **kwargs)
 
     def navigate(self, u, **kwargs):
         self.connector.navigate(u)
@@ -1564,8 +1047,7 @@ class WorkerThread(QThread):
         self.connector.paste_to_input(s, auto_send=auto_send)
 
     def touch_file(self, path, **kwargs):
-        if os.path.exists(path):
-            os.utime(path, None)
+        return self.code_workspace_bridge.touch_file(path, **kwargs)
 
     def set_manual_turn(self, num, **kwargs):
         self.state_service.set_manual_bubble_count(self.current_chat_id, num)
@@ -1576,27 +1058,11 @@ class WorkerThread(QThread):
         self._check_and_emit_sync(True)
 
     def trigger_resync(self):
-        if self.last_messages_snapshot:
-            self._do_push_extracted_messages(
-                self.last_messages_snapshot,
-                reason='resync',
-                force_full=True,
-            )
-        self._check_and_emit_sync(True)
+        return self.browser_message_sync_bridge.trigger_resync()
 
 
     def _check_and_emit_sync(self, force=False):
-        needs, snap = self.state_service.should_emit_sync(
-            self.current_chat_id,
-            self.current_bubble_count,
-            force
-        )
-        if needs:
-            self.state_sync_signal.emit(self.current_bubble_count, snap)
-            self.context_health_signal.emit(
-                self.current_bubble_count,
-                self.current_bubble_count - snap
-            )
+        return self.browser_message_sync_bridge.check_and_emit_sync(force)
 
     def _update_ai_state(self, state):
         extra = {}
@@ -1622,7 +1088,7 @@ class WorkerThread(QThread):
             except Exception as e:
                 logger.debug("[状态机缓存失效] 失败（非致命）: %s", e)
 
-        # 守护进程触发：仅浏览器回复流水线 fixing → idle 后生成建议。
+        # Subagent触发：仅浏览器回复流水线 fixing → idle 后生成建议。
         # 会话切换、异常恢复、工具失败兜底等回到 idle 的路径不应误触发建议。
         if (
             old_state == BrowserRoundState.FIXING
@@ -1630,9 +1096,9 @@ class WorkerThread(QThread):
             and event == RoundStateEvent.PIPELINE_END
         ):
             try:
-                self._notify_daemon_reply_completed("browser", self.current_chat_id)
+                self._notify_subagent_reply_completed("browser", self.current_chat_id)
             except Exception as e:
-                logger.debug("[守护进程] 浏览器模式通知失败（非致命）: %s", e)
+                logger.debug("[Subagent] 浏览器模式通知失败（非致命）: %s", e)
 
     @property
     def _browser_round_state(self) -> str:
@@ -1645,275 +1111,52 @@ class WorkerThread(QThread):
         return self._round_sm.state_value
 
     def _normalize_runtime_task(self, task: dict | None):
-        task = dict(task or {})
-        task_id = str(task.get('task_id') or task.get('id') or '').strip()
-        if not task_id:
-            return None
-        task['id'] = task_id
-        task['task_id'] = task_id
-        if not task.get('status'):
-            task['status'] = 'running'
-        started_at = task.get('started_at', 0) or 0
-        elapsed_ms = task.get('elapsed_ms', 0) or 0
-        if started_at and not elapsed_ms:
-            elapsed_ms = max(0, int((time.time() - float(started_at)) * 1000))
-            task['elapsed_ms'] = elapsed_ms
-        if elapsed_ms and not task.get('age'):
-            task['age'] = elapsed_ms / 1000.0
-        return task
+        return self.runtime_monitor_bridge.normalize_runtime_task(task)
 
     def _upsert_runtime_task(self, task: dict | None):
-        payload = self._normalize_runtime_task(task)
-        if not payload:
-            return None
-        task_id = payload['task_id']
-        self._runtime_tool_tasks[task_id] = payload
-        self._runtime_task_order = [x for x in self._runtime_task_order if x != task_id]
-        self._runtime_task_order.append(task_id)
-        return payload
+        return self.runtime_monitor_bridge.upsert_runtime_task(task)
 
     def _remove_runtime_task(self, task_id: str | None):
-        key = str(task_id or '').strip()
-        if not key:
-            return
-        self._runtime_tool_tasks.pop(key, None)
-        self._runtime_task_order = [x for x in self._runtime_task_order if x != key]
+        return self.runtime_monitor_bridge.remove_runtime_task(task_id)
 
     def _build_queue_monitor_snapshot(self):
-        active_task = None
-        queue_list = []
-        if hasattr(self.scheduler, 'get_queue_snapshot'):
-            active_task, queue_list = self.scheduler.get_queue_snapshot()
-        queue_list = list(queue_list or [])
-        runtime_tasks = []
-        for task_id in list(self._runtime_task_order):
-            payload = self._normalize_runtime_task(self._runtime_tool_tasks.get(task_id))
-            if not payload:
-                continue
-            self._runtime_tool_tasks[task_id] = payload
-            runtime_tasks.append(payload)
-        if runtime_tasks:
-            # Runtime tool task 优先于 scheduler 的 system send 任务占据 active 位
-            scheduler_action = str(active_task.get('action', '') if active_task else '')
-            if active_task and scheduler_action in ('real_send_text', 'compound_send_task'):
-                # scheduler 的发送任务让位给 runtime tool task
-                queue_list = [active_task] + queue_list
-                active_task = runtime_tasks[0]
-                queue_list = runtime_tasks[1:] + queue_list
-            elif active_task:
-                queue_list = runtime_tasks + queue_list
-            else:
-                active_task = runtime_tasks[0]
-                queue_list = runtime_tasks[1:] + queue_list
-        return {
-            'active': active_task,
-            'queue': queue_list,
-            'timestamp': time.time(),
-        }
+        return self.runtime_monitor_bridge.build_queue_monitor_snapshot()
 
     def _emit_queue_monitor_snapshot(self, reason='runtime_event'):
-        snapshot = self._build_queue_monitor_snapshot()
-        active = snapshot.get('active') or {}
-        _has_active = bool(active)
-        _log = logger.info if _has_active else logger.debug
-        _log(
-            "[QueueMonitor] emit snapshot | reason=%s has_active=%s task_id=%s tool_name=%s queue=%s",
-            reason,
-            _has_active,
-            active.get('task_id', ''),
-            active.get('tool_name', ''),
-            len(snapshot.get('queue', []) or []),
-        )
-        self.queue_monitor_signal.emit(snapshot)
-        return snapshot
+        return self.runtime_monitor_bridge.emit_queue_monitor_snapshot(reason)
 
     def _emit_tool_event(self, event_type, tool_call_id, tool_name, status,
                          success=None, elapsed_ms=0, index=0):
-        """工具状态/结果事件推送，走 canonical 同步层。"""
-        from app.core.browser_sync.events import EventType
-        seq = self._seq_gen.next()
-        payload = {
-            "tool_call_id": tool_call_id,
-            "tool_name": tool_name,
-            "status": status,
-            "index": index,
-        }
-        if success is not None:
-            payload["success"] = success
-        if elapsed_ms:
-            payload["elapsed_ms"] = elapsed_ms
-
-        self._canonical_store.log_event(
-            type("E", (), {
-                "seq": seq,
-                "conversation_id": self.current_chat_id,
-                "round_id": "",
-                "event": event_type,
-                "payload": payload,
-                "created_at": time.time(),
-                "to_dict": lambda self_: {
-                    "seq": self_.seq,
-                    "conversation_id": self_.conversation_id,
-                    "round_id": self_.round_id,
-                    "event": self_.event,
-                    "payload": self_.payload,
-                    "created_at": self_.created_at,
-                },
-            })()
+        return self.runtime_monitor_bridge.emit_tool_event(
+            event_type,
+            tool_call_id,
+            tool_name,
+            status,
+            success=success,
+            elapsed_ms=elapsed_ms,
+            index=index,
         )
-        self.ai_state_signal.emit({
-            "type": "tool_event",
-            "_seq": seq,
-            "_event": event_type,
-            "tool_call_id": tool_call_id,
-            "tool_name": tool_name,
-            "status": status,
-            "success": success,
-            "elapsed_ms": elapsed_ms,
-            "index": index,
-        })
-        logger.info("[工具事件] %s | tool_call_id=%s | tool_name=%s | status=%s | seq=%s",
-                    event_type, tool_call_id[:20], tool_name, status, seq)
 
     def _handle_runtime_tool_start(self, intent, index):
-        task_id = str(getattr(intent, 'tool_call_id', '') or '').strip()
-        tool_name = getattr(intent, 'name', '') or getattr(intent, 'kind', 'tool_call')
-        task = {
-            'id': task_id,
-            'task_id': task_id,
-            'action': tool_name,
-            'status': 'running',
-            'label': tool_name or getattr(intent, 'kind', '工具任务'),
-            'category': 'Tool',
-            'icon': '🛠️' if getattr(intent, 'kind', '') == 'skill_call' else '🖥️',
-            'cancellable': False,
-            'client_id': getattr(intent, 'conversation_id', '') or 'tool_runtime',
-            'tool_call_id': task_id,
-            'tool_name': tool_name,
-            'conversation_id': getattr(intent, 'conversation_id', ''),
-            'started_at': time.time(),
-            'elapsed_ms': 0,
-            'age': 0,
-            'runtime_source': 'tool_runtime',
-            'index': index,
-            'block_key': getattr(intent, 'block_key', ''),
-        }
-        logger.info(
-            "[工具执行] 开始执行工具 | tool_name=%s | tool_call_id=%s | conversation_id=%s | index=%s",
-            tool_name,
-            task_id,
-            getattr(intent, 'conversation_id', ''),
-            index,
-        )
-        self._upsert_runtime_task(task)
-        self._emit_queue_monitor_snapshot(reason='tool_start')
-        self._emit_tool_event("tool.status", task_id, tool_name, "running", index=index)
+        return self.runtime_monitor_bridge.handle_runtime_tool_start(intent, index)
 
     def _handle_runtime_tool_end(self, intent, result, index):
-        task_id = str(getattr(intent, 'tool_call_id', '') or '').strip()
-        tool_name = getattr(intent, 'name', '') or getattr(intent, 'kind', 'tool_call')
-        elapsed_ms = 0
-        current_task = self._runtime_tool_tasks.get(task_id) or {}
-        started_at = current_task.get('started_at', 0) or 0
-        if started_at:
-            elapsed_ms = max(0, int((time.time() - float(started_at)) * 1000))
-        logger.info(
-            "[工具执行] 工具执行结束 | tool_name=%s | tool_call_id=%s | success=%s | elapsed_ms=%s | conversation_id=%s | index=%s",
-            tool_name,
-            task_id,
-            bool(getattr(result, 'success', False)),
-            elapsed_ms,
-            getattr(intent, 'conversation_id', ''),
-            index,
-        )
-        self._remove_runtime_task(task_id)
-        self._emit_queue_monitor_snapshot(reason='tool_end')
-        success = bool(getattr(result, 'success', False))
-        status = "completed" if success else "failed"
-        self._emit_tool_event("tool.result", task_id, tool_name, status,
-                              success=success, elapsed_ms=elapsed_ms, index=index)
+        return self.runtime_monitor_bridge.handle_runtime_tool_end(intent, result, index)
 
     def _handle_knowledge_task_state_change(self, event):
-        event = dict(event or {})
-        state = str(event.get('state') or '').strip() or 'unknown'
-        snap = event.get('snapshot') or {}
-        payload = self.knowledge_task_bridge.build_runtime_task_payload(snap)
-        task_id = ''
-        if payload:
-            task_id = payload.get('task_id', '')
-        if not task_id:
-            task_id = str((snap or {}).get('task_id', '') or '').strip()
-        tool_name = str((snap or {}).get('tool_name', '') or 'knowledge_search')
-        if state == 'running' and payload:
-            logger.info(
-                "[知识任务] 开始执行知识检索 | task_id=%s | tool_call_id=%s | tool_name=%s | conversation_id=%s | query_preview=%s",
-                task_id,
-                payload.get('tool_call_id', ''),
-                tool_name,
-                payload.get('conversation_id', ''),
-                payload.get('query_preview', ''),
-            )
-            self._upsert_runtime_task(payload)
-        elif state in ('finished', 'idle', 'error', 'cancelled'):
-            elapsed_ms = (snap or {}).get('elapsed_ms', 0) or 0
-            logger.info(
-                "[知识任务] 知识检索状态变更 | state=%s | task_id=%s | tool_call_id=%s | tool_name=%s | elapsed_ms=%s | conversation_id=%s",
-                state,
-                task_id,
-                (payload or {}).get('tool_call_id', '') if payload else (snap or {}).get('tool_call_id', ''),
-                tool_name,
-                elapsed_ms,
-                (payload or {}).get('conversation_id', '') if payload else (snap or {}).get('conversation_id', ''),
-            )
-            self._remove_runtime_task(task_id)
-        self._emit_queue_monitor_snapshot(reason=f'knowledge_{state}')
-
+        return self.runtime_monitor_bridge.handle_knowledge_task_state_change(event)
 
     def _wrap_tool_runtime_start(self, previous_callback):
-        def _wrapped(intent, index):
-            try:
-                self._handle_runtime_tool_start(intent, index)
-            finally:
-                if callable(previous_callback):
-                    previous_callback(intent, index)
-        return _wrapped
+        return self.runtime_monitor_bridge.wrap_tool_runtime_start(previous_callback)
 
     def _wrap_tool_runtime_end(self, previous_callback):
-        def _wrapped(intent, result, index):
-            try:
-                self._handle_runtime_tool_end(intent, result, index)
-            finally:
-                if callable(previous_callback):
-                    previous_callback(intent, result, index)
-        return _wrapped
+        return self.runtime_monitor_bridge.wrap_tool_runtime_end(previous_callback)
 
     def _install_tool_runtime_callbacks(self):
-        runtime_executor = getattr(self.tool_router, 'runtime_executor', None)
-        if not runtime_executor:
-            return None
-        previous_on_start = getattr(runtime_executor, 'on_intent_start', None)
-        previous_on_end = getattr(runtime_executor, 'on_intent_end', None)
-        runtime_executor.on_intent_start = self._wrap_tool_runtime_start(previous_on_start)
-        runtime_executor.on_intent_end = self._wrap_tool_runtime_end(previous_on_end)
-        token = (runtime_executor, previous_on_start, previous_on_end)
-        self._tool_runtime_callback_stack.append(token)
-        return token
+        return self.runtime_monitor_bridge.install_tool_runtime_callbacks()
 
     def _restore_tool_runtime_callbacks(self, token=None):
-        runtime_executor = getattr(self.tool_router, 'runtime_executor', None)
-        if token is None:
-            if not self._tool_runtime_callback_stack:
-                return
-            token = self._tool_runtime_callback_stack.pop()
-        else:
-            try:
-                self._tool_runtime_callback_stack.remove(token)
-            except ValueError:
-                pass
-        executor_obj, previous_on_start, previous_on_end = token
-        if runtime_executor is executor_obj:
-            runtime_executor.on_intent_start = previous_on_start
-            runtime_executor.on_intent_end = previous_on_end
+        return self.runtime_monitor_bridge.restore_tool_runtime_callbacks(token)
 
     def _get_api_profile_display_name(self, profile_key: str) -> str:
         try:
@@ -1981,172 +1224,17 @@ class WorkerThread(QThread):
         return changed
 
     def _extract_browser_tool_input(self):
-        """优先从最后一条结构化 AI 消息提取工具识别输入；全文文本仅作兜底。"""
-        try:
-            raw_msgs, _ = self.connector.get_chat_content(self.target_class, auto_wake=False)
-            raw_msgs = self.file_service.process_images(raw_msgs)
-        except Exception as e:
-            logger.warning(f"浏览器模式结构化消息获取失败: {e}")
-            raw_msgs = []
-
-        if raw_msgs:
-            try:
-                self.last_messages_snapshot = raw_msgs
-            except Exception:
-                pass
-
-            last_ai_msg = None
-            for msg in reversed(raw_msgs):
-                if str(msg.get('role', '')).lower() == 'ai':
-                    last_ai_msg = msg
-                    break
-
-            if last_ai_msg:
-                segments = list(last_ai_msg.get('segments') or [])
-                structured_summary = []
-                for seg in segments:
-                    seg_type = seg.get('type')
-                    if seg_type == 'code':
-                        structured_summary.append({
-                            'type': 'code',
-                            'content': seg.get('content', ''),
-                            'language': seg.get('language'),
-                            'message_id': seg.get('message_id'),
-                            'block_index': seg.get('block_index'),
-                            'code_fingerprint': seg.get('code_fingerprint'),
-                            'block_key': seg.get('block_key'),
-                        })
-                    elif seg_type in ('text', 'tool_call', 'tool_result', 'thinking'):
-                        structured_summary.append({
-                            'type': seg_type,
-                            'content': seg.get('content', ''),
-                        })
-
-                logger.info(
-                    "[工具路由] 浏览器模式命中结构化 AI 消息 | segments=%s | codes=%s | message_id=%s",
-                    len(segments),
-                    sum(1 for seg in segments if seg.get('type') == 'code'),
-                    last_ai_msg.get('id', ''),
-                )
-                return {
-                    'messages': [{
-                        'role': 'AI',
-                        'id': last_ai_msg.get('id', ''),
-                        'segments': segments,
-                    }],
-                    'fingerprint_source': json.dumps(structured_summary, ensure_ascii=False, sort_keys=True),
-                    'fallback_text': self.connector.check_last_ai_message_for_tool() or '',
-                    'used_structured': True,
-                    'last_ai_msg_id': last_ai_msg.get('id', ''),
-                }
-
-        fallback_text = self.connector.check_last_ai_message_for_tool() or ''
-        if fallback_text:
-            logger.warning("[工具路由] 浏览器模式未获取到结构化 AI 消息，回退到全文文本识别")
-        return {
-            'messages': [{
-                'role': 'AI',
-                'index': 9999,
-                'segments': [{'type': 'text', 'content': fallback_text}],
-            }] if fallback_text else [],
-            'fingerprint_source': fallback_text,
-            'fallback_text': fallback_text,
-            'used_structured': False,
-            'last_ai_msg_id': '',
-        }
+        return self.browser_tool_input_bridge.extract_browser_tool_input()
 
     def _looks_like_browser_tool_feedback_text(self, text: str) -> bool:
-        text = str(text or '').strip()
-        if not text:
-            return False
-        normalized = text.lstrip()
-        return normalized.startswith('🔧 [工具执行结果]') or normalized.startswith('[工具执行结果]') or normalized.startswith('工具执行结果')
+        return self.browser_tool_input_bridge.looks_like_browser_tool_feedback_text(text)
 
     def _classify_browser_tool_input(self, candidate_messages, fallback_text: str = '', used_structured: bool = False) -> str:
-        fallback_text = str(fallback_text or '')
-        messages = list(candidate_messages or [])
-        if not messages:
-            return 'none'
-
-        last_msg = messages[-1] if messages else {}
-        segments = list(last_msg.get('segments') or []) if isinstance(last_msg, dict) else []
-
-        if used_structured and segments:
-            has_tool_result = any(str(seg.get('type', '') or '').strip().lower() == 'tool_result' for seg in segments if isinstance(seg, dict))
-            if has_tool_result:
-                logger.info("[工具分类] 结果=工具回显 | 段数=%s | 含 tool_result 段", len(segments))
-                return 'tool_feedback'
-
-            # [诊断] 记录每段 type/language/是否最后段/代码block_key
-            seg_details = []
-            for i, seg in enumerate(segments):
-                if not isinstance(seg, dict):
-                    continue
-                _t = str(seg.get('type', '') or '').strip().lower()
-                _l = str(seg.get('language', '') or '').strip().lower()
-                _is_last = (i == len(segments) - 1)
-                _bk = str(seg.get('block_key', '') or '').strip()[:20] if _t == 'code' else ''
-                _c_len = len(str(seg.get('content', '') or ''))
-                seg_details.append(f'{_t}:{_l}:len={_c_len}:last={_is_last}{":bk="+_bk if _bk else ""}')
-
-            text_chunks = []
-            has_tool_call = False
-            has_tool_call_code = False
-            has_code = False
-
-            for seg in segments:
-                if not isinstance(seg, dict):
-                    continue
-
-                seg_type = str(seg.get('type', '') or '').strip().lower()
-
-                if seg_type == 'tool_call':
-                    has_tool_call = True
-
-                elif seg_type == 'code':
-                    has_code = True
-                    language = str(seg.get('language', '') or '').strip().lower()
-                    if language == 'tool_call':
-                        has_tool_call_code = True
-
-                elif seg_type == 'text':
-                    text_chunks.append(str(seg.get('content', '') or ''))
-
-            merged_text = '\n'.join([chunk for chunk in text_chunks if chunk.strip()])
-            if self._looks_like_browser_tool_feedback_text(merged_text):
-                logger.info("[工具分类] 结果=工具回显 | 段数=%s | 文本匹配反馈模式", len(segments))
-                return 'tool_feedback'
-
-            if has_tool_call or has_tool_call_code:
-                logger.info(
-                    "[工具分类] 结果=工具调用 | 段数=%s | 含显式 tool_call 段=%s | 含 tool_call 代码块=%s | 段详情=%s",
-                    len(segments),
-                    has_tool_call,
-                    has_tool_call_code,
-                    seg_details,
-                )
-                return 'tool_call'
-
-            if has_code:
-                logger.info(
-                    "[工具分类] 结果=无工具 | 段数=%s | 仅普通代码块，不进入工具路由 | 段详情=%s",
-                    len(segments),
-                    seg_details,
-                )
-                return 'none'
-
-            logger.info(
-                "[工具分类] 结果=无工具 | 段数=%s | 无工具调用/代码块/回显 | 段详情=%s",
-                len(segments),
-                seg_details,
-            )
-            return 'none'
-
-        if self._looks_like_browser_tool_feedback_text(fallback_text):
-            return 'tool_feedback'
-        if fallback_text.strip():
-            return 'tool_call'
-        return 'none'
+        return self.browser_tool_input_bridge.classify_browser_tool_input(
+            candidate_messages,
+            fallback_text=fallback_text,
+            used_structured=used_structured,
+        )
 
     def _batch_fix_all(self, limit=None):
         count = 0
@@ -2215,68 +1303,21 @@ class WorkerThread(QThread):
 
 
     def get_skills_list(self, client_id="Host", **kwargs):
-        """获取 Skills 列表（RPC 方法）"""
-        try:
-            skills_list = self.agent.skills_manager.list_all_skills()
-            
-            # 通过信号返回数据
-            if hasattr(self, 'skills_data_signal'):
-                self.skills_data_signal.emit({
-                    'target_client_id': client_id,
-                    'skills': skills_list
-                })
-            
-            self.safe_emit_status(f"📋 已获取 {len(skills_list)} 个 Skills")
-        except Exception as e:
-            self.safe_emit_status(f"❌ 获取 Skills 列表失败: {e}")
-    
+        return self.skills_bridge.get_skills_list(client_id=client_id, **kwargs)
+
     def toggle_skill(self, skill_name, enabled, client_id="Host", **kwargs):
-        """启用/禁用 Skill（RPC 方法）"""
-        try:
-            if not self.tool_router or not self.tool_router.skills_manager:
-                self.safe_emit_status(f"❌ SkillsManager 未初始化，无法切换 Skill")
-                return False
-
-            success = self.tool_router.skills_manager.toggle_skill(skill_name, enabled)
-            if success:
-                status = "启用" if enabled else "禁用"
-                self.safe_emit_status(f"✅ 已{status} Skill: {skill_name}")
-            else:
-                self.safe_emit_status(f"❌ Skill '{skill_name}' 不存在")
-
-            self.get_skills_list(client_id=client_id)
-            return success
-        except Exception as e:
-            self.safe_emit_status(f"❌ 切换 Skill 状态失败: {e}")
-            return False
+        return self.skills_bridge.toggle_skill(
+            skill_name,
+            enabled,
+            client_id=client_id,
+            **kwargs,
+        )
 
     def reload_skill(self, skill_name, client_id="Host", **kwargs):
-        """重载单个 Skill（RPC 方法）"""
-        try:
-            success, message = self.agent.reload_skill(skill_name)
-            if success:
-                self.safe_emit_status(f"🔄 {message}")
-            else:
-                self.safe_emit_status(f"❌ {message}")
-            self.get_skills_list(client_id=client_id)
-        except Exception as e:
-            self.safe_emit_status(f"❌ 重载 Skill 失败: {e}")
-    
+        return self.skills_bridge.reload_skill(skill_name, client_id=client_id, **kwargs)
+
     def get_system_prompt(self, client_id="Host", **kwargs):
-        """获取系统提示词（RPC 方法）"""
-        try:
-            prompt = self.agent.skills_manager.generate_system_prompt()
-            
-            # 通过信号返回数据
-            if hasattr(self, 'system_prompt_signal'):
-                self.system_prompt_signal.emit({
-                    'target_client_id': client_id,
-                    'prompt': prompt
-                })
-            
-            self.safe_emit_status(f"📝 已生成系统提示词 (~{len(prompt) // 4} tokens)")
-        except Exception as e:
-            self.safe_emit_status(f"❌ 生成系统提示词失败: {e}")
+        return self.skills_bridge.get_system_prompt(client_id=client_id, **kwargs)
 
     def run(self):
         """主循环入口：根据 mode 分发"""
@@ -2467,6 +1508,7 @@ class WorkerThread(QThread):
                 self.safe_emit_status("✅ 修复完成")
                 self.batch_complete_signal.emit()
                 logger.info("[修复队列] 批量修复完成，队列已清空")
+                self._background_process_ai_response_direct()
                 continue
             msg_idx, blk_idx, total, fingerprint = task
             self.connector.manual_toggle_block(
@@ -2474,142 +1516,17 @@ class WorkerThread(QThread):
             )
 
     def _idle_probe_and_maybe_push(self, transient_last_ai=False):
-        """IDLE 状态下轻量探测：只看结构变化，无变化则静默跳过。"""
-        try:
-            raw_msgs, is_at_bottom, has_structural_change = \
-                self.connector.get_chat_content_incremental(
-                    transient_last_ai=transient_last_ai
-                )
-        except Exception as e:
-            logger.warning("[IDLE探测] 增量提取异常: %s", e)
-            return
-
-        if not has_structural_change:
-            return  # 结构无变化 → 静默跳过，零推送
-
-        # 结构有变化（如平台插入了系统消息）→ 推送
-        self._do_push_extracted_messages(raw_msgs, reason='idle_structural_change')
+        return self.browser_message_sync_bridge.idle_probe_and_maybe_push(transient_last_ai)
 
     def _do_extract_and_push(self, reason='state_driven', transient_last_ai=False):
-        """非 IDLE 状态下的提取+推送，使用增量提取器。"""
-        try:
-            raw_msgs, is_at_bottom, _ = self.connector.get_chat_content_incremental(
-                transient_last_ai=transient_last_ai
-            )
-        except Exception as e:
-            logger.warning("[提取推送] 增量提取异常，降级全量: %s", e)
-            try:
-                raw_msgs, _ = self.connector.get_chat_content(
-                    self.target_class,
-                    transient_last_ai=transient_last_ai,
-                )
-            except Exception as e2:
-                logger.warning("[提取推送] 全量提取也失败: %s", e2)
-                return
-
-        self._do_push_extracted_messages(raw_msgs, reason=reason)
+        return self.browser_message_sync_bridge.do_extract_and_push(reason, transient_last_ai)
 
     def _do_push_extracted_messages(self, raw_msgs, reason='unknown', force_full=False):
-        """公共推送逻辑：预扫描tool_call_id → process_images → deduce_state → tag_messages → normalizer → store → emit。
-
-        force_full=True 时全量推送（重启/切换对话/切换模式）。
-        默认增量推送：只发变化的消息。
-        """
-        raw_msgs = self.file_service.process_images(raw_msgs)
-        self.last_messages_snapshot = raw_msgs
-
-        self._prescan_tool_call_ids(raw_msgs)
-
-        session_data = self.state_service.get_session(self.current_chat_id)
-        session_data, self.current_bubble_count, log = self.engine.deduce_state(
-            raw_msgs, session_data
-        )
-        if log:
-            self.safe_emit_status(log)
-        raw_msgs = self.engine.tag_messages(
-            raw_msgs,
-            self.current_bubble_count,
-            session_data.snapshot_bubble
-        )
-
-        # === canonical 同步层 ===
-        canonical_msgs, changed_ids, removed_ids = self._normalizer.normalize_messages(
-            raw_msgs,
-            conversation_id=self.current_chat_id,
-            round_id="",
-            force_full=force_full,
-        )
-        seq = self._seq_gen.next()
-
-        store_empty = (self._canonical_store.message_count == 0)
-        if force_full or store_empty or not changed_ids:
-            event_type = "conversation.snapshot"
-            self._canonical_store.apply_snapshot(canonical_msgs, seq, self.current_chat_id)
-            enriched = []
-            for cm in canonical_msgs:
-                d = cm.to_dict()
-                d["_seq"] = seq
-                d["_event"] = event_type
-                enriched.append(d)
-            _ch_summary = []
-            for cm in canonical_msgs:
-                _ch_summary.append(f"{cm.id[:12]}:rev={cm.rev}:ch={cm.content_hash[:8]}")
-            logger.info(
-                "[同步推送] 全量推送 | reason=%s | seq=%s | messages=%s | 详情=[%s]",
-                reason, seq, len(enriched), " | ".join(_ch_summary),
-            )
-            self.messages_signal.emit(enriched)
-        else:
-            event_type = "message.upsert"
-            self._canonical_store.apply_incremental(canonical_msgs, changed_ids, seq, self.current_chat_id)
-            changed_set = set(changed_ids)
-            enriched = []
-            for cm in canonical_msgs:
-                if cm.id in changed_set:
-                    d = cm.to_dict()
-                    d["_seq"] = seq
-                    d["_event"] = event_type
-                    enriched.append(d)
-            for rid in removed_ids:
-                enriched.append({
-                    "id": rid,
-                    "_seq": seq,
-                    "_event": "message.remove",
-                })
-            logger.info(
-                "[同步推送] 增量推送 | reason=%s | seq=%s | changed=%s | removed=%s | total=%s",
-                reason, seq, len(enriched) - len(removed_ids), len(removed_ids), len(canonical_msgs),
-            )
-            self.messages_signal.emit(enriched)
-
-        try:
-            self.process_batch(raw_msgs)
-        except Exception as e:
-            logger.warning(e)
+        return self.browser_message_sync_bridge.do_push_extracted_messages(raw_msgs, reason, force_full)
 
     def _prescan_tool_call_ids(self, raw_msgs):
-        """预扫描 AI 消息的 tool_call segment，提前生成 tool_call_id 并回写到 segment dict。
+        return self.browser_message_sync_bridge.prescan_tool_call_ids(raw_msgs)
 
-        时序要求：必须在 normalizer 推送之前完成，这样客户端第一次渲染时
-        ToolCallCard 就能通过 tool_call_id 注册到 _tool_cards_by_id，
-        后续工具执行结果通过 _emit_tool_event 推送时可直接绑定。
-        """
-        from app.core.tool_runtime.segment_parser import ToolSegmentParser
-        assigned = 0
-        for msg in raw_msgs or []:
-            if str(msg.get('role', '') or '').lower() != 'ai':
-                continue
-            segments = msg.get('segments') or []
-            intents = ToolSegmentParser.parse_segments(
-                segments,
-                conversation_id=self.current_chat_id,
-                source='prescan',
-                write_back_tool_call_id=True,
-            )
-            assigned += len(intents)
-        if assigned > 0:
-            logger.info("[预扫描] tool_call_id 已回写 | count=%s | chat_id=%s",
-                        assigned, self.current_chat_id[:12])
 
     #============================================================
     # API???
@@ -2620,6 +1537,23 @@ class WorkerThread(QThread):
 
     def _init_api_source(self):
         return self.api_mode_bridge._init_api_source()
+
+    def get_agent_runtime_options(self, **kwargs):
+        return self.agent_runtime_bridge.options(**kwargs)
+
+    def get_agent_runtime_state(self, **kwargs):
+        return self.agent_runtime_bridge.state(**kwargs)
+
+    def api_cancel(self, conversation_id=None, request_id=None, **kwargs):
+        if self.agent_runtime_bridge.is_running:
+            return self.agent_runtime_bridge.cancel(conversation_id, request_id, **kwargs)
+        if self.stream_bridge:
+            self.stream_bridge.cancel_stream()
+        self._api_pending_text = None
+        return {"ok": True}
+
+    def api_approve_tool(self, conversation_id, request_id, call_id, approved, **kwargs):
+        return self.agent_runtime_bridge.approve(conversation_id, request_id, call_id, approved, **kwargs)
 
     def api_send(self, text: str, **kwargs):
         return self.api_mode_bridge.api_send(text, **kwargs)

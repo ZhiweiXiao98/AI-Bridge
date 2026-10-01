@@ -255,3 +255,26 @@ python -m pytest tests/ -v
 ## License
 
 MIT License
+
+
+## Public development checks and first server start
+
+`main` is the release branch; development work targets `develop` through a
+feature branch and reviewed pull request. Public source safety runs on standard
+GitHub-hosted Ubuntu, Windows and macOS runners. It checks tracked-file privacy
+boundaries, authentication regressions and Python syntax without app imports or
+provider calls. Run the same dependency-free checks locally:
+
+```sh
+python tools/check_public_tree.py
+python -m unittest discover -s tests/public_ci -v
+```
+
+The first server start requires `AUTH_ADMIN_PASSWORD` to be set in the process
+environment to a unique password of at least 12 characters. `.env.example` is
+a template; the application does not automatically load `.env`. There is no
+built-in administrator password. Existing database users are preserved and
+are not reset when this variable changes. Back up existing data before upgrades
+and explicitly change any administrator password that was previously a default.
+Use a normal authenticated login; a plain token string no longer grants access.
+These focused fixes are not a full server security audit or production approval.

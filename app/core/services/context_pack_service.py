@@ -41,7 +41,7 @@ class ContextPackService:
         "user_data.db",
         "crash_log.txt",
         "FULL_PROJECT_CONTEXT.txt",
-        "docs/PROJECT_STRUCTURE_DUMP.md",
+        "PROJECT_STRUCTURE_DUMP.json",
         "ignored_blocks.json",
         ".coverage",
         "coverage.json",
@@ -183,9 +183,9 @@ class ContextPackService:
                 parts.append(self._format_file_block("AI_README.md", self._read_text(readme_path)))
 
         if include_project_structure:
-            ps_path = os.path.join(self.project_root, "docs", "PROJECT_STRUCTURE.md")
+            ps_path = os.path.join(self.project_root, "docs", "项目结构导航.md")
             if self._is_allowed_file(ps_path):
-                parts.append(self._format_file_block("docs/PROJECT_STRUCTURE.md", self._read_text(ps_path)))
+                parts.append(self._format_file_block("docs/项目结构导航.md", self._read_text(ps_path)))
 
         for rel_path in files:
             abs_path = os.path.join(self.project_root, rel_path)

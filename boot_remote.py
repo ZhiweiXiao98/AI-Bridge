@@ -18,7 +18,8 @@ _configure_stdio()
 import os
 import traceback
 import datetime
-import requests 
+import argparse
+import requests
 from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtCore import QTimer, QTranslator, QLibraryInfo, QLocale
 from app.ui.main_window import MainWindow
@@ -29,6 +30,15 @@ from app.core.app_constants import DEFAULT_AUTH_CREDENTIALS, SERVER_PORT, LOCAL_
 from app.core.utils.text_utils import is_test_log
 logger = logging.getLogger("boot_remote")
 
+VALID_STARTUP_MODES = {"browser", "api"}
+
+
+def parse_startup_mode(argv=None):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--mode", choices=["browser", "api"], default=None)
+    parser.add_argument("--startup-mode", choices=["browser", "api"], default=None)
+    args, _ = parser.parse_known_args(argv[1:] if argv else None)
+    return args.mode or args.startup_mode or "browser"
 
 
 def _is_test_log(text):
@@ -52,7 +62,7 @@ def install_translator(app):
     # 尝试加载 qtbase_zh_CN.qm
     # 通常位于 site-packages/PySide6/Qt6/translations
     path = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
-    
+
     # 优先加载 qt_zh_CN (包含了 qtbase, qtmultimedia 等的集合)
     if translator.load("qt_zh_CN", path):
         app.installTranslator(translator)
@@ -74,14 +84,37 @@ def install_translator(app):
 
 def main():
     sys.excepthook = exception_hook
-    app = QApplication(sys.argv)
+    startup_mode = parse_startup_mode(sys.argv)
+    app = QApplication([sys.argv[0]])
     app.setOrganizationName("AIBridge")
     app.setOrganizationDomain("ai.bridge.com")
     app.setApplicationName("RemoteClient")
-    
+
     # [New] 加载翻译
     install_translator(app)
-    
+
+    if "--desktop-smoke-test" in sys.argv:
+        # No authentication, network requests or worker thread in this probe.
+        login_win = LoginWindow()
+        login_win.show()
+        app.processEvents()
+        login_win.close()
+        from pathlib import Path
+        from app.core.app_constants import APP_ROOT
+        import json
+        import platform
+        import PySide6
+        from PySide6.QtCore import qVersion
+        from PySide6.support import deprecated
+        (Path(APP_ROOT) / "desktop-runtime.json").write_text(json.dumps({
+            "python": platform.python_version(), "pyside": PySide6.__version__,
+            "qt": qVersion(), "qt_build": QLibraryInfo.build(),
+            "recombination_marker": getattr(deprecated, "AI_BRIDGE_RECOMBINATION_MARKER", None),
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
+        (Path(APP_ROOT) / "desktop-smoke-ok.txt").write_text(
+            "login-window-ok\n", encoding="utf-8")
+        return
+
     # 检查是否以 admin 模式启动
     if "--admin" in sys.argv or "--panel" in sys.argv:
         try:
@@ -89,15 +122,23 @@ def main():
         except UnicodeEncodeError:
             print("[INFO] 正在以管理模式自动登录...")
         try:
+            password = DEFAULT_AUTH_CREDENTIALS.get("admin", {}).get("password")
+            if not password:
+                QMessageBox.warning(
+                    None, "Administrator login",
+                    "Set AUTH_ADMIN_PASSWORD in the process environment for automatic login, "
+                    "or start without --admin/--panel and log in manually."
+                )
+                return
             url = f"http://{LOCAL_SERVER_HOST}:{SERVER_PORT}/api/login"
             resp = requests.post(
-                url, json={"username": "admin", "password": DEFAULT_AUTH_CREDENTIALS["admin"]["password"]},                 
-                timeout=10, proxies={"http": None, "https": None} 
+                url, json={"username": "admin", "password": password},
+                timeout=10, proxies={"http": None, "https": None}
             )
             if resp.status_code == 200:
                 data = resp.json()
                 profile = {"username": data["username"], "role": data["role"], "token": data["token"], "server_ip": LOCAL_SERVER_HOST}
-                start_main_window(profile, jump_to_console="--panel" in sys.argv)
+                start_main_window(profile, jump_to_console="--panel" in sys.argv, startup_mode=startup_mode)
                 sys.exit(app.exec())
             else:
                 QMessageBox.critical(None, "错误", f"自动登录失败: {resp.text}")
@@ -107,33 +148,37 @@ def main():
             return
 
     login_win = LoginWindow()
-    login_win.login_success.connect(lambda p: start_main_window(p, jump_to_console=False))
+    login_win.login_success.connect(lambda p: start_main_window(p, jump_to_console=False, startup_mode=startup_mode))
     login_win.show()
     sys.exit(app.exec())
 
-def start_main_window(user_profile, jump_to_console=False):
+def start_main_window(user_profile, jump_to_console=False, startup_mode="browser"):
     try:
         print(f"✅ 登录成功: {user_profile['username']}")
     except UnicodeEncodeError:
         print(f"[OK] 登录成功: {user_profile['username']}")
-    
+
     config = ConfigManager.load()
     config["server_ip"] = user_profile["server_ip"]
-    ConfigManager.save(config) 
-    
+    ConfigManager.save(config)
+
     remote_worker = RemoteWorker(token=user_profile["token"])
-    
+
     main_win = MainWindow(remote_worker, user_profile)
     main_win.show()
-    
+
+    startup_mode = str(startup_mode or "browser").strip().lower()
+    if startup_mode in VALID_STARTUP_MODES and hasattr(main_win, "chat_page"):
+        QTimer.singleShot(200, lambda: main_win.chat_page.on_mode_switch(startup_mode))
+
     if jump_to_console:
         main_win.switch_to_page(5)
         if hasattr(main_win, "console_page"):
             main_win.console_page.tabs.setCurrentIndex(1)
-            
+
     QTimer.singleShot(3000, lambda: check_update_silently(remote_worker))
-    
-    global _main_window_ref 
+
+    global _main_window_ref
     _main_window_ref = main_win
 
 def check_update_silently(worker):

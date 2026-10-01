@@ -12,23 +12,23 @@ COLOR_DEFINITIONS = {
     "BG_PRIMARY": ("主窗口背景", "应用的最底层背景，如大窗口的空白处。建议深色。"),
     "BG_SECONDARY": ("次级背景/容器", "侧边栏、卡片、弹窗的背景色。应比主背景稍亮。"),
     "BG_TERTIARY": ("三级背景/控件", "输入框、下拉框、进度条底色。应具有区分度。"),
-    
+
     "TEXT_PRIMARY": ("主要文字", "标题、正文、重要信息的颜色。需与背景高对比。"),
     "TEXT_SECONDARY": ("次要文字", "标签、说明、未选中项的颜色。"),
     "TEXT_DANGER": ("错误/危险文字", "报错信息、删除按钮文字。通常为红色系。"),
     "TEXT_SUCCESS": ("成功/安全文字", "通过提示、运行成功。通常为绿色系。"),
-    
+
     "BORDER": ("通用边框", "分割线、组件边框颜色。"),
-    
+
     "ACCENT_PRIMARY": ("主强调色 (品牌色)", "主按钮、选中状态、高亮文字。决定应用的主色调。"),
     "ACCENT_HOVER": ("主强调色 (悬停)", "鼠标悬停在主按钮上时的颜色。"),
-    
+
     "BTN_SUCCESS": ("成功按钮背景", "执行操作、添加、确认按钮的背景。"),
     "BTN_SUCCESS_HOVER": ("成功按钮 (悬停)", "成功按钮的悬停色。"),
-    
+
     "BTN_DANGER": ("危险按钮背景", "停止、删除、清空按钮的背景。"),
     "BTN_DANGER_HOVER": ("危险按钮 (悬停)", "危险按钮的悬停色。"),
-    
+
     "BTN_WARNING": ("警告按钮背景", "挂起、等待、次要操作按钮。"),
     "BTN_WARNING_HOVER": ("警告按钮 (悬停)", "警告按钮的悬停色。"),
 }
@@ -51,7 +51,7 @@ class DarkPalette:
     BTN_DANGER_HOVER = "#B91C1C"
     BTN_WARNING = "#D97706"
     BTN_WARNING_HOVER = "#F59E0B"
-    
+
     # 标题栏颜色
     TITLEBAR_BG = "#1F2937"
     TITLEBAR_BORDER = "#374151"
@@ -77,7 +77,7 @@ class LightPalette:
     BTN_DANGER_HOVER = "#DC2626"
     BTN_WARNING = "#F59E0B"
     BTN_WARNING_HOVER = "#D97706"
-    
+
     # 标题栏颜色
     TITLEBAR_BG = "#FFFFFF"
     TITLEBAR_BORDER = "#E5E7EB"
@@ -148,6 +148,7 @@ class ThemeManager(QObject):
                 background-color: {c('BG_PRIMARY')};
                 color: {c('TEXT_PRIMARY')} !important;
                 font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+                font-size: 12px;
             }}
             QScrollBar:vertical {{
                 border: none;
@@ -169,7 +170,7 @@ class ThemeManager(QObject):
                 color: {c('TEXT_PRIMARY')} !important;
                 border: 1px solid {c('BORDER')};
                 border-radius: 6px;
-                padding: 5px;
+                padding: 4px;
                 selection-background-color: {c('ACCENT_PRIMARY')};
             }}
             QLineEdit:focus, QTextEdit:focus {{
@@ -185,7 +186,7 @@ class ThemeManager(QObject):
                 outline: none;
             }}
             QListWidget::item {{
-                padding: 8px;
+                padding: 5px;
                 border-bottom: 1px solid {c('BG_PRIMARY')};
             }}
             QListWidget::item:selected {{
@@ -201,8 +202,8 @@ class ThemeManager(QObject):
                 border: none;
                 border-radius: 8px;
                 color: {c('TEXT_SECONDARY')};
-                padding: 5px;
-                font-size: 11px;
+                padding: 3px;
+                font-size: 10px;
                 font-weight: bold;
             }}
             QToolButton#SidebarBtn:hover {{
@@ -217,7 +218,7 @@ class ThemeManager(QObject):
                 background-color: {c('BG_TERTIARY')};
                 border: 1px solid {c('BORDER')};
                 border-radius: 5px;
-                padding: 6px 12px;
+                padding: 4px 9px;
                 color: {c('TEXT_PRIMARY')} !important;
             }}
             QPushButton:hover {{
@@ -229,10 +230,10 @@ class ThemeManager(QObject):
             QMenu {{
                 background-color: {c('BG_SECONDARY')};
                 border: 1px solid {c('BORDER')};
-                padding: 5px;
+                padding: 3px;
             }}
             QMenu::item {{
-                padding: 5px 20px;
+                padding: 4px 16px;
                 color: {c('TEXT_PRIMARY')} !important;
             }}
             QMenu::item:selected {{
@@ -246,7 +247,7 @@ class ThemeManager(QObject):
             QDockWidget::title {{
                 background: {c('BG_SECONDARY')};
                 color: {c('TEXT_PRIMARY')} !important;
-                padding: 6px;
+                padding: 4px;
                 border: 1px solid {c('BORDER')};
                 font-weight: bold;
             }}
@@ -268,9 +269,9 @@ class ThemeManager(QObject):
                 border-bottom: none;
                 border-top-left-radius: 4px;
                 border-top-right-radius: 4px;
-                padding: 6px 12px;
+                padding: 4px 10px;
                 margin-right: 2px;
-                min-width: 80px;
+                min-width: 64px;
             }}
             QTabBar::tab:selected {{
                 background-color: {c('BG_PRIMARY')};
@@ -300,7 +301,7 @@ class ThemeManager(QObject):
                 color: {c('TEXT_SECONDARY')};
                 border: none;
                 border-radius: 4px;
-                font-size: 18px;
+                font-size: 14px;
                 font-weight: bold;
             }}
             QPushButton#titleBarButton:hover {{
@@ -328,29 +329,29 @@ Palette = DynamicPalette()
 
 class Theme:
     """全局样式生成器"""
-    
+
     @staticmethod
     def message_box():
         p = theme_manager.get_palette()
         return f"""
-            QMessageBox {{ 
-                background-color: {p.BG_SECONDARY}; 
-                border: 1px solid {p.BORDER}; 
+            QMessageBox {{
+                background-color: {p.BG_SECONDARY};
+                border: 1px solid {p.BORDER};
             }}
-            QMessageBox QLabel {{ 
-                color: {p.TEXT_PRIMARY}; 
-                font-size: 13px; 
-                background-color: transparent; 
+            QMessageBox QLabel {{
+                color: {p.TEXT_PRIMARY};
+                font-size: 13px;
+                background-color: transparent;
             }}
-            QPushButton {{ 
-                background-color: {p.ACCENT_PRIMARY}; 
-                color: white; 
-                padding: 6px 12px; 
-                border-radius: 4px; 
+            QPushButton {{
+                background-color: {p.ACCENT_PRIMARY};
+                color: white;
+                padding: 6px 12px;
+                border-radius: 4px;
                 min-width: 60px;
             }}
-            QPushButton:hover {{ 
-                background-color: {p.ACCENT_HOVER}; 
+            QPushButton:hover {{
+                background-color: {p.ACCENT_HOVER};
             }}
         """
 
@@ -358,10 +359,10 @@ class Theme:
     def stat_card():
         p = theme_manager.get_palette()
         return f"""
-            QFrame {{ 
-                background-color: {p.BG_SECONDARY}; 
-                border: 1px solid {p.BORDER}; 
-                border-radius: 8px; 
+            QFrame {{
+                background-color: {p.BG_SECONDARY};
+                border: 1px solid {p.BORDER};
+                border-radius: 8px;
             }}
         """
 
@@ -385,17 +386,17 @@ class Theme:
     def group_box():
         p = theme_manager.get_palette()
         return f"""
-            QGroupBox {{ 
-                color: {p.TEXT_SECONDARY}; 
-                border: 1px solid {p.BORDER}; 
-                border-radius: 6px; 
-                margin-top: 10px; 
-                padding-top: 10px; 
+            QGroupBox {{
+                color: {p.TEXT_SECONDARY};
+                border: 1px solid {p.BORDER};
+                border-radius: 6px;
+                margin-top: 10px;
+                padding-top: 10px;
             }}
-            QGroupBox::title {{ 
-                subcontrol-origin: margin; 
-                left: 10px; 
-                padding: 0 5px; 
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
             }}
         """
 
@@ -406,14 +407,14 @@ class Theme:
         bg = "#F3F4F6" if is_light else "#0F172A"
         fg = "#1F2937" if is_light else "#D1D5DB"
         return f"""
-            QPlainTextEdit {{ 
-                background-color: {bg}; 
-                color: {fg}; 
-                font-family: Consolas; 
-                font-size: 11px; 
-                border: 1px solid {p.BORDER}; 
-                border-radius: 6px; 
-                padding: 10px; 
+            QPlainTextEdit {{
+                background-color: {bg};
+                color: {fg};
+                font-family: Consolas;
+                font-size: 11px;
+                border: 1px solid {p.BORDER};
+                border-radius: 6px;
+                padding: 10px;
             }}
         """
 
@@ -421,14 +422,14 @@ class Theme:
     def progress_bar():
         p = theme_manager.get_palette()
         return f"""
-            QProgressBar {{ 
-                border: none; 
-                background-color: {p.BG_TERTIARY}; 
-                border-radius: 2px; 
-            }} 
-            QProgressBar::chunk {{ 
-                background-color: {p.TEXT_SUCCESS}; 
-                border-radius: 2px; 
+            QProgressBar {{
+                border: none;
+                background-color: {p.BG_TERTIARY};
+                border-radius: 2px;
+            }}
+            QProgressBar::chunk {{
+                background-color: {p.TEXT_SUCCESS};
+                border-radius: 2px;
             }}
         """
 
@@ -436,17 +437,17 @@ class Theme:
     def table_widget():
         p = theme_manager.get_palette()
         return f"""
-            QTableWidget {{ 
-                background-color: {p.BG_PRIMARY}; 
-                border: 1px solid {p.BORDER}; 
-                color: {p.TEXT_PRIMARY}; 
+            QTableWidget {{
+                background-color: {p.BG_PRIMARY};
+                border: 1px solid {p.BORDER};
+                color: {p.TEXT_PRIMARY};
                 gridline-color: {p.BORDER};
-            }} 
-            QHeaderView::section {{ 
-                background-color: {p.BG_SECONDARY}; 
-                color: {p.TEXT_PRIMARY}; 
-                padding: 5px; 
-                border: 1px solid {p.BG_PRIMARY}; 
+            }}
+            QHeaderView::section {{
+                background-color: {p.BG_SECONDARY};
+                color: {p.TEXT_PRIMARY};
+                padding: 5px;
+                border: 1px solid {p.BG_PRIMARY};
             }}
             QTableWidget::item:selected {{
                 background-color: {p.ACCENT_PRIMARY};
@@ -458,12 +459,12 @@ class Theme:
     def button_primary():
         p = theme_manager.get_palette()
         return f"""
-            QPushButton {{ 
-                background-color: {p.ACCENT_PRIMARY}; 
-                color: white; 
-                font-weight: bold; 
-                border-radius: 6px; 
-                font-size: 14px; 
+            QPushButton {{
+                background-color: {p.ACCENT_PRIMARY};
+                color: white;
+                font-weight: bold;
+                border-radius: 6px;
+                font-size: 14px;
             }}
             QPushButton:hover {{ background-color: {p.ACCENT_HOVER}; }}
             QPushButton:disabled {{ background-color: {p.BORDER}; color: {p.TEXT_SECONDARY}; }}
@@ -473,12 +474,12 @@ class Theme:
     def button_danger():
         p = theme_manager.get_palette()
         return f"""
-            QPushButton {{ 
-                background-color: {p.BTN_DANGER}; 
-                color: white; 
-                font-weight: bold; 
-                border-radius: 6px; 
-                font-size: 14px; 
+            QPushButton {{
+                background-color: {p.BTN_DANGER};
+                color: white;
+                font-weight: bold;
+                border-radius: 6px;
+                font-size: 14px;
             }}
             QPushButton:hover {{ background-color: {p.BTN_DANGER_HOVER}; }}
         """
@@ -488,9 +489,9 @@ class Theme:
         p = theme_manager.get_palette()
         return f"""
             QPushButton {{
-                background-color: {p.BTN_SUCCESS}; 
-                color: white; 
-                padding: 5px 10px; 
+                background-color: {p.BTN_SUCCESS};
+                color: white;
+                padding: 5px 10px;
                 border-radius: 4px;
             }}
             QPushButton:hover {{ background-color: {p.BTN_SUCCESS_HOVER}; }}
@@ -501,9 +502,9 @@ class Theme:
         p = theme_manager.get_palette()
         return f"""
             QPushButton {{
-                background-color: {p.BTN_WARNING}; 
-                color: white; 
-                padding: 5px 10px; 
+                background-color: {p.BTN_WARNING};
+                color: white;
+                padding: 5px 10px;
                 border-radius: 4px;
             }}
             QPushButton:hover {{ background-color: {p.BTN_WARNING_HOVER}; }}
@@ -514,9 +515,9 @@ class Theme:
         p = theme_manager.get_palette()
         return f"""
             QComboBox {{
-                background-color: {p.BG_TERTIARY}; 
-                color: {p.TEXT_PRIMARY}; 
-                border: 1px solid {p.BORDER}; 
+                background-color: {p.BG_TERTIARY};
+                color: {p.TEXT_PRIMARY};
+                border: 1px solid {p.BORDER};
                 border-radius: 6px;
                 padding: 5px 10px;
             }}

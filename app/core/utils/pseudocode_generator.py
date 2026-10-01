@@ -44,7 +44,7 @@ class PseudocodeGenerator:
             lines = source_code.split('\n')
             header_comments = []
             code_start_idx = 0
-            
+
             for i, line in enumerate(lines):
                 stripped = line.strip()
                 if stripped.startswith('#'):
@@ -52,24 +52,24 @@ class PseudocodeGenerator:
                     code_start_idx = i + 1
                 elif stripped:  # 遇到非空非注释行，停止
                     break
-            
+
             # 解析代码
-            tree = ast.parse(source_code)
+            tree = ast.parse(source_code, filename="<pseudocode-preview>")
             pseudo_body = self._visit(tree, 0)
-            
+
             # 如果有首行注释，保留它们
             if header_comments:
                 return '\n'.join(header_comments) + '\n' + pseudo_body
             return pseudo_body
-            
+
         except SyntaxError as e:
             return f"❌ 源码语法错误: {e}"
         except Exception as e:
             return f"❌ 解析失败: {e}"
-    
+
     def _visit(self, node, level=0):
         indent = "    " * level
-        self.current_depth = level 
+        self.current_depth = level
 
         if isinstance(node, ast.Module):
             return "\n".join([self._visit(n, level) for n in node.body])
@@ -121,7 +121,7 @@ class PseudocodeGenerator:
 
     def _visit_expr(self, node):
         if node is None: return ""
-        
+
         if isinstance(node, ast.Name):
             return self.translate_identifier(node.id)
         if isinstance(node, ast.Constant):
@@ -133,7 +133,7 @@ class PseudocodeGenerator:
             args = [self._visit_expr(a) for a in node.args]
             kwargs = [f"{k.arg}={self._visit_expr(k.value)}" for k in node.keywords]
             return f"{func}({', '.join(args + kwargs)})"
-        
+
         if isinstance(node, ast.JoinedStr):
             parts = []
             for val in node.values:

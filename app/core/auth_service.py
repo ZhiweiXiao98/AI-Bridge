@@ -5,6 +5,7 @@ import hashlib
 import binascii
 import secrets
 from datetime import datetime, timedelta
+from contextlib import closing
 from typing import Optional, List
 from jose import jwt, JWTError
 from app.core.app_constants import DEFAULT_AUTH_CREDENTIALS, PROJECT_ROOT
@@ -48,7 +49,7 @@ class AuthService:
 
     def _init_db(self):
         os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-        with sqlite3.connect(DB_PATH) as conn:
+        with closing(sqlite3.connect(DB_PATH)) as conn, conn:
             c = conn.cursor()
             c.execute('''CREATE TABLE IF NOT EXISTS users
                          (username TEXT PRIMARY KEY, 
@@ -64,9 +65,18 @@ class AuthService:
                           ip TEXT,
                           timestamp TEXT)''')
             
-            # 初始化默认用户
-            for username, info in DEFAULT_AUTH_CREDENTIALS.items():
-                self._create_user_if_not_exists(c, username, info["password"], info["role"], info["display_name"])
+            # Bootstrap only an empty database. Never rotate existing users implicitly.
+            if c.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
+                info = DEFAULT_AUTH_CREDENTIALS.get("admin", {})
+                password = info.get("password", "")
+                if len(password.strip()) < 12 or password.strip().lower() in {"admin", "changeme", "password"}:
+                    raise RuntimeError(
+                        "First server start requires AUTH_ADMIN_PASSWORD with at least 12 characters. "
+                        "Set it in the process environment; no default password is supplied."
+                    )
+                self._create_user_if_not_exists(
+                    c, "admin", password, "developer", "Administrator"
+                )
             conn.commit()
 
     def _create_user_if_not_exists(self, cursor, username, pwd, role, name):
@@ -76,17 +86,17 @@ class AuthService:
             pwd_hash = self._hash_password(pwd, salt)
             cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)", 
                            (username, pwd_hash, salt, role, name, datetime.now().isoformat()))
-            print(f"🔒 [Auth] 初始化用户: {username} ({role})")
+            print(f"[Auth] Initialized user: {username} ({role})")
 
     # === [New] 管理接口 ===
     def get_all_users(self) -> List[dict]:
-        with sqlite3.connect(DB_PATH) as conn:
+        with closing(sqlite3.connect(DB_PATH)) as conn, conn:
             c = conn.cursor()
             c.execute("SELECT username, role, display_name, created_at FROM users")
             return [{"username": r[0], "role": r[1], "name": r[2], "created_at": r[3]} for r in c.fetchall()]
 
     def create_user(self, username, password, role, name):
-        with sqlite3.connect(DB_PATH) as conn:
+        with closing(sqlite3.connect(DB_PATH)) as conn, conn:
             c = conn.cursor()
             c.execute("SELECT 1 FROM users WHERE username=?", (username,))
             if c.fetchone(): return False, "用户已存在"
@@ -100,7 +110,7 @@ class AuthService:
 
     def delete_user(self, username):
         if username == "admin": return False, "不能删除超级管理员"
-        with sqlite3.connect(DB_PATH) as conn:
+        with closing(sqlite3.connect(DB_PATH)) as conn, conn:
             c = conn.cursor()
             c.execute("DELETE FROM users WHERE username=?", (username,))
             conn.commit()
@@ -113,7 +123,7 @@ class AuthService:
 
     def verify_password(self, username: str, plain_password: str) -> bool:
         try:
-            with sqlite3.connect(DB_PATH) as conn:
+            with closing(sqlite3.connect(DB_PATH)) as conn, conn:
                 c = conn.cursor()
                 c.execute("SELECT password_hash, salt FROM users WHERE username=?", (username,))
                 row = c.fetchone()
@@ -129,7 +139,7 @@ class AuthService:
             return False
 
     def get_user_role(self, username: str):
-        with sqlite3.connect(DB_PATH) as conn:
+        with closing(sqlite3.connect(DB_PATH)) as conn, conn:
             c = conn.cursor()
             c.execute("SELECT role, display_name FROM users WHERE username=?", (username,))
             row = c.fetchone()
@@ -150,7 +160,7 @@ class AuthService:
     # === 审计 ===
     def log_action(self, username, action, ip="Unknown"):
         try:
-            with sqlite3.connect(DB_PATH) as conn:
+            with closing(sqlite3.connect(DB_PATH)) as conn, conn:
                 conn.cursor().execute("INSERT INTO audit_logs (username, action, ip, timestamp) VALUES (?, ?, ?, ?)",
                                       (username, action, ip, datetime.now().isoformat()))
         except: pass
