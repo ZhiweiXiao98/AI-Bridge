@@ -82,6 +82,18 @@ def main():
     # [New] 加载翻译
     install_translator(app)
     
+    if "--desktop-smoke-test" in sys.argv:
+        # No authentication, network requests or worker thread in this probe.
+        login_win = LoginWindow()
+        login_win.show()
+        app.processEvents()
+        login_win.close()
+        from pathlib import Path
+        from app.core.app_constants import APP_ROOT
+        (Path(APP_ROOT) / "desktop-smoke-ok.txt").write_text(
+            "login-window-ok\n", encoding="utf-8")
+        return
+
     # 检查是否以 admin 模式启动
     if "--admin" in sys.argv or "--panel" in sys.argv:
         try:

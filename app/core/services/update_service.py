@@ -19,7 +19,8 @@ class UpdateService:
             c['rel_path'] = c['rel_path'].replace('\\', '/')
         return changes
 
-    def get_file_category(self, file_path):
+    @staticmethod
+    def get_file_category(file_path):
         p = file_path.replace('\\', '/')
         
         # 1. 纯静态资源/文档 -> 绝对无需重启

@@ -1,6 +1,7 @@
 import logging
 # filename: app/core/remote_worker.py
 import json
+import sys
 import time
 import os
 from app.core.project_context import ProjectContext
@@ -222,6 +223,9 @@ class RemoteWorker(QThread):
     # === 公共接口 (UI 调用入口) ===
     
     def request_latest_code(self):
+        if getattr(sys, "frozen", False):
+            self.status_signal.emit("Packaged client: replace the full application to update.")
+            return
         self.status_signal.emit("☁️ 正在检查代码更新...")
         self.run_driver_action("handle_sync_request")
 
@@ -453,6 +457,9 @@ class RemoteWorker(QThread):
 
     # === OTA (热更新) 逻辑 ===
     def _process_ota_pull(self):
+        if getattr(sys, "frozen", False):
+            self.status_signal.emit("Packaged client: replace the full application to update.")
+            return
         try:
             url = f"{self.api_url}/sync/code"
             headers = {"Authorization": f"Bearer {self.token}"}
@@ -467,6 +474,9 @@ class RemoteWorker(QThread):
             self.status_signal.emit(f"❌ 代码下载异常: {e}")
 
     def _process_ota_payload(self, payload):
+        if getattr(sys, "frozen", False):
+            self.status_signal.emit("Packaged client: replace the full application to update.")
+            return
         cache_root = os.path.join(ProjectContext.get().get_project_root(), "export", "update_cache")
         if not os.path.exists(cache_root): os.makedirs(cache_root)
         real_update_count = 0

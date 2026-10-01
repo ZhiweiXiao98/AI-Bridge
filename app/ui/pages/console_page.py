@@ -119,6 +119,11 @@ class TestRunnerThread(QThread):
     finished_signal = Signal(str)
 
     def run(self):
+        if getattr(sys, "frozen", False):
+            message = "Local pytest requires the source checkout and Python environment."
+            self.log_signal.emit(message)
+            self.finished_signal.emit(message)
+            return
         cmd = [sys.executable, "-m", "pytest", "tests/", "-v"]
         full_log = []
         try:

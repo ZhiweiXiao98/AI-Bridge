@@ -1,5 +1,5 @@
 # filename: requirements_client.txt
-PyQt6
+PySide6
 requests
 selenium
 beautifulsoup4

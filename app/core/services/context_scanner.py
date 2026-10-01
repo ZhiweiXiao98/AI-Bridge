@@ -2,8 +2,6 @@
 import os
 import ast
 from app.core.services.update_service import UpdateService
-from app.core.services.file_service import FileService
-from app.core.config import ConfigManager
 
 class ContextScanner:
     """
@@ -13,9 +11,7 @@ class ContextScanner:
     """
     def __init__(self, project_root):
         self.project_root = project_root
-        self.config = ConfigManager.load()
-        # 实例化 UpdateService 用于判断文件安全等级 (CRITICAL/SAFE)
-        self.update_svc = UpdateService(self.config, FileService(self.config))
+        # File classification needs no server-side RAG or file-service instance.
         
         # 扫描配置
         self.ignore_dirs = {
@@ -62,7 +58,7 @@ class ContextScanner:
                     "funcs": [], 
                     "size": 0, 
                     "token": 0,
-                    "category": self.update_svc.get_file_category(rel_path) # 预计算安全等级
+                    "category": UpdateService.get_file_category(rel_path) # 预计算安全等级
                 }
                 
                 # --- 阶段 2: 内容读取与分析 ---
