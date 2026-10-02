@@ -39,7 +39,11 @@ def test_fixture_matches_browser_dom_contract_without_server():
     assert soup.select_one('.n-scrollbar-container')
     assert soup.select_one('.spinner-box[hidden]')
     assert soup.select_one('button.n-button--error-type span').get_text() == '停止'
-    assert soup.select_one('#new-chat[data-action="new-chat"]').get_text() == '新建对话'
+    new_chat = soup.select_one('button#new-chat.aa-sidebar-toolbar__btn')
+    assert new_chat.select_one('.fa-plus')
+    assert not new_chat.get_text(strip=True)
+    assert not new_chat.has_attr('data-action') and not new_chat.has_attr('aria-label')
+    assert soup.select_one('[role="tooltip"]').get_text() == '创建新对话'
     for role in ('false', 'true'):
         assert soup.select_one(f'template .chat-item[data-message-ai="{role}"] .chat-text')
     assert not soup.select('[src],link[href]')

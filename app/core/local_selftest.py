@@ -383,6 +383,15 @@ def run_browser_selftest(app, window, worker, home: Path, fixture):
     wait(lambda: fixture.request_count == 3, "重连后的真实发送")
     wait(lambda: fixture.response_count == 2 and "重连后还能正常发送" in ui_text(), "重连后的真实回复")
 
+    # 活动会话中只有侧栏图标入口，独立 tooltip 不会成为按钮文本。
+    worker.new_chat()
+    wait(lambda: fixture.snapshot()["new_chat_count"] == 1, "真实侧栏图标创建新会话")
+    wait(lambda: not page.browser_input_area.is_ai_busy and not page._browser_all_messages,
+         "新会话在本地界面显示为空")
+    if fixture.snapshot()["clear_count"] != 0:
+        raise RuntimeError("新建会话错误触发了清空历史")
+    checks.append("浏览器侧栏图标新建会话")
+
     send("生成尚未完成时关闭客户端窗口")
     wait(lambda: fixture.request_count == 4 and page.browser_input_area.is_ai_busy, "窗口关闭前确实存在活动浏览器生成")
     window.close()

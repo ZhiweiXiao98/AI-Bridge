@@ -173,7 +173,17 @@ class InteractionManager:
             "//button[@data-action='new-chat' or @aria-label='新建对话' or @aria-label='新建聊天' "
             "or @aria-label='创建新对话' or normalize-space(.)='新建对话' "
             "or normalize-space(.)='新建聊天' or normalize-space(.)='创建新对话']")
-        visible = [button for button in candidates if button.is_displayed() and button.is_enabled()]
+        def usable(button):
+            return (button.is_displayed() and button.is_enabled()
+                    and button.get_attribute("aria-disabled") != "true")
+
+        visible = [button for button in candidates if usable(button)]
+        if not visible:
+            # 新版侧栏把名称放在独立 tooltip；只识别该侧栏控件中的可见加号，
+            # 不把消息附件、模型管理等任意加号当作新建会话，也不绕过禁用状态。
+            sidebar = self.driver.find_elements(By.CSS_SELECTOR, "button.aa-sidebar-toolbar__btn")
+            visible = [button for button in sidebar if usable(button)
+                       and any(icon.is_displayed() for icon in button.find_elements(By.CSS_SELECTOR, ".fa-plus"))]
         if len(visible) != 1:
             return False, "网页没有唯一可识别的“新建对话”按钮，请在专用 Chrome 窗口中新建"
         visible[0].click()

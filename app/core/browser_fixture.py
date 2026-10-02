@@ -40,6 +40,7 @@ button { cursor: pointer; padding: 10px 14px; border: 1px solid #bdcddd; border-
 button:disabled { cursor: default; opacity: .5; }
 .aa-sidebar-list-item { display: block; width: 100%; margin: 10px 0; text-align: left; }
 .aa-sidebar-list-item.active { background: #cddfff; border-color: #466db2; }
+.aa-sidebar-toolbar__btn .fa-plus::before { content: "+"; }
 .notice { margin: 0 0 14px; color: #526376; }
 .n-scrollbar-container { overflow: auto; height: 60vh; padding: 12px; background: white; border-radius: 10px; }
 .chat-item { min-height: 24px; margin: 10px 0; padding: 12px; border-radius: 7px; background: #eff4fa; }
@@ -51,7 +52,8 @@ button:disabled { cursor: default; opacity: .5; }
 .spinner-box { color: #3856ad; } .n-button--error-type { color: #ac2730; }
 </style></head>
 <body><main>
-<aside><button id="new-chat" data-action="new-chat" aria-label="新建对话">新建对话</button>
+<aside><button id="new-chat" class="aa-sidebar-toolbar__btn"><i class="fa fa-plus" aria-hidden="true"></i></button>
+<span role="tooltip" hidden>创建新对话</span>
 <nav id="sessions" aria-label="会话列表">
 <button class="aa-sidebar-list-item active" data-session-id="session-1">测试会话一</button>
 <button class="aa-sidebar-list-item" data-session-id="session-2">测试会话二</button>
