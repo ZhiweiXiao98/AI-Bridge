@@ -1,0 +1,1687 @@
+{
+  "schema_version": 1,
+  "source_commit": "d51dc1ef827912d84b90fee77ff84d6369588cc5",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "python_wheels": [
+    {
+      "name": "Jinja2",
+      "version": "3.1.6",
+      "filename": "jinja2-3.1.6-py3-none-any.whl",
+      "sha256": "85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"
+    },
+    {
+      "name": "MarkupSafe",
+      "version": "3.0.3",
+      "filename": "markupsafe-3.0.3-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "1872df69a4de6aead3491198eaf13810b565bdbeec3ae2dc8780f14458ec73ce"
+    },
+    {
+      "name": "PyPika",
+      "version": "0.51.1",
+      "filename": "pypika-0.51.1-py2.py3-none-any.whl",
+      "sha256": "77985b4d7ce71b9905255bf12468cf598349e98837c037541cfc240e528aec46"
+    },
+    {
+      "name": "PySide6",
+      "version": "6.11.1",
+      "filename": "pyside6-6.11.1-cp310-abi3-macosx_13_0_universal2.whl",
+      "sha256": "537682c3b7530817203e667c1f5a2f00486b37bf52c52eeab438544c7a0917f6"
+    },
+    {
+      "name": "PySide6_Addons",
+      "version": "6.11.1",
+      "filename": "pyside6_addons-6.11.1-cp310-abi3-macosx_13_0_universal2.whl",
+      "sha256": "54733c77f789bef5f03c6aff4ad3bec8b2eff021f0cfcbc53d5e6c250ded24f9"
+    },
+    {
+      "name": "PySide6_Essentials",
+      "version": "6.11.1",
+      "filename": "pyside6_essentials-6.11.1-cp310-abi3-macosx_13_0_universal2.whl",
+      "sha256": "228de53c2bc26b07e5021fbe3614fc44ca08e4dab9999af08c2b389d2c239957"
+    },
+    {
+      "name": "PySocks",
+      "version": "1.7.1",
+      "filename": "PySocks-1.7.1-py3-none-any.whl",
+      "sha256": "2725bd0a9925919b9b51739eea5f9e2bae91e83288108a9ad338b2e3a4435ee5"
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "filename": "pyyaml-6.0.3-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "fc09d0aa354569bc501d4e787133afc08552722d3ab34836a80547331bb5d4a0"
+    },
+    {
+      "name": "Pygments",
+      "version": "2.20.0",
+      "filename": "pygments-2.20.0-py3-none-any.whl",
+      "sha256": "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176"
+    },
+    {
+      "name": "SQLAlchemy",
+      "version": "2.0.50",
+      "filename": "sqlalchemy-2.0.50-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "23ae23d8b9d344d30d0a92f06d45825024a5790f1c1dd4cf452636a50d3e58cb"
+    },
+    {
+      "name": "annotated-doc",
+      "version": "0.0.4",
+      "filename": "annotated_doc-0.0.4-py3-none-any.whl",
+      "sha256": "571ac1dc6991c450b25a9c2d84a3705e2ae7a53467b5d111c24fa8baabbed320"
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.7.0",
+      "filename": "annotated_types-0.7.0-py3-none-any.whl",
+      "sha256": "1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53"
+    },
+    {
+      "name": "anyio",
+      "version": "4.13.0",
+      "filename": "anyio-4.13.0-py3-none-any.whl",
+      "sha256": "08b310f9e24a9594186fd75b4f73f4a4152069e3853f1ed8bfbf58369f4ad708"
+    },
+    {
+      "name": "asttokens",
+      "version": "3.0.1",
+      "filename": "asttokens-3.0.1-py3-none-any.whl",
+      "sha256": "15a3ebc0f43c2d0a50eeafea25e19046c68398e487b9f1f5b517f7c0f40f976a"
+    },
+    {
+      "name": "attrs",
+      "version": "25.4.0",
+      "filename": "attrs-25.4.0-py3-none-any.whl",
+      "sha256": "adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373"
+    },
+    {
+      "name": "bcrypt",
+      "version": "5.0.0",
+      "filename": "bcrypt-5.0.0-cp39-abi3-macosx_10_12_universal2.whl",
+      "sha256": "0c418ca99fd47e9c59a301744d63328f17798b5947b0f791e9af3c1c499c2d0a"
+    },
+    {
+      "name": "beautifulsoup4",
+      "version": "4.14.3",
+      "filename": "beautifulsoup4-4.14.3-py3-none-any.whl",
+      "sha256": "0918bfe44902e6ad8d57732ba310582e98da931428d231a5ecb9e7c703a735bb"
+    },
+    {
+      "name": "brotli",
+      "version": "1.2.0",
+      "filename": "brotli-1.2.0-cp312-cp312-macosx_10_13_universal2.whl",
+      "sha256": "35d382625778834a7f3061b15423919aa03e4f5da34ac8e02c074e4b75ab4f84"
+    },
+    {
+      "name": "build",
+      "version": "1.4.0",
+      "filename": "build-1.4.0-py3-none-any.whl",
+      "sha256": "6a07c1b8eb6f2b311b96fcbdbce5dab5fe637ffda0fd83c9cac622e927501596"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.5.20",
+      "filename": "certifi-2026.5.20-py3-none-any.whl",
+      "sha256": "3c52e209ba0a4ad7aebe60436a4ab349c39e1e602e8c134221e546902ad25897"
+    },
+    {
+      "name": "cffi",
+      "version": "2.0.0",
+      "filename": "cffi-2.0.0-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "8eca2a813c1cb7ad4fb74d368c2ffbbb4789d377ee5bb8df98373c2cc0dee76c"
+    },
+    {
+      "name": "chardet",
+      "version": "5.2.0",
+      "filename": "chardet-5.2.0-py3-none-any.whl",
+      "sha256": "e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970"
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.4.6",
+      "filename": "charset_normalizer-3.4.6-cp312-cp312-macosx_10_13_universal2.whl",
+      "sha256": "2ef7fedc7a6ecbe99969cd09632516738a97eeb8bd7258bf8a0f23114c057dab"
+    },
+    {
+      "name": "chromadb",
+      "version": "1.5.9",
+      "filename": "chromadb-1.5.9-cp39-abi3-macosx_11_0_arm64.whl",
+      "sha256": "814b9c95617377f6501e5757d63dfddb554a283a7739c87b9fa573850174e6f3"
+    },
+    {
+      "name": "click",
+      "version": "8.3.1",
+      "filename": "click-8.3.1-py3-none-any.whl",
+      "sha256": "981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6"
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "filename": "colorama-0.4.6-py2.py3-none-any.whl",
+      "sha256": "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+    },
+    {
+      "name": "cryptography",
+      "version": "46.0.5",
+      "filename": "cryptography-46.0.5-cp311-abi3-macosx_10_9_universal2.whl",
+      "sha256": "351695ada9ea9618b3500b490ad54c739860883df6c1f555e088eaf25b1bbaad"
+    },
+    {
+      "name": "ddgs",
+      "version": "9.14.4",
+      "filename": "ddgs-9.14.4-py3-none-any.whl",
+      "sha256": "acb084c34bf1110c974caf7e5e5a2c1973beb4bd9e170bfd191fe5ed2d2b2d6c"
+    },
+    {
+      "name": "decorator",
+      "version": "5.2.1",
+      "filename": "decorator-5.2.1-py3-none-any.whl",
+      "sha256": "d316bb415a2d9e2d2b3abcc4084c6502fc09240e292cd76a76afc106a1c8e04a"
+    },
+    {
+      "name": "distro",
+      "version": "1.9.0",
+      "filename": "distro-1.9.0-py3-none-any.whl",
+      "sha256": "7bffd925d65168f85027d8da9af6bddab658135b840670a223589bc0c8ef02b2"
+    },
+    {
+      "name": "docker",
+      "version": "7.1.0",
+      "filename": "docker-7.1.0-py3-none-any.whl",
+      "sha256": "c96b93b7f0a746f9e77d325bcfb87422a3d8bd4f03136ae8a85b37f1898d5fc0"
+    },
+    {
+      "name": "durationpy",
+      "version": "0.10",
+      "filename": "durationpy-0.10-py3-none-any.whl",
+      "sha256": "3b41e1b601234296b4fb368338fdcd3e13e0b4fb5b67345948f4f2bf9868b286"
+    },
+    {
+      "name": "ecdsa",
+      "version": "0.19.1",
+      "filename": "ecdsa-0.19.1-py2.py3-none-any.whl",
+      "sha256": "30638e27cf77b7e15c4c4cc1973720149e1033827cfd00661ca5c8cc0cdb24c3"
+    },
+    {
+      "name": "executing",
+      "version": "2.2.1",
+      "filename": "executing-2.2.1-py2.py3-none-any.whl",
+      "sha256": "760643d3452b4d777d295bb167ccc74c64a81df23fb5e08eff250c425a4b2017"
+    },
+    {
+      "name": "fake-useragent",
+      "version": "2.2.0",
+      "filename": "fake_useragent-2.2.0-py3-none-any.whl",
+      "sha256": "67f35ca4d847b0d298187443aaf020413746e56acd985a611908c73dba2daa24"
+    },
+    {
+      "name": "fastapi",
+      "version": "0.136.3",
+      "filename": "fastapi-0.136.3-py3-none-any.whl",
+      "sha256": "3d2a69bdf04b7e9f3afa292c3bc7a98816bbfafa10bc9b45f3f3700d2f761620"
+    },
+    {
+      "name": "fastembed",
+      "version": "0.8.0",
+      "filename": "fastembed-0.8.0-py3-none-any.whl",
+      "sha256": "40bee672657574a1009e35ec50030a55f2b426842cb011845379817641bbbbd0"
+    },
+    {
+      "name": "filelock",
+      "version": "3.25.2",
+      "filename": "filelock-3.25.2-py3-none-any.whl",
+      "sha256": "ca8afb0da15f229774c9ad1b455ed96e85a81373065fb10446672f64444ddf70"
+    },
+    {
+      "name": "flatbuffers",
+      "version": "25.12.19",
+      "filename": "flatbuffers-25.12.19-py2.py3-none-any.whl",
+      "sha256": "7634f50c427838bb021c2d66a3d1168e9d199b0607e6329399f04846d42e20b4"
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.2.0",
+      "filename": "fsspec-2026.2.0-py3-none-any.whl",
+      "sha256": "98de475b5cb3bd66bedd5c4679e87b4fdfe1a3bf4d707b151b3c07e58c9a2437"
+    },
+    {
+      "name": "google-auth",
+      "version": "2.49.1",
+      "filename": "google_auth-2.49.1-py3-none-any.whl",
+      "sha256": "195ebe3dca18eddd1b3db5edc5189b76c13e96f29e73043b923ebcf3f1a860f7"
+    },
+    {
+      "name": "google-genai",
+      "version": "2.7.0",
+      "filename": "google_genai-2.7.0-py3-none-any.whl",
+      "sha256": "21cac381e09a869151706aba797b6a4f96cfe92c484e13204d092caee7ff11cb"
+    },
+    {
+      "name": "googleapis-common-protos",
+      "version": "1.72.0",
+      "filename": "googleapis_common_protos-1.72.0-py3-none-any.whl",
+      "sha256": "4299c5a82d5ae1a9702ada957347726b167f9f8d1fc352477702a1e851ff4038"
+    },
+    {
+      "name": "greenlet",
+      "version": "3.3.2",
+      "filename": "greenlet-3.3.2-cp312-cp312-macosx_11_0_universal2.whl",
+      "sha256": "ac8d61d4343b799d1e526db579833d72f23759c71e07181c2d2944e429eb09cd"
+    },
+    {
+      "name": "grpcio",
+      "version": "1.78.0",
+      "filename": "grpcio-1.78.0-cp312-cp312-macosx_11_0_universal2.whl",
+      "sha256": "3f8904a8165ab21e07e58bf3e30a73f4dffc7a1e0dbc32d51c61b5360d26f43e"
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "filename": "h11-0.16.0-py3-none-any.whl",
+      "sha256": "63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86"
+    },
+    {
+      "name": "h2",
+      "version": "4.3.0",
+      "filename": "h2-4.3.0-py3-none-any.whl",
+      "sha256": "c438f029a25f7945c69e0ccf0fb951dc3f73a5f6412981daee861431b70e2bdd"
+    },
+    {
+      "name": "hf-xet",
+      "version": "1.4.2",
+      "filename": "hf_xet-1.4.2-cp37-abi3-macosx_11_0_arm64.whl",
+      "sha256": "e9b38d876e94d4bdcf650778d6ebbaa791dd28de08db9736c43faff06ede1b5a"
+    },
+    {
+      "name": "hpack",
+      "version": "4.1.0",
+      "filename": "hpack-4.1.0-py3-none-any.whl",
+      "sha256": "157ac792668d995c657d93111f46b4535ed114f0c9c8d672271bbec7eae1b496"
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "filename": "httpcore-1.0.9-py3-none-any.whl",
+      "sha256": "2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55"
+    },
+    {
+      "name": "httptools",
+      "version": "0.7.1",
+      "filename": "httptools-0.7.1-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "f25bbaf1235e27704f1a7b86cd3304eabc04f569c828101d94a0e605ef7205a5"
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "filename": "httpx-0.28.1-py3-none-any.whl",
+      "sha256": "d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad"
+    },
+    {
+      "name": "huggingface_hub",
+      "version": "1.7.2",
+      "filename": "huggingface_hub-1.7.2-py3-none-any.whl",
+      "sha256": "288f33a0a17b2a73a1359e2a5fd28d1becb2c121748c6173ab8643fb342c850e"
+    },
+    {
+      "name": "hyperframe",
+      "version": "6.1.0",
+      "filename": "hyperframe-6.1.0-py3-none-any.whl",
+      "sha256": "b03380493a519fce58ea5af42e4a42317bf9bd425596f7a0835ffce80f1a42e5"
+    },
+    {
+      "name": "idna",
+      "version": "3.17",
+      "filename": "idna-3.17-py3-none-any.whl",
+      "sha256": "466e48829084efe2548012b855df21540b96f2e20e51bd124c851536556a592c"
+    },
+    {
+      "name": "importlib_metadata",
+      "version": "8.7.1",
+      "filename": "importlib_metadata-8.7.1-py3-none-any.whl",
+      "sha256": "5a1f80bf1daa489495071efbb095d75a634cf28a8bc299581244063b53176151"
+    },
+    {
+      "name": "importlib_resources",
+      "version": "6.5.2",
+      "filename": "importlib_resources-6.5.2-py3-none-any.whl",
+      "sha256": "789cfdc3ed28c78b67a06acb8126751ced69a3d5f79c095a98298cd8a760ccec"
+    },
+    {
+      "name": "iniconfig",
+      "version": "2.3.0",
+      "filename": "iniconfig-2.3.0-py3-none-any.whl",
+      "sha256": "f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12"
+    },
+    {
+      "name": "ipython",
+      "version": "9.10.0",
+      "filename": "ipython-9.10.0-py3-none-any.whl",
+      "sha256": "c6ab68cc23bba8c7e18e9b932797014cc61ea7fd6f19de180ab9ba73e65ee58d"
+    },
+    {
+      "name": "itsdangerous",
+      "version": "2.2.0",
+      "filename": "itsdangerous-2.2.0-py3-none-any.whl",
+      "sha256": "c6242fc49e35958c8b15141343aa660db5fc54d4f13a1db01a3f5891b98700ef"
+    },
+    {
+      "name": "jedi",
+      "version": "0.19.2",
+      "filename": "jedi-0.19.2-py2.py3-none-any.whl",
+      "sha256": "a8ef22bde8490f57fe5c7681a3c83cb58874daf72b4784de3cce5b6ef6edb5b9"
+    },
+    {
+      "name": "jiter",
+      "version": "0.13.0",
+      "filename": "jiter-0.13.0-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "f917a04240ef31898182f76a332f508f2cc4b57d2b4d7ad2dbfebbfe167eb505"
+    },
+    {
+      "name": "jsonschema",
+      "version": "4.26.0",
+      "filename": "jsonschema-4.26.0-py3-none-any.whl",
+      "sha256": "d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce"
+    },
+    {
+      "name": "jsonschema-specifications",
+      "version": "2025.9.1",
+      "filename": "jsonschema_specifications-2025.9.1-py3-none-any.whl",
+      "sha256": "98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe"
+    },
+    {
+      "name": "kubernetes",
+      "version": "35.0.0",
+      "filename": "kubernetes-35.0.0-py2.py3-none-any.whl",
+      "sha256": "39e2b33b46e5834ef6c3985ebfe2047ab39135d41de51ce7641a7ca5b372a13d"
+    },
+    {
+      "name": "loguru",
+      "version": "0.7.3",
+      "filename": "loguru-0.7.3-py3-none-any.whl",
+      "sha256": "31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c"
+    },
+    {
+      "name": "lxml",
+      "version": "6.0.2",
+      "filename": "lxml-6.0.2-cp312-cp312-macosx_10_13_universal2.whl",
+      "sha256": "a59f5448ba2ceccd06995c95ea59a7674a10de0810f2ce90c9006f3cbc044456"
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.0.0",
+      "filename": "markdown_it_py-4.0.0-py3-none-any.whl",
+      "sha256": "87327c59b172c5011896038353a81343b6754500a08cd7a4973bb48c6d578147"
+    },
+    {
+      "name": "matplotlib-inline",
+      "version": "0.2.1",
+      "filename": "matplotlib_inline-0.2.1-py3-none-any.whl",
+      "sha256": "d56ce5156ba6085e00a9d54fead6ed29a9c47e215cd1bba2e976ef39f5710a76"
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2",
+      "filename": "mdurl-0.1.2-py3-none-any.whl",
+      "sha256": "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"
+    },
+    {
+      "name": "mmh3",
+      "version": "5.2.1",
+      "filename": "mmh3-5.2.1-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "eee884572b06bbe8a2b54f424dbd996139442cf83c76478e1ec162512e0dd2c7"
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "filename": "mpmath-1.3.0-py3-none-any.whl",
+      "sha256": "a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c"
+    },
+    {
+      "name": "numpy",
+      "version": "2.4.3",
+      "filename": "numpy-2.4.3-cp312-cp312-macosx_14_0_arm64.whl",
+      "sha256": "abdce0f71dcb4a00e4e77f3faf05e4616ceccfe72ccaa07f47ee79cda3b7b0f4"
+    },
+    {
+      "name": "oauthlib",
+      "version": "3.3.1",
+      "filename": "oauthlib-3.3.1-py3-none-any.whl",
+      "sha256": "88119c938d2b8fb88561af5f6ee0eec8cc8d552b7bb1f712743136eb7523b7a1"
+    },
+    {
+      "name": "onnxruntime",
+      "version": "1.24.4",
+      "filename": "onnxruntime-1.24.4-cp312-cp312-macosx_14_0_arm64.whl",
+      "sha256": "cad1c2b3f455c55678ab2a8caa51fb420c25e6e3cf10f4c23653cdabedc8de78"
+    },
+    {
+      "name": "openai",
+      "version": "2.38.0",
+      "filename": "openai-2.38.0-py3-none-any.whl",
+      "sha256": "ec6661c57b2dcc47414a767e6e3335c7ed3d19c9696999283a3c82e95c756a3c"
+    },
+    {
+      "name": "opentelemetry-api",
+      "version": "1.39.1",
+      "filename": "opentelemetry_api-1.39.1-py3-none-any.whl",
+      "sha256": "2edd8463432a7f8443edce90972169b195e7d6a05500cd29e6d13898187c9950"
+    },
+    {
+      "name": "opentelemetry-exporter-otlp-proto-common",
+      "version": "1.39.1",
+      "filename": "opentelemetry_exporter_otlp_proto_common-1.39.1-py3-none-any.whl",
+      "sha256": "08f8a5862d64cc3435105686d0216c1365dc5701f86844a8cd56597d0c764fde"
+    },
+    {
+      "name": "opentelemetry-exporter-otlp-proto-grpc",
+      "version": "1.39.1",
+      "filename": "opentelemetry_exporter_otlp_proto_grpc-1.39.1-py3-none-any.whl",
+      "sha256": "fa1c136a05c7e9b4c09f739469cbdb927ea20b34088ab1d959a849b5cc589c18"
+    },
+    {
+      "name": "opentelemetry-proto",
+      "version": "1.39.1",
+      "filename": "opentelemetry_proto-1.39.1-py3-none-any.whl",
+      "sha256": "22cdc78efd3b3765d09e68bfbd010d4fc254c9818afd0b6b423387d9dee46007"
+    },
+    {
+      "name": "opentelemetry-sdk",
+      "version": "1.39.1",
+      "filename": "opentelemetry_sdk-1.39.1-py3-none-any.whl",
+      "sha256": "4d5482c478513ecb0a5d938dcc61394e647066e0cc2676bee9f3af3f3f45f01c"
+    },
+    {
+      "name": "opentelemetry-semantic-conventions",
+      "version": "0.60b1",
+      "filename": "opentelemetry_semantic_conventions-0.60b1-py3-none-any.whl",
+      "sha256": "9fa8c8b0c110da289809292b0591220d3a7b53c1526a23021e977d68597893fb"
+    },
+    {
+      "name": "orjson",
+      "version": "3.11.7",
+      "filename": "orjson-3.11.7-cp312-cp312-macosx_15_0_arm64.whl",
+      "sha256": "89e440ebc74ce8ab5c7bc4ce6757b4a6b1041becb127df818f6997b5c71aa60b"
+    },
+    {
+      "name": "outcome",
+      "version": "1.3.0.post0",
+      "filename": "outcome-1.3.0.post0-py2.py3-none-any.whl",
+      "sha256": "e771c5ce06d1415e356078d3bdd68523f284b4ce5419828922b6871e65eda82b"
+    },
+    {
+      "name": "overrides",
+      "version": "7.7.0",
+      "filename": "overrides-7.7.0-py3-none-any.whl",
+      "sha256": "c7ed9d062f78b8e4c1a7b70bd8796b35ead4d9f510227ef9c5dc7626c60d7e49"
+    },
+    {
+      "name": "packaging",
+      "version": "26.0",
+      "filename": "packaging-26.0-py3-none-any.whl",
+      "sha256": "b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529"
+    },
+    {
+      "name": "pandas",
+      "version": "2.3.3",
+      "filename": "pandas-2.3.3-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "3fd2f887589c7aa868e02632612ba39acb0b8948faf5cc58f0850e165bd46f35"
+    },
+    {
+      "name": "parso",
+      "version": "0.8.6",
+      "filename": "parso-0.8.6-py2.py3-none-any.whl",
+      "sha256": "2c549f800b70a5c4952197248825584cb00f033b29c692671d3bf08bf380baff"
+    },
+    {
+      "name": "pexpect",
+      "version": "4.9.0",
+      "filename": "pexpect-4.9.0-py2.py3-none-any.whl",
+      "sha256": "7236d1e080e4936be2dc3e326cec0af72acf9212a7e1d060210e70a47e253523"
+    },
+    {
+      "name": "pillow",
+      "version": "12.1.1",
+      "filename": "pillow-12.1.1-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "adebb5bee0f0af4909c30db0d890c773d1a92ffe83da908e2e9e720f8edf3984"
+    },
+    {
+      "name": "pluggy",
+      "version": "1.6.0",
+      "filename": "pluggy-1.6.0-py3-none-any.whl",
+      "sha256": "e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746"
+    },
+    {
+      "name": "primp",
+      "version": "1.3.1",
+      "filename": "primp-1.3.1-cp310-abi3-macosx_11_0_arm64.whl",
+      "sha256": "27a8804eb9a3f641f379ee2b443591428cf85c898816e93d04d3e7b6f229ebcb"
+    },
+    {
+      "name": "prompt_toolkit",
+      "version": "3.0.52",
+      "filename": "prompt_toolkit-3.0.52-py3-none-any.whl",
+      "sha256": "9aac639a3bbd33284347de5ad8d68ecc044b91a762dc39b7c21095fcd6a19955"
+    },
+    {
+      "name": "protobuf",
+      "version": "6.33.6",
+      "filename": "protobuf-6.33.6-cp39-abi3-macosx_10_9_universal2.whl",
+      "sha256": "9720e6961b251bde64edfdab7d500725a2af5280f3f4c87e57c0208376aa8c3a"
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2",
+      "filename": "psutil-7.2.2-cp36-abi3-macosx_11_0_arm64.whl",
+      "sha256": "1a7b04c10f32cc88ab39cbf606e117fd74721c831c98a27dc04578deb0c16979"
+    },
+    {
+      "name": "ptyprocess",
+      "version": "0.7.0",
+      "filename": "ptyprocess-0.7.0-py2.py3-none-any.whl",
+      "sha256": "4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35"
+    },
+    {
+      "name": "pure_eval",
+      "version": "0.2.3",
+      "filename": "pure_eval-0.2.3-py3-none-any.whl",
+      "sha256": "1db8e35b67b3d218d818ae653e27f06c3aa420901fa7b081ca98cbedc874e0d0"
+    },
+    {
+      "name": "py_rust_stemmers",
+      "version": "0.1.5",
+      "filename": "py_rust_stemmers-0.1.5-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "4d62410ada44a01e02974b85d45d82f4b4c511aae9121e5f3c1ba1d0bea9126b"
+    },
+    {
+      "name": "pyarrow",
+      "version": "23.0.1",
+      "filename": "pyarrow-23.0.1-cp312-cp312-macosx_12_0_arm64.whl",
+      "sha256": "f4b0dbfa124c0bb161f8b5ebb40f1a680b70279aa0c9901d44a2b5a20806039f"
+    },
+    {
+      "name": "pyasn1",
+      "version": "0.6.2",
+      "filename": "pyasn1-0.6.2-py3-none-any.whl",
+      "sha256": "1eb26d860996a18e9b6ed05e7aae0e9fc21619fcee6af91cca9bad4fbea224bf"
+    },
+    {
+      "name": "pyasn1_modules",
+      "version": "0.4.2",
+      "filename": "pyasn1_modules-0.4.2-py3-none-any.whl",
+      "sha256": "29253a9207ce32b64c3ac6600edc75368f98473906e8fd1043bd6b5b1de2c14a"
+    },
+    {
+      "name": "pybase64",
+      "version": "1.4.3",
+      "filename": "pybase64-1.4.3-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "3f5791a3491d116d0deaf4d83268f48792998519698f8751efb191eac84320e9"
+    },
+    {
+      "name": "pycparser",
+      "version": "3.0",
+      "filename": "pycparser-3.0-py3-none-any.whl",
+      "sha256": "b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992"
+    },
+    {
+      "name": "pydantic",
+      "version": "2.13.4",
+      "filename": "pydantic-2.13.4-py3-none-any.whl",
+      "sha256": "45a282cde31d808236fd7ea9d919b128653c8b38b393d1c4ab335c62924d9aba"
+    },
+    {
+      "name": "pydantic-settings",
+      "version": "2.14.1",
+      "filename": "pydantic_settings-2.14.1-py3-none-any.whl",
+      "sha256": "6e3c7edfd8277687cdc598f56e5cff0e9bfff0910a3749deaa8d4401c3a2b9de"
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.46.4",
+      "filename": "pydantic_core-2.46.4-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "962ccbab7b642487b1d8b7df90ef677e03134cf1fd8880bf698649b22a69371f"
+    },
+    {
+      "name": "pyinstaller",
+      "version": "6.22.0",
+      "filename": "pyinstaller-6.22.0-py3-none-macosx_10_13_universal2.whl",
+      "sha256": "d7c7c5b149f7f9b37585b37e2376f774038b6a5633ba34db0de2698f75391e13"
+    },
+    {
+      "name": "pyproject_hooks",
+      "version": "1.2.0",
+      "filename": "pyproject_hooks-1.2.0-py3-none-any.whl",
+      "sha256": "9e5c6bfa8dcc30091c74b0cf803c81fdd29d94f01992a7707bc97babb1141913"
+    },
+    {
+      "name": "pytest",
+      "version": "9.0.3",
+      "filename": "pytest-9.0.3-py3-none-any.whl",
+      "sha256": "2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9"
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0",
+      "filename": "python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+      "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
+    },
+    {
+      "name": "python-dotenv",
+      "version": "1.2.1",
+      "filename": "python_dotenv-1.2.1-py3-none-any.whl",
+      "sha256": "b81ee9561e9ca4004139c6cbba3a238c32b03e4894671e181b671e8cb8425d61"
+    },
+    {
+      "name": "python-jose",
+      "version": "3.5.0",
+      "filename": "python_jose-3.5.0-py2.py3-none-any.whl",
+      "sha256": "abd1202f23d34dfad2c3d28cb8617b90acf34132c7afd60abd0b0b7d3cb55771"
+    },
+    {
+      "name": "python-multipart",
+      "version": "0.0.30",
+      "filename": "python_multipart-0.0.30-py3-none-any.whl",
+      "sha256": "830964def8c90607ac5daa00514e3987815865713ade8d20febc9177ac0c3c5b"
+    },
+    {
+      "name": "pytz",
+      "version": "2026.1.post1",
+      "filename": "pytz-2026.1.post1-py2.py3-none-any.whl",
+      "sha256": "f2fd16142fda348286a75e1a524be810bb05d444e5a081f37f7affc635035f7a"
+    },
+    {
+      "name": "referencing",
+      "version": "0.37.0",
+      "filename": "referencing-0.37.0-py3-none-any.whl",
+      "sha256": "381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231"
+    },
+    {
+      "name": "regex",
+      "version": "2026.2.28",
+      "filename": "regex-2026.2.28-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "9b65d33a17101569f86d9c5966a8b1d7fbf8afdda5a8aa219301b0a80f58cf7d"
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "filename": "requests-2.34.2-py3-none-any.whl",
+      "sha256": "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"
+    },
+    {
+      "name": "requests-oauthlib",
+      "version": "2.0.0",
+      "filename": "requests_oauthlib-2.0.0-py2.py3-none-any.whl",
+      "sha256": "7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36"
+    },
+    {
+      "name": "rich",
+      "version": "14.3.3",
+      "filename": "rich-14.3.3-py3-none-any.whl",
+      "sha256": "793431c1f8619afa7d3b52b2cdec859562b950ea0d4b6b505397612db8d5362d"
+    },
+    {
+      "name": "rpds-py",
+      "version": "0.30.0",
+      "filename": "rpds_py-0.30.0-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "6abc8880d9d036ecaafe709079969f56e876fcf107f7a8e9920ba6d5a3878d05"
+    },
+    {
+      "name": "rsa",
+      "version": "4.9.1",
+      "filename": "rsa-4.9.1-py3-none-any.whl",
+      "sha256": "68635866661c6836b8d39430f97a996acbd61bfa49406748ea243539fe239762"
+    },
+    {
+      "name": "selenium",
+      "version": "4.44.0",
+      "filename": "selenium-4.44.0-py3-none-any.whl",
+      "sha256": "d01ea3e5ecad8149460a765f7cf5177194c21dcc0173093fc05427c289b1bf24"
+    },
+    {
+      "name": "setuptools",
+      "version": "82.0.1",
+      "filename": "setuptools-82.0.1-py3-none-any.whl",
+      "sha256": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb"
+    },
+    {
+      "name": "shellingham",
+      "version": "1.5.4",
+      "filename": "shellingham-1.5.4-py2.py3-none-any.whl",
+      "sha256": "7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686"
+    },
+    {
+      "name": "shiboken6",
+      "version": "6.11.1",
+      "filename": "shiboken6-6.11.1-cp310-abi3-macosx_13_0_universal2.whl",
+      "sha256": "1a16867f103ef1c662a5f09dfed03273a9f81688b174555162c58e83650a3f02"
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "filename": "six-1.17.0-py2.py3-none-any.whl",
+      "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+    },
+    {
+      "name": "sniffio",
+      "version": "1.3.1",
+      "filename": "sniffio-1.3.1-py3-none-any.whl",
+      "sha256": "2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2"
+    },
+    {
+      "name": "socksio",
+      "version": "1.0.0",
+      "filename": "socksio-1.0.0-py3-none-any.whl",
+      "sha256": "95dc1f15f9b34e8d7b16f06d74b8ccf48f609af32ab33c608d08761c5dcbb1f3"
+    },
+    {
+      "name": "sortedcontainers",
+      "version": "2.4.0",
+      "filename": "sortedcontainers-2.4.0-py2.py3-none-any.whl",
+      "sha256": "a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"
+    },
+    {
+      "name": "soupsieve",
+      "version": "2.8.3",
+      "filename": "soupsieve-2.8.3-py3-none-any.whl",
+      "sha256": "ed64f2ba4eebeab06cc4962affce381647455978ffc1e36bb79a545b91f45a95"
+    },
+    {
+      "name": "stack-data",
+      "version": "0.6.3",
+      "filename": "stack_data-0.6.3-py3-none-any.whl",
+      "sha256": "d5558e0c25a4cb0853cddad3d77da9891a08cb85dd9f9f91b9f8cd66e511e695"
+    },
+    {
+      "name": "starlette",
+      "version": "0.52.1",
+      "filename": "starlette-0.52.1-py3-none-any.whl",
+      "sha256": "0029d43eb3d273bc4f83a08720b4912ea4b071087a3b48db01b7c839f7954d74"
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0",
+      "filename": "sympy-1.14.0-py3-none-any.whl",
+      "sha256": "e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5"
+    },
+    {
+      "name": "tenacity",
+      "version": "9.1.4",
+      "filename": "tenacity-9.1.4-py3-none-any.whl",
+      "sha256": "6095a360c919085f28c6527de529e76a06ad89b23659fa881ae0649b867a9d55"
+    },
+    {
+      "name": "tiktoken",
+      "version": "0.13.0",
+      "filename": "tiktoken-0.13.0-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "4d9980f11429ed2d737c463bb1fb78cf330caa026adf002f714aced7849a687b"
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.22.2",
+      "filename": "tokenizers-0.22.2-cp39-abi3-macosx_11_0_arm64.whl",
+      "sha256": "1e418a55456beedca4621dbab65a318981467a2b188e982a23e117f115ce5001"
+    },
+    {
+      "name": "toml",
+      "version": "0.10.2",
+      "filename": "toml-0.10.2-py2.py3-none-any.whl",
+      "sha256": "806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"
+    },
+    {
+      "name": "tornado",
+      "version": "6.5.5",
+      "filename": "tornado-6.5.5-cp39-abi3-macosx_10_9_universal2.whl",
+      "sha256": "487dc9cc380e29f58c7ab88f9e27cdeef04b2140862e5076a66fb6bb68bb1bfa"
+    },
+    {
+      "name": "tqdm",
+      "version": "4.67.3",
+      "filename": "tqdm-4.67.3-py3-none-any.whl",
+      "sha256": "ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf"
+    },
+    {
+      "name": "traitlets",
+      "version": "5.14.3",
+      "filename": "traitlets-5.14.3-py3-none-any.whl",
+      "sha256": "b74e89e397b1ed28cc831db7aea759ba6640cb3de13090ca145426688ff1ac4f"
+    },
+    {
+      "name": "trio",
+      "version": "0.33.0",
+      "filename": "trio-0.33.0-py3-none-any.whl",
+      "sha256": "3bd5d87f781d9b0192d592aef28691f8951d6c2e41b7e1da4c25cde6c180ae9b"
+    },
+    {
+      "name": "trio-websocket",
+      "version": "0.12.2",
+      "filename": "trio_websocket-0.12.2-py3-none-any.whl",
+      "sha256": "df605665f1db533f4a386c94525870851096a223adcb97f72a07e8b4beba45b6"
+    },
+    {
+      "name": "typer",
+      "version": "0.24.1",
+      "filename": "typer-0.24.1-py3-none-any.whl",
+      "sha256": "112c1f0ce578bfb4cab9ffdabc68f031416ebcc216536611ba21f04e9aa84c9e"
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.2",
+      "filename": "typing_inspection-0.4.2-py3-none-any.whl",
+      "sha256": "4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7"
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.15.0",
+      "filename": "typing_extensions-4.15.0-py3-none-any.whl",
+      "sha256": "f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"
+    },
+    {
+      "name": "urllib3",
+      "version": "2.6.3",
+      "filename": "urllib3-2.6.3-py3-none-any.whl",
+      "sha256": "bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4"
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.48.0",
+      "filename": "uvicorn-0.48.0-py3-none-any.whl",
+      "sha256": "48097851328b87ec36117d3d575234519eb58c2b22d79666e9bbc6c49a761dad"
+    },
+    {
+      "name": "uvloop",
+      "version": "0.23.0",
+      "filename": "uvloop-0.23.0-cp312-cp312-macosx_10_13_universal2.whl",
+      "sha256": "93935ab27b6eaef4c3e5489aebc84284f0644592f7ab516df60ee1b27eaf5eb3"
+    },
+    {
+      "name": "watchfiles",
+      "version": "1.2.0",
+      "filename": "watchfiles-1.2.0-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "2d95ddc1eb6914154253d239089900813f6a767e174b8e6a50e7fdacb7e4236c"
+    },
+    {
+      "name": "wcwidth",
+      "version": "0.6.0",
+      "filename": "wcwidth-0.6.0-py3-none-any.whl",
+      "sha256": "1a3a1e510b553315f8e146c54764f4fb6264ffad731b3d78088cdb1478ffbdad"
+    },
+    {
+      "name": "webdriver-manager",
+      "version": "4.1.1",
+      "filename": "webdriver_manager-4.1.1-py3-none-any.whl",
+      "sha256": "4cedd217862e3fe324fadf7423fc9757c40af5979dda36493712c6c751224df1"
+    },
+    {
+      "name": "websocket-client",
+      "version": "1.9.0",
+      "filename": "websocket_client-1.9.0-py3-none-any.whl",
+      "sha256": "af248a825037ef591efbf6ed20cc5faa03d3b47b9e5a2230a529eeee1c1fc3ef"
+    },
+    {
+      "name": "websockets",
+      "version": "16.0",
+      "filename": "websockets-16.0-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "86890e837d61574c92a97496d590968b23c2ef0aeb8a9bc9421d174cd378ae39"
+    },
+    {
+      "name": "wheel",
+      "version": "0.47.0",
+      "filename": "wheel-0.47.0-py3-none-any.whl",
+      "sha256": "212281cab4dff978f6cedd499cd893e1f620791ca6ff7107cf270781e587eced"
+    },
+    {
+      "name": "wsproto",
+      "version": "1.3.2",
+      "filename": "wsproto-1.3.2-py3-none-any.whl",
+      "sha256": "61eea322cdf56e8cc904bd3ad7573359a242ba65688716b0710a5eb12beab584"
+    },
+    {
+      "name": "zipp",
+      "version": "3.23.0",
+      "filename": "zipp-3.23.0-py3-none-any.whl",
+      "sha256": "071652d6115ed432f5ce1d34c336c0adfd6a884660d1e9712a256d3d3bd4b14e"
+    }
+  ],
+  "node": {
+    "version": "22.23.3",
+    "target": "darwin-arm64",
+    "archive_sha256": "23b25245dcfb9af7262f8ff142e9e2e0af025368117329e7a7458a51e5922f53",
+    "executable_sha256": "68f4d07ca49e0500cc135c7e0a445093e228e42e126ac22306d045f0a8c2636b",
+    "license_sha256": "c738ae413cf561f174e34f6961f8ca458aae2369a73640dda6234c629b98bcc4"
+  },
+  "pi_version": "0.99.1",
+  "pi_lock_sha256": "6a93223ea4d5bf7e0939c00e3e22f10ff095e7d7642a59506bb711f8602f084c",
+  "npm_packages": [
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent",
+      "name": "@earendil-works/pi-coding-agent",
+      "version": "0.99.1",
+      "integrity": "sha512-cWUrTOqA5M73cOYMgsh9PlhDrsBhavd+n5kVY6F7BGbGl1RjqCteVCoeVMVqhngoGACVDyw1tbLjajL8l9jrHg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@anthropic-ai/sdk",
+      "name": "@anthropic-ai/sdk",
+      "version": "0.124.0",
+      "integrity": "sha512-cN5O8i9UVxHeOQAzj/XjshWXG8KiibJDw9OGpH2Z/eR3n/RBxdoLxDJOcfqAJWvjaMDFfHTBADU04hWRJVkDyA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/client-bedrock-runtime",
+      "name": "@aws-sdk/client-bedrock-runtime",
+      "version": "3.1127.0",
+      "integrity": "sha512-IDl/lrPb90aH+pZFHGNDmgH9nAUQj5PlZH1sJ3w7RikctyjHSnY3oNjZhrLoaBoQn/rNK0zsP6OHEqEhj2tdLA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/core",
+      "name": "@aws-sdk/core",
+      "version": "3.977.9",
+      "integrity": "sha512-reqPFEQrZxDZpeGj4PFMepBeR5LGYHRqq/L0motTzgFkCRBA4rFdaVXDSLYyGHhxVz7sT2PDnPN9CluGSfgyJA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/credential-provider-env",
+      "name": "@aws-sdk/credential-provider-env",
+      "version": "3.972.70",
+      "integrity": "sha512-H404B7dJl2mCrBqahDEYsanB0xhdDp6tXnXcTUnXmmpy2Q3J0Ho0bUajZ2jr/RdwzCyS59Gi8xXIFwPLGBl6Uw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/credential-provider-http",
+      "name": "@aws-sdk/credential-provider-http",
+      "version": "3.972.72",
+      "integrity": "sha512-X98zYOrVOeuosCX+6ktf29FC2N2GHPLia7qv6mzPzTc+RPAuHWCDS++Z6JK7eGYqb/v6uaW7bAXaOvDBfol+0w=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/credential-provider-ini",
+      "name": "@aws-sdk/credential-provider-ini",
+      "version": "3.973.15",
+      "integrity": "sha512-Rykg6s5ceBuynMOGWgoowO4N+27JfnqXAnVaSunZl0hOO1XodSrxGNz6sCEbnmS0lAfQZDKyb3fbr46gSuv6Sg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/credential-provider-login",
+      "name": "@aws-sdk/credential-provider-login",
+      "version": "3.972.77",
+      "integrity": "sha512-Jb59xfEISoN5mmbnA+HYqdtrSX3CgCtJoof+V5D8/TgUI56W63GEEd5Y58WijU3Ou6+WEgaLD1feVzaRXV5IDQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/credential-provider-node",
+      "name": "@aws-sdk/credential-provider-node",
+      "version": "3.972.82",
+      "integrity": "sha512-znDkEOGXB8W3kG1LJUKP3foBZY/9qLM0eil/DxWXSp37XsdsRLQHE/d/OaCGGVgKpA6znR38h/+INk8do1FjiA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/credential-provider-process",
+      "name": "@aws-sdk/credential-provider-process",
+      "version": "3.972.70",
+      "integrity": "sha512-2ry03fGRJr4sV3jI+ocjj5JqALnFD6ymM5KiNCDZMvq8bX2GSbE0vji4aM43TVCl2nXqqLRZaUxdq/KeWRAY4Q=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/credential-provider-sso",
+      "name": "@aws-sdk/credential-provider-sso",
+      "version": "3.973.14",
+      "integrity": "sha512-jkhg/8ocAAoc0RFyLMhCw+/zZh7gystQgd4F4hznNa8P4Cc501PQmxd+jGLiMHodPJ+7Zv/3znM62gZojyasmA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/credential-provider-sso/node_modules/@aws-sdk/token-providers",
+      "name": "@aws-sdk/token-providers",
+      "version": "3.1116.0",
+      "integrity": "sha512-ygIivKqh8aHzNkucOCXHyIBgBpLPfrSI0mCqXF+vLBsPTUKqj0VSqAY0GFPe7lQl4HntjOcQ+KSyS7oUV2C54Q=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/credential-provider-web-identity",
+      "name": "@aws-sdk/credential-provider-web-identity",
+      "version": "3.972.76",
+      "integrity": "sha512-d3AGyVu759PGr35mEB2s22xxlNEA5rpdxtSPJthfPFJvoQ8dt357iVPECqWfUxXp1toJAvKmbtcIYVGigaGsCA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/eventstream-handler-node",
+      "name": "@aws-sdk/eventstream-handler-node",
+      "version": "3.972.34",
+      "integrity": "sha512-cTeVzpu1xEAkryTZBYhGwnQ6gOGyp8ZYZvmn0Sg/nI/ABmy/CRHHxPDJDUi9PxwxUtGGaatvfRUB3FCgT/rSWw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/middleware-eventstream",
+      "name": "@aws-sdk/middleware-eventstream",
+      "version": "3.972.29",
+      "integrity": "sha512-dlRzHCgyB8W6hLuDC5pcT5q+ziPt00n4QGgGBE17ucLVU4zMa6lsbuUdQ2Pm75Z5VA8GF+R/+SgrRcaTdIzSIQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/middleware-websocket",
+      "name": "@aws-sdk/middleware-websocket",
+      "version": "3.972.52",
+      "integrity": "sha512-vsPPM+nMbKJlUCFU+eoGZbdxdxDIAX9LbpjSXaR5Ufpmqgp8TdYQnoExhLu4T3umW/JIIPny1ydbhWidZZYokQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/nested-clients",
+      "name": "@aws-sdk/nested-clients",
+      "version": "3.997.44",
+      "integrity": "sha512-NhEgryjlBF9w38ZXqGymQV28IhkYa1mKhlbYnqIis57AYwWGVYfUPgg/qC2rLRqOUfblxx++irvju10kVTa8Vw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/signature-v4-multi-region",
+      "name": "@aws-sdk/signature-v4-multi-region",
+      "version": "3.996.46",
+      "integrity": "sha512-L+2xZTye/2T96f3lwCws0Zw6GG2JHZW9e8FpVgGBeeExSKyeoZ6CWRpBml/7DNiK/O26jrgPM9F+Ay8VkgzUWQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/token-providers",
+      "name": "@aws-sdk/token-providers",
+      "version": "3.1127.0",
+      "integrity": "sha512-Dv2TMWBshJ+tF6ahs2Sy5bh4Iabsd4GAQqVvE9XZmYmnoaVbpS2QKIKE/HRacc7bTtbjEEvP+laGzHvHlf1CiQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/types",
+      "name": "@aws-sdk/types",
+      "version": "3.974.5",
+      "integrity": "sha512-LkwLL2BLbC6wNNm4JaH9mbEqBMdOZCct6VAYqhdN4U1xrWM+fUJQEfbHwQgDypapOWTRtlk25akb5afM0P8CIQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws-sdk/xml-builder",
+      "name": "@aws-sdk/xml-builder",
+      "version": "3.972.40",
+      "integrity": "sha512-wlFmCIGUlwF4zx/kncw+bmxTQh1HeSJq4mYV/V5cZUSJadDP3kXvGW8Rn21cimj/7y9ju+47oYWXi97vF7czaA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@aws/lambda-invoke-store",
+      "name": "@aws/lambda-invoke-store",
+      "version": "0.3.0",
+      "integrity": "sha512-sl4Bm6yiMNYrZKkqqDFWN0UfnWhlS8ivKxrYl+6t0gCLrqr8y3B2IqZZbFRkfaVVp7C/baApyh71P+LeE1A2sQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@babel/runtime",
+      "name": "@babel/runtime",
+      "version": "7.29.2",
+      "integrity": "sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/chord",
+      "name": "@earendil-works/chord",
+      "version": "0.99.1",
+      "integrity": "sha512-4xyn0IBzJ+Xu/iOGi2hjXJGAR61QEhEWZsIqTDqr+GmItdquYwBO5jYFnqGiBaTqlY12/EpM7QHoEKSHbyvOug=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-agent-core",
+      "name": "@earendil-works/pi-agent-core",
+      "version": "0.99.1",
+      "integrity": "sha512-zywvWnj5FujeuFI/x/CJHwwxhcLIQgjqseTA+bQgX4O8gJTcgjRd/I8SZnQDqJvxC9QcV12ujiGLviv6EgwcCg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai",
+      "name": "@earendil-works/pi-ai",
+      "version": "0.99.1",
+      "integrity": "sha512-4nV9JKc94iPX8bwdGPc2nTuVPKIPsffhnp3WoN9NYCNqbtoOF8LhYcIs/+Sn/alroqJK/5QRu6/Z6Ck+n0hyBA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai/node_modules/agent-base",
+      "name": "agent-base",
+      "version": "9.0.0",
+      "integrity": "sha512-TQf59BsZnytt8GdJKLPfUZ54g/iaUL2OWDSFCCvMOhsHduDQxO8xC4PNeyIkVcA5KwL2phPSv0douC0fgWzmnA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai/node_modules/https-proxy-agent",
+      "name": "https-proxy-agent",
+      "version": "9.1.0",
+      "integrity": "sha512-ag87y7cJJ9/3+GxFr8Oy4O5faDsGRGnBGsJj/YjOSsSx/5eadKLYTMPlzuR6obgoCDDm0abAAZitXXQkMOPSpA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai/node_modules/openai",
+      "name": "openai",
+      "version": "7.19.0",
+      "integrity": "sha512-MX2s3u2L5racTO0CC/SWpCOasJQBCJrqLKXK+l82cAhdeF8mPMBEe/gxMm0ZFa2xpKpOFLRjxv5afYEZbBXmbQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-codemode",
+      "name": "@earendil-works/pi-codemode",
+      "version": "0.99.1",
+      "integrity": "sha512-oh8TMsBI3SWTN3xTQtX8u5n+BKhnVXcFagroWumfn6/WWfBnDYL/LmeQtjLb83WRTb9rcu+ZdK8rFa4vggvCJg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-mcp",
+      "name": "@earendil-works/pi-mcp",
+      "version": "0.99.1",
+      "integrity": "sha512-YCFGPkmDzLwQuIzwfbP6Vuk/g/ukKpZhwTpbcfzomuI1Fkiu6hHRkOGwAqsO3G8cTkZWkM8vmOkFJjStQNC4qA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-telemetry",
+      "name": "@earendil-works/pi-telemetry",
+      "version": "0.99.1",
+      "integrity": "sha512-9PBPjGk+TXRtuMianpqBbHBpYpyKusESF6rwdmgD0WTZSTUQXhcKEO0hAINRLuSwy4V7yPvXV+EVV0ONY7mbpQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-tui",
+      "name": "@earendil-works/pi-tui",
+      "version": "0.99.1",
+      "integrity": "sha512-gZp0Guat96Fr1AuC/xqVz5B2lulZakp/PxD1lXx3lSgBdjiqmwYhJbcQ0HRrGAfy0WtMGn9b05RJr5qJf7oIuw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@esbuild/darwin-arm64",
+      "name": "@esbuild/darwin-arm64",
+      "version": "0.28.2",
+      "integrity": "sha512-n4KqkOQrraxHJcgjM1RvwbigfQKIKJVpM7xp+KsxiyUSrRdIXnt73VhrPAx0fV44hgfmIVKjxMN9J1t5jySVkw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@google/genai",
+      "name": "@google/genai",
+      "version": "2.21.0",
+      "integrity": "sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@protobufjs/aspromise",
+      "name": "@protobufjs/aspromise",
+      "version": "1.1.2",
+      "integrity": "sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@protobufjs/base64",
+      "name": "@protobufjs/base64",
+      "version": "1.1.2",
+      "integrity": "sha512-AZkcAA5vnN/v4PDqKyMR5lx7hZttPDgClv83E//FMNhR2TMcLUhfRUBHCmSl0oi9zMgDDqRUJkSxO3wm85+XLg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@protobufjs/codegen",
+      "name": "@protobufjs/codegen",
+      "version": "2.0.5",
+      "integrity": "sha512-zgXFLzW3Ap33e6d0Wlj4MGIm6Ce8O89n/apUaGNB/jx+hw+ruWEp7EwGUshdLKVRCxZW12fp9r40E1mQrf/34g=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@protobufjs/eventemitter",
+      "name": "@protobufjs/eventemitter",
+      "version": "1.1.1",
+      "integrity": "sha512-vW1GmwMZNnL+gMRaovlh9yZX74kc+TTU3FObkkurpMaRtBfLP3ldjS9KQWlwZgraRE0+dheEEoAxdzcJQ8eXZg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@protobufjs/fetch",
+      "name": "@protobufjs/fetch",
+      "version": "1.1.1",
+      "integrity": "sha512-GpptLrs57adMSuHi3VNj0mAF8dwh36LMaYF6XyJ6JMWlVsc+t42tm1HSEDmOs3A8fC9yyeisgLhsTVQokOZ0zw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@protobufjs/float",
+      "name": "@protobufjs/float",
+      "version": "1.0.2",
+      "integrity": "sha512-Ddb+kVXlXst9d+R9PfTIxh1EdNkgoRe5tOX6t01f1lYWOvJnSPDBlG241QLzcyPdoNTsblLUdujGSE4RzrTZGQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@protobufjs/path",
+      "name": "@protobufjs/path",
+      "version": "1.1.2",
+      "integrity": "sha512-6JOcJ5Tm08dOHAbdR3GrvP+yUUfkjG5ePsHYczMFLq3ZmMkAD98cDgcT2iA1lJ9NVwFd4tH/iSSoe44YWkltEA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@protobufjs/pool",
+      "name": "@protobufjs/pool",
+      "version": "1.1.0",
+      "integrity": "sha512-0kELaGSIDBKvcgS4zkjz1PeddatrjYcmMWOlAuAPwAeccUrPHdUqo/J6LiymHHEiJT5NrF1UVwxY14f+fy4WQw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@protobufjs/utf8",
+      "name": "@protobufjs/utf8",
+      "version": "1.1.1",
+      "integrity": "sha512-oOAWABowe8EAbMyWKM0tYDKi8Yaox52D+HWZhAIJqQXbqe0xI/GV7FhLWqlEKreMkfDjshR5FKgi3mnle0h6Eg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@silvia-odwyer/photon-node",
+      "name": "@silvia-odwyer/photon-node",
+      "version": "0.3.4",
+      "integrity": "sha512-bnly4BKB3KDTFxrUIcgCLbaeVVS8lrAkri1pEzskpmxu9MdfGQTy8b8EgcD83ywD3RPMsIulY8xJH5Awa+t9fA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@smithy/core",
+      "name": "@smithy/core",
+      "version": "3.33.3",
+      "integrity": "sha512-CsOeKq/9kA3y6VJHt+/+VTCtBaxJ4OTFpgrjIUhPpDIKxBci1k2bJaQASF2h/ELWrulGp+t97DZ0mevfAD8idg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@smithy/credential-provider-imds",
+      "name": "@smithy/credential-provider-imds",
+      "version": "4.5.2",
+      "integrity": "sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@smithy/fetch-http-handler",
+      "name": "@smithy/fetch-http-handler",
+      "version": "5.8.0",
+      "integrity": "sha512-ycSJu3tFAQ4v04CBB0agqFMVsSQ1iG3yw+SpgxRqKfaURpQD4CZ8Wn0zPMmSnOuTpTh65Vz+EA0rMrw089wvkA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@smithy/node-http-handler",
+      "name": "@smithy/node-http-handler",
+      "version": "4.12.1",
+      "integrity": "sha512-ThMkboGeONWXAelq9FvGsuJC4rOi+qyC4/zhUF58xYpxUg5sQKx2VXZYJmtNjr4dSuBJ1HeJXETQILCz3wOHvw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@smithy/signature-v4",
+      "name": "@smithy/signature-v4",
+      "version": "5.7.3",
+      "integrity": "sha512-7ImGm+FkHRLcBaRttIAMZ6bzJZWb2cJGoYjq46F2UjycujWzrL9GEN9h4w7eQyXJYnltrUhxbbieBAIRrdqpow=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@smithy/types",
+      "name": "@smithy/types",
+      "version": "4.18.0",
+      "integrity": "sha512-CgB6HHWer/vrKps24ulRIbpcpb7K4xAU7SkZ7YHzBPlwHsvsrCJFEXK421s+cJzX+ZrqtA/TuU5w1HzI7k9N8A=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@stablelib/base64",
+      "name": "@stablelib/base64",
+      "version": "1.0.1",
+      "integrity": "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/@types/node",
+      "name": "@types/node",
+      "version": "22.19.19",
+      "integrity": "sha512-dyh/xO2Fh5bYrfWaaqGrRQQGkNdmYw6AmaAUvYeUMNTWQtvb796ikLdmTchRmOlOiIJ1TDXfWgVx1QkUlQ6Hew=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/agent-base",
+      "name": "agent-base",
+      "version": "7.1.4",
+      "integrity": "sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/balanced-match",
+      "name": "balanced-match",
+      "version": "4.0.4",
+      "integrity": "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/base64-js",
+      "name": "base64-js",
+      "version": "1.5.1",
+      "integrity": "sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/bignumber.js",
+      "name": "bignumber.js",
+      "version": "9.3.1",
+      "integrity": "sha512-Ko0uX15oIUS7wJ3Rb30Fs6SkVbLmPBAKdlm7q9+ak9bbIeFf0MwuBsQV6z7+X768/cHsfg+WlysDWJcmthjsjQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/bowser",
+      "name": "bowser",
+      "version": "2.14.1",
+      "integrity": "sha512-tzPjzCxygAKWFOJP011oxFHs57HzIhOEracIgAePE4pqB3LikALKnSzUyU4MGs9/iCEUuHlAJTjTc5M+u7YEGg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/brace-expansion",
+      "name": "brace-expansion",
+      "version": "5.0.9",
+      "integrity": "sha512-ScQ4IuvIEF1TMlP7Zt+vjJ//9zlPb2SDcxWxM3bk8s6t6GGdJ7KO1dCcTidOPJKePW30LE/2cT7wCyPho9/Wxg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/buffer-equal-constant-time",
+      "name": "buffer-equal-constant-time",
+      "version": "1.0.1",
+      "integrity": "sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/chalk",
+      "name": "chalk",
+      "version": "6.0.0",
+      "integrity": "sha512-2uNTXIuTTxk7ciZgAU1BQcgnchcG0xXnrs6jzkQfj9SsRa9M2s5zE8WT96hS6KmG4MzWHSrvH43DF1m4XRkrFg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/cross-spawn",
+      "name": "cross-spawn",
+      "version": "7.0.6",
+      "integrity": "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/data-uri-to-buffer",
+      "name": "data-uri-to-buffer",
+      "version": "4.0.1",
+      "integrity": "sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/debug",
+      "name": "debug",
+      "version": "4.4.3",
+      "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/diff",
+      "name": "diff",
+      "version": "8.0.4",
+      "integrity": "sha512-DPi0FmjiSU5EvQV0++GFDOJ9ASQUVFh5kD+OzOnYdi7n3Wpm9hWWGfB/O2blfHcMVTL5WkQXSnRiK9makhrcnw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/ecdsa-sig-formatter",
+      "name": "ecdsa-sig-formatter",
+      "version": "1.0.11",
+      "integrity": "sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/esbuild",
+      "name": "esbuild",
+      "version": "0.28.2",
+      "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/extend",
+      "name": "extend",
+      "version": "3.0.2",
+      "integrity": "sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/fast-sha256",
+      "name": "fast-sha256",
+      "version": "1.3.0",
+      "integrity": "sha512-n11RGP/lrWEFI/bWdygLxhI+pVeo1ZYIVwvvPkW7azl/rOy+F3HYRZ2K5zeE9mmkhQppyv9sQFx0JM9UabnpPQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/fetch-blob",
+      "name": "fetch-blob",
+      "version": "3.2.0",
+      "integrity": "sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/formdata-polyfill",
+      "name": "formdata-polyfill",
+      "version": "4.0.10",
+      "integrity": "sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/gaxios",
+      "name": "gaxios",
+      "version": "7.1.4",
+      "integrity": "sha512-bTIgTsM2bWn3XklZISBTQX7ZSddGW+IO3bMdGaemHZ3tbqExMENHLx6kKZ/KlejgrMtj8q7wBItt51yegqalrA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/gcp-metadata",
+      "name": "gcp-metadata",
+      "version": "8.1.2",
+      "integrity": "sha512-zV/5HKTfCeKWnxG0Dmrw51hEWFGfcF2xiXqcA3+J90WDuP0SvoiSO5ORvcBsifmx/FoIjgQN3oNOGaQ5PhLFkg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/get-east-asian-width",
+      "name": "get-east-asian-width",
+      "version": "1.6.0",
+      "integrity": "sha512-QRbvDIbx6YklUe6RxeTeleMR0yv3cYH6PsPZHcnVn7xv7zO1BHN8r0XETu8n6Ye3Q+ahtSarc3WgtNWmehIBfA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/google-auth-library",
+      "name": "google-auth-library",
+      "version": "10.6.2",
+      "integrity": "sha512-e27Z6EThmVNNvtYASwQxose/G57rkRuaRbQyxM2bvYLLX/GqWZ5chWq2EBoUchJbCc57eC9ArzO5wMsEmWftCw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/google-logging-utils",
+      "name": "google-logging-utils",
+      "version": "1.1.3",
+      "integrity": "sha512-eAmLkjDjAFCVXg7A1unxHsLf961m6y17QFqXqAXGj/gVkKFrEICfStRfwUlGNfeCEjNRa32JEWOUTlYXPyyKvA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/graceful-fs",
+      "name": "graceful-fs",
+      "version": "4.2.11",
+      "integrity": "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/grok-mermaid",
+      "name": "grok-mermaid",
+      "version": "0.2.3",
+      "integrity": "sha512-/4KopAbsjvuRP9MdPtlDjOHUmUVEohOX73JNcsWpzAtFxh+bq5+Dhb6gzvRieLDwIPQIR3/vy8V1NNTuz4Zsmg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/highlight.js",
+      "name": "highlight.js",
+      "version": "10.7.3",
+      "integrity": "sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/hosted-git-info",
+      "name": "hosted-git-info",
+      "version": "9.0.3",
+      "integrity": "sha512-Hc+ghLoSt6QaYZUv0WBiIvmMDZuZZ7oaDvdH8MbfOO4lOsxdXLEvuC6ePoGs9H1X9oCLyq6+NVN0MKqD+ydxyg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/http-proxy-agent",
+      "name": "http-proxy-agent",
+      "version": "9.1.0",
+      "integrity": "sha512-2NxoveTT58mjYT4n3RPTEfCZGLMbidoO8XEieXfpSYxu+PQJ1qpx4ypwH6N+uF9twBPIvRRgvkvW5HUTYWENig=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/http-proxy-agent/node_modules/agent-base",
+      "name": "agent-base",
+      "version": "9.0.0",
+      "integrity": "sha512-TQf59BsZnytt8GdJKLPfUZ54g/iaUL2OWDSFCCvMOhsHduDQxO8xC4PNeyIkVcA5KwL2phPSv0douC0fgWzmnA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/https-proxy-agent",
+      "name": "https-proxy-agent",
+      "version": "7.0.6",
+      "integrity": "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/ignore",
+      "name": "ignore",
+      "version": "7.0.8",
+      "integrity": "sha512-YYNsSlXBjMk92SKnkwvB5LOVSa6OznlFUGcsvrFgNJbJCd0M1XKeFVRc8ZByeCqz32FivYNHJVooLmdqrmvp/Q=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/isexe",
+      "name": "isexe",
+      "version": "2.0.0",
+      "integrity": "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/jiti",
+      "name": "jiti",
+      "version": "2.7.0",
+      "integrity": "sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/json-bigint",
+      "name": "json-bigint",
+      "version": "1.0.0",
+      "integrity": "sha512-SiPv/8VpZuWbvLSMtTDU8hEfrZWg/mH/nV/b4o0CYbSxu1UIQPLdwKOCIyLQX+VIPO5vrLX3i8qtqFyhdPSUSQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/json-schema-to-ts",
+      "name": "json-schema-to-ts",
+      "version": "3.1.1",
+      "integrity": "sha512-+DWg8jCJG2TEnpy7kOm/7/AxaYoaRbjVB4LFZLySZlWn8exGs3A4OLJR966cVvU26N7X9TWxl+Jsw7dzAqKT6g=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/jwa",
+      "name": "jwa",
+      "version": "2.0.1",
+      "integrity": "sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/jws",
+      "name": "jws",
+      "version": "4.0.1",
+      "integrity": "sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/long",
+      "name": "long",
+      "version": "5.3.2",
+      "integrity": "sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/lru-cache",
+      "name": "lru-cache",
+      "version": "11.4.0",
+      "integrity": "sha512-W+R+kFL4HgVxONq2bhXPi3bGpzGe/yEhVOp233qw9wCRtgncJ15P3bC+e4zZMu4Cq7d+WAJjXGW0uUkifhcatA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/marked",
+      "name": "marked",
+      "version": "18.0.11",
+      "integrity": "sha512-HnslJfsZkRPBDJRHvVtAaWlZHEpSu7u8LgQuJCELjRKuWR+hpq4A7sLq3p8HaI9ypVoXDXxV34CsQJEe1+J5Aw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/minimatch",
+      "name": "minimatch",
+      "version": "10.2.6",
+      "integrity": "sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/ms",
+      "name": "ms",
+      "version": "2.1.3",
+      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/node-domexception",
+      "name": "node-domexception",
+      "version": "1.0.0",
+      "integrity": "sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/node-fetch",
+      "name": "node-fetch",
+      "version": "3.3.2",
+      "integrity": "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/p-retry",
+      "name": "p-retry",
+      "version": "4.6.2",
+      "integrity": "sha512-312Id396EbJdvRONlngUx0NydfrIQ5lsYu0znKVUzVvArzEIt08V1qhtyESbGVd1FGX7UKtiFp5uwKZdM8wIuQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/p-retry/node_modules/@types/retry",
+      "name": "@types/retry",
+      "version": "0.12.0",
+      "integrity": "sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/partial-json",
+      "name": "partial-json",
+      "version": "0.1.7",
+      "integrity": "sha512-Njv/59hHaokb/hRUjce3Hdv12wd60MtM9Z5Olmn+nehe0QDAsRtRbJPvJ0Z91TusF0SuZRIvnM+S4l6EIP8leA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/path-key",
+      "name": "path-key",
+      "version": "3.1.1",
+      "integrity": "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/proper-lockfile",
+      "name": "proper-lockfile",
+      "version": "4.1.2",
+      "integrity": "sha512-TjNPblN4BwAWMXU8s9AEz4JmQxnD1NNL7bNOY/AKUzyamc379FWASUhc/K1pL2noVb+XmZKLL68cjzLsiOAMaA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/proper-lockfile/node_modules/retry",
+      "name": "retry",
+      "version": "0.12.0",
+      "integrity": "sha512-9LkiTwjUh6rT555DtE9rTX+BKByPfrMzEAtnlEtdEwr3Nkffwiihqe2bWADg+OQRjt9gl6ICdmB/ZFDCGAtSow=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/protobufjs",
+      "name": "protobufjs",
+      "version": "7.6.6",
+      "integrity": "sha512-dYDWdjSl5RNb7SgPxGQcRU+GtvP7s2fpkrY0r432PcOIaZ0/rBcxEZnQN67iJhFuQiVw754JDoPruPCNdGsbjg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/proxy-agent-negotiate",
+      "name": "proxy-agent-negotiate",
+      "version": "1.1.0",
+      "integrity": "sha512-N8IBcM3UgCVzz2L2Lqv8DVntDnnC8/hiV4nEDUPkqq72TPUgYWjQc+bdZlBPZK9LzPAvOY//gAt0S0DApoOXWQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/quickjs-wasi",
+      "name": "quickjs-wasi",
+      "version": "3.6.2",
+      "integrity": "sha512-FCqGtGOrMgzUiIrMNMA2YnsOxCNwo31dzqXvclXUC6xeT35NJLKXQJsvbeCTjvoFAwZgEAPg8U6+KAPDGXn8Mg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/retry",
+      "name": "retry",
+      "version": "0.13.1",
+      "integrity": "sha512-XQBQ3I8W1Cge0Seh+6gjj03LbmRFWuoszgK9ooCpwYIrhhoO80pfq4cUkU5DkknwfOfFteRwlZ56PYOGYyFWdg=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/safe-buffer",
+      "name": "safe-buffer",
+      "version": "5.2.1",
+      "integrity": "sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/semver",
+      "name": "semver",
+      "version": "7.8.5",
+      "integrity": "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/shebang-command",
+      "name": "shebang-command",
+      "version": "2.0.0",
+      "integrity": "sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/shebang-regex",
+      "name": "shebang-regex",
+      "version": "3.0.0",
+      "integrity": "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/signal-exit",
+      "name": "signal-exit",
+      "version": "3.0.7",
+      "integrity": "sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/standardwebhooks",
+      "name": "standardwebhooks",
+      "version": "1.1.1",
+      "integrity": "sha512-bCbX9ZEyFkWPsRz7Bl3NuQUJohmwGSev/yhr7vhaGPlc4AfIrspIRa6cPTBuI1ItmrTDJ4d/S2hCsfe4+vQGnQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/ts-algebra",
+      "name": "ts-algebra",
+      "version": "2.0.0",
+      "integrity": "sha512-FPAhNPFMrkwz76P7cdjdmiShwMynZYN6SgOujD1urY4oNm80Ou9oMdmbR45LotcKOXoy7wSmHkRFE6Mxbrhefw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/tslib",
+      "name": "tslib",
+      "version": "2.8.1",
+      "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/typebox",
+      "name": "typebox",
+      "version": "1.3.27",
+      "integrity": "sha512-zu+jc1pcy4UiNThxikUr36f0Rybk9PEeCg/NE6adeWr/SKsdNO4EzZHYRDlv2YCVAfj3Odq3dESSo/jNyoBXzA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/undici",
+      "name": "undici",
+      "version": "8.10.2",
+      "integrity": "sha512-/y4/bH9YNU5hi9NIrpOuvGXFcxrj3CMrV+/AYpowAYTpHn8gX/XPFjNy766FPoYY0miQhdW977JFWKGNhBdwyQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/undici-types",
+      "name": "undici-types",
+      "version": "6.21.0",
+      "integrity": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/web-streams-polyfill",
+      "name": "web-streams-polyfill",
+      "version": "3.3.3",
+      "integrity": "sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/which",
+      "name": "which",
+      "version": "2.0.2",
+      "integrity": "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/ws",
+      "name": "ws",
+      "version": "8.21.0",
+      "integrity": "sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g=="
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/yaml",
+      "name": "yaml",
+      "version": "2.9.0",
+      "integrity": "sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA=="
+    }
+  ]
+}
