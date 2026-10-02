@@ -18,6 +18,40 @@ import local_smoke
 
 
 class BrowserArchiveTests(unittest.TestCase):
+    def test_public_binary_staging_uses_normal_creation_mode_and_cleans_up(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            original = Path.mkdir
+            modes = []
+            def capture(path, mode=0o777, *args, **kwargs):
+                modes.append(mode)
+                return original(path, mode, *args, **kwargs)
+            with patch.object(Path, "mkdir", capture):
+                with local_browser_fixture.extraction_staging(root) as staging:
+                    self.assertEqual(staging.parent, root)
+                    self.assertTrue(staging.name.startswith(".browser-extract-"))
+                    self.assertTrue(staging.is_dir())
+                    (staging / "test.txt").write_text("public", encoding="utf-8")
+            self.assertEqual(modes, [0o755])
+            self.assertFalse(staging.exists())
+
+    def test_public_binary_staging_cleans_up_after_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaises(RuntimeError):
+                with local_browser_fixture.extraction_staging(root) as staging:
+                    (staging / "partial.txt").write_text("public", encoding="utf-8")
+                    raise RuntimeError("模拟解压失败")
+            self.assertFalse(staging.exists())
+
+    def test_public_binary_staging_does_not_remove_moved_runtime(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with local_browser_fixture.extraction_staging(root) as staging:
+                (staging / "test.txt").write_text("public", encoding="utf-8")
+                staging.rename(root / "runtime")
+            self.assertEqual((root / "runtime/test.txt").read_text(encoding="utf-8"), "public")
+
     def test_committed_sources_cover_each_target_with_matching_versions(self):
         manifest = json.loads((ROOT / "licenses/local/browser-test-sources.json").read_text(encoding="utf-8"))
         for target in ("mac-arm64", "win64", "linux64"):

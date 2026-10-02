@@ -83,6 +83,57 @@ def test_message_template_content_roundtrips_through_actual_dom_parser():
                             'content': '# 仅供显示，不执行\nprint("browser fixture")'}
 
 
+@pytest.mark.parametrize('full', [False, True])
+def test_fixture_stream_and_final_roundtrip_through_message_extractor(full):
+    """Fixture 的稳定消息 ID 在流式、完成和缓存重读时均保留最新文本。"""
+    import copy
+    from app.core.driver.browser_incremental import IncrementalExtractor
+    from app.core.driver.browser_js import BATCH_CHAT_CONTENT, CHAT_CONTENT_BY_INDEX, CHAT_CONTENT_PROBE
+    from app.core.driver.config import SCRIPTS
+    from app.core.driver.parser import DOMParser
+
+    template = BeautifulSoup(BrowserFixture().html, 'html.parser')
+
+    class FixtureDOM:
+        items = []
+
+        def update(self, answer):
+            self.items = []
+            for role, text, message_id in [('user', '中文输入', 'user-1'), ('ai', answer, 'ai-2')]:
+                node = copy.deepcopy(template.select_one(f'#{role}-message-template .chat-item'))
+                node['data-message-id'] = message_id
+                paragraph = template.new_tag('p')
+                paragraph.string = text
+                node.select_one('.chat-text').append(paragraph)
+                self.items.append({'id': message_id, 'ai': node['data-message-ai'],
+                                   'html': str(node), 'text_len': len(node.get_text()),
+                                   'html_len': len(str(node)), 'code_count': 0})
+
+        def execute_script(self, script, *args):
+            if script == SCRIPTS['scroll_check']:
+                return True
+            if script in (BATCH_CHAT_CONTENT, CHAT_CONTENT_PROBE):
+                return self.items
+            assert script == CHAT_CONTENT_BY_INDEX
+            return [dict(self.items[index], idx=index) for index in args[0]]
+
+    driver = FixtureDOM()
+    extractor = IncrementalExtractor(DOMParser())
+    extract = extractor._extract_full if full else extractor.extract
+    observed = []
+    for text, streaming in [('这是本地', True), ('这是本地浏览器测试回复。', True),
+                            ('这是本地浏览器测试回复。\n分块输出已完成。', False)]:
+        driver.update(text)
+        messages, at_bottom, _ = extract(driver, None, streaming)
+        assert at_bottom
+        assert [(message['id'], message['role']) for message in messages] == [('user-1', 'User'), ('ai-2', 'AI')]
+        observed.append(''.join(segment['content'] for segment in messages[-1]['segments']))
+        assert text.split('\n')[-1] in observed[-1]
+    assert len(set(observed)) == 3
+    messages, _, _ = extract(driver, None, False)
+    assert '分块输出已完成' in messages[-1]['segments'][0]['content']
+
+
 @pytest.mark.parametrize('kwargs', [
     {'chunk_delay': -1}, {'initial_delay': float('nan')}, {'chunk_delay': float('inf')},
     {'initial_delay': '0.1'}, {'chunk_delay': True}, {'chunk_size': 0}, {'chunk_size': 1.5},

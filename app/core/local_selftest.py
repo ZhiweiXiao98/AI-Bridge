@@ -260,6 +260,29 @@ def prepare_browser_selftest(home: Path):
         raise
 
 
+def browser_selftest_probe(page, worker, fixture, stream_snapshot_count=0):
+    """只输出隔离自检的计数和布尔值，不输出页面、消息、会话或路径。"""
+    counts = fixture.snapshot()
+    cached = page._browser_all_messages
+    rendered = [getattr(bubble, "current_data", {}) for bubble in page.browser_msg_area.bubbles_cache]
+    def has_final(messages):
+        return "分块输出已完成" in json.dumps(messages, ensure_ascii=False, default=lambda _: "<non-json>")
+    return {
+        "fixture_counts": {key: counts.get(key, 0) for key in (
+            "page_ready_count", "request_count", "chunk_count", "response_count", "cancel_count",
+            "session_switch_count", "new_chat_count", "clear_count")},
+        "worker_mode": worker.mode if worker.mode in {"api", "browser"} else "unknown",
+        "ui_mode": page.current_mode if page.current_mode in {"api", "browser"} else "unknown",
+        "worker_message_count": len(worker.last_messages_snapshot),
+        "ui_cached_message_count": len(cached), "rendered_bubble_count": len(rendered),
+        "final_marker_cached": has_final(cached), "final_marker_rendered": has_final(rendered),
+        "stream_snapshot_count": stream_snapshot_count,
+        "ui_busy": bool(page.browser_input_area.is_ai_busy),
+        "ui_has_queued_message": page.browser_input_area.queued_payload is not None,
+        "driver": worker.connector.conn.diagnostic_snapshot(),
+    }
+
+
 def run_browser_selftest(app, window, worker, home: Path, fixture):
     """真实 Chrome/ChromeDriver + Worker + Qt 发送、流式同步、停止及进程恢复。"""
     from PySide6.QtCore import qVersion
@@ -281,22 +304,23 @@ def run_browser_selftest(app, window, worker, home: Path, fixture):
         return worker.browser_command_bridge.ready and session() is not None and session().process is not None
 
     def browser_diagnostic():
-        current = session()
-        process = current.process if current is not None else None
-        snapshot = worker.connector.conn.diagnostic_snapshot()
-        return (f"Worker模式={worker.mode}；页面加载次数={fixture.page_ready_count}；"
-                f"专用Chrome进程退出码={process.poll() if process is not None else '尚未启动'}；"
-                f"最近连接状态={worker.browser_command_bridge._last_diagnostic or '尚无诊断'}；"
-                f"driver_diagnostic={json.dumps(snapshot, ensure_ascii=False, sort_keys=True)}")
+        return json.dumps(browser_selftest_probe(page, worker, fixture, len(ui_stream_samples)),
+                          ensure_ascii=False, sort_keys=True)
+
+    def wait(predicate, message, timeout=30):
+        wait_for(app, predicate, message, timeout=timeout, timeout_detail=browser_diagnostic)
+
+    def rendered_text():
+        return json.dumps([getattr(bubble, "current_data", {}) for bubble in page.browser_msg_area.bubbles_cache],
+                          ensure_ascii=False, default=lambda _: "<non-json>")
 
     def send(text):
-        wait_for(app, lambda: page.browser_input_area.send_btn.isEnabled() and not page.browser_input_area.is_ai_busy,
-                 "等待浏览器输入恢复可发送")
+        wait(lambda: page.browser_input_area.send_btn.isEnabled() and not page.browser_input_area.is_ai_busy,
+             "等待浏览器输入恢复可发送")
         page.browser_input_area.input_box.setPlainText(text)
         page.browser_input_area.send_btn.click()
 
-    wait_for(app, ready, "真实浏览器、匹配驱动和输入页面就绪", timeout=50,
-             timeout_detail=browser_diagnostic)
+    wait(ready, "真实浏览器、匹配驱动和输入页面就绪", timeout=50)
     if worker.mode != "browser" or page.current_mode != "browser" or page.session_tabs.currentIndex() != 0:
         raise RuntimeError("浏览器 Worker 与界面模式不一致")
     browser_processes.append(session().process)
@@ -309,8 +333,9 @@ def run_browser_selftest(app, window, worker, home: Path, fixture):
 
     first = "界面真实发送第一条中文消息"
     send(first)
-    wait_for(app, lambda: fixture.request_count == 1, "网页收到真实 UI 输入")
-    wait_for(app, lambda: "分块输出已完成" in ui_text() and fixture.response_count == 1, "网页流式最终回复同步界面")
+    wait(lambda: fixture.request_count == 1, "网页收到真实 UI 输入")
+    wait(lambda: "分块输出已完成" in ui_text() and "分块输出已完成" in rendered_text()
+         and fixture.response_count == 1, "网页流式最终回复同步缓存与真实气泡")
     if len(ui_stream_samples) < 2:
         raise RuntimeError("界面没有观察到至少两个真实浏览器流式快照")
     if first not in ui_text() or page.browser_input_area.input_box.toPlainText():
@@ -318,15 +343,13 @@ def run_browser_selftest(app, window, worker, home: Path, fixture):
     checks += ["真实浏览器发送与回执", "浏览器流式文本读取", "浏览器最终文本读取"]
 
     send("停止生成路径，保留当前部分回复并阻止排队消息自动发送")
-    wait_for(app, lambda: fixture.request_count == 2 and page.browser_input_area.is_ai_busy,
-             "浏览器第二轮生成中")
+    wait(lambda: fixture.request_count == 2 and page.browser_input_area.is_ai_busy, "浏览器第二轮生成中")
     page.browser_input_area.input_box.setPlainText("这条待发消息不能发给网页")
     page.browser_input_area.on_send()
     if page.browser_input_area.queued_payload is None:
         raise RuntimeError("没有建立真实 UI 待发队列")
     page.browser_stop_btn.click()
-    wait_for(app, lambda: fixture.cancel_count == 1 and not worker.browser_command_bridge.cancel_pending,
-             "真实网页停止按钮确认")
+    wait(lambda: fixture.cancel_count == 1 and not worker.browser_command_bridge.cancel_pending, "真实网页停止按钮确认")
     deadline = time.monotonic() + 3.4
     while time.monotonic() < deadline:
         app.processEvents()
@@ -343,26 +366,24 @@ def run_browser_selftest(app, window, worker, home: Path, fixture):
     old_process.terminate()
     old_process.wait(timeout=10)
     page.browser_reconnect_btn.click()
-    wait_for(app, lambda: ready() and session().process.pid != old_process.pid,
-             "浏览器窗口关闭后真实新进程重连", timeout=60, timeout_detail=browser_diagnostic)
+    wait(lambda: ready() and session().process.pid != old_process.pid,
+         "浏览器窗口关闭后真实新进程重连", timeout=60)
     browser_processes.append(session().process)
-    wait_for(app, lambda: fixture.page_ready_count > before_page_loads,
-             "新浏览器进程实际重新加载网页")
+    wait(lambda: fixture.page_ready_count > before_page_loads, "新浏览器进程实际重新加载网页")
     if fixture.page_ready_events[-1]["restored_message_count"] < 4:
         raise RuntimeError("新浏览器进程没有从同一资料目录恢复前两轮消息")
-    wait_for(app, lambda: first in ui_text(), "专用资料目录中的网页历史恢复")
+    wait(lambda: first in ui_text() and first in rendered_text(), "专用资料目录中的网页历史恢复")
     checks += ["浏览器断开后重连", "浏览器重启后重新连接"]
     page.browser_input_area.clear_inputs()
     send("重连后还能正常发送")
-    wait_for(app, lambda: fixture.request_count == 3, "重连后的真实发送")
-    wait_for(app, lambda: fixture.response_count == 2 and "重连后还能正常发送" in ui_text(), "重连后的真实回复")
+    wait(lambda: fixture.request_count == 3, "重连后的真实发送")
+    wait(lambda: fixture.response_count == 2 and "重连后还能正常发送" in ui_text(), "重连后的真实回复")
 
     send("生成尚未完成时关闭客户端窗口")
-    wait_for(app, lambda: fixture.request_count == 4 and page.browser_input_area.is_ai_busy,
-             "窗口关闭前确实存在活动浏览器生成")
+    wait(lambda: fixture.request_count == 4 and page.browser_input_area.is_ai_busy, "窗口关闭前确实存在活动浏览器生成")
     window.close()
-    wait_for(app, lambda: not worker.isRunning() and all(process.poll() is not None for process in browser_processes),
-             "活动生成时关闭窗口并清理应用拥有的浏览器", timeout=25)
+    wait(lambda: not worker.isRunning() and all(process.poll() is not None for process in browser_processes),
+         "活动生成时关闭窗口并清理应用拥有的浏览器", timeout=25)
     checks.append("浏览器活动生成时关闭窗口")
     checks.append("浏览器与驱动所有权清理")
     return {"mode": "local-browser", "fixture": "loopback-html", "browser_version": browser_version,

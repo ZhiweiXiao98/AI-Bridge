@@ -2,16 +2,17 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import json
 import os
 from pathlib import Path, PurePosixPath
 import platform
 import re
+import secrets
 import shutil
 import stat
 import subprocess
 import sys
-import tempfile
 from urllib.request import urlopen
 import zipfile
 
@@ -99,6 +100,29 @@ def executable_paths(runtime: Path, target: str) -> tuple[Path, Path]:
     return runtime / "chrome-linux64/chrome", runtime / "chromedriver-linux64/chromedriver"
 
 
+@contextmanager
+def extraction_staging(output: Path):
+    """公开测试二进制使用普通继承目录；不能把 TemporaryDirectory 的私有 ACL 移进运行时。"""
+    # Python 3.12.4+ 的 Windows mkdir(0700) 设置私有 ACL（CPython #118486）。
+    # 此处不调整任何既有 ACL，不触碰用户数据，只原子创建新的随机公开程序暂存目录。
+    for _ in range(8):
+        staging = output / (".browser-extract-" + secrets.token_hex(12))
+        try:
+            staging.mkdir(mode=0o755)
+        except FileExistsError:
+            continue
+        break
+    else:
+        raise RuntimeError("无法为浏览器测试归档分配新的随机暂存目录")
+    try:
+        yield staging
+    finally:
+        if staging.is_symlink():
+            staging.unlink()
+        elif staging.exists():
+            shutil.rmtree(staging)
+
+
 def prepare(output: Path, *, archive_cache: Path | None = None) -> dict:
     manifest_path = ROOT / "licenses/local/browser-test-sources.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -107,8 +131,7 @@ def prepare(output: Path, *, archive_cache: Path | None = None) -> dict:
     output.mkdir(parents=True, exist_ok=True)
     archives = output / "archives"
     archives.mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix=".browser-extract-", dir=output) as temporary:
-        staging = Path(temporary)
+    with extraction_staging(output) as staging:
         for entry in records:
             filename = f"{entry['kind']}-{target}.zip"
             archive = archives / filename

@@ -294,7 +294,9 @@ class IncrementalExtractor:
             else:
                 old_sig = self._last_content_sigs.get(cache_key)
                 new_sig = current_content_sigs.get(cache_key)
-                if old_sig is not None and new_sig is not None and old_sig != new_sig:
+                # 流式尾消息刻意不提交稳定签名。结束生成后的第一轮必须
+                # 重取最终 DOM，不能把“尚无稳定签名”当成内容未变化。
+                if old_sig is None or (new_sig is not None and old_sig != new_sig):
                     changed_indexes.append(i)
                     logger.debug(
                         "[增量提取] 内容签名变化 | key=%s | old_sig=%s | new_sig=%s",

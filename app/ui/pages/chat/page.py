@@ -17,6 +17,7 @@ from .api_skill_references import ApiSkillReferenceHandler
 from .services.message_window_service import MessageWindowService
 from app.ui.components.chat import ChatBubble
 from app.core.config import ConfigManager
+from app.core.browser_sync import ChatProjectionReducer
 from app.core.app_constants import UI_SIZES
 from app.ui.theme import theme_manager
 from app.ui.components.collapsible_sidebar import CollapsibleSideBar
@@ -38,6 +39,9 @@ class ChatPage(QWidget):
             step_turns=int(cfg.get('chat_message_load_step_turns', 50)),
         )
         self._browser_all_messages = []
+        # Keep the complete history independently of MessageArea's visible window.
+        self._browser_message_projection = ChatProjectionReducer()
+        self._browser_message_projection.set_resync_callback(self._request_browser_resync)
         self._api_all_messages = []
         self._api_approval_dialog = None
         self._api_pending_approval = None
@@ -692,7 +696,10 @@ class ChatPage(QWidget):
             return
         visible, has_more = self.message_window_service.slice_messages('browser', self._browser_all_messages)
         incoming_id = visible[0].get('id', '') if visible else ''
-        self.browser_msg_area.render_messages(visible, incoming_id)
+        # Expanding the local window is not a replay of an old Worker event.
+        # Cached messages can carry different historical sequence numbers.
+        window = [dict(msg, _seq=0, _event='conversation.snapshot') for msg in visible]
+        self.browser_msg_area.render_messages(window, incoming_id)
         self.browser_msg_area.set_load_more_visible(has_more)
 
     def update_api_sessions(self, conversations):
@@ -988,18 +995,33 @@ class ChatPage(QWidget):
             _raw = self.worker.__dict__.get('current_chat_id', '')
             browser_conv_id = str(_raw) if isinstance(_raw, str) else ''
             event_type = (message[0].get('_event', '') if message else '')
-            if event_type == 'message.upsert':
-                for msg in message or []:
-                    if isinstance(msg, dict) and not msg.get('conversation_id'):
-                        msg['conversation_id'] = browser_conv_id
-                self.browser_msg_area.render_incremental(message, round_state=self._browser_round_state)
-                return
-            self._browser_all_messages = list(message or [])
-            if browser_conv_id:
-                for msg in self._browser_all_messages:
-                    if isinstance(msg, dict) and not msg.get('conversation_id'):
-                        msg['conversation_id'] = browser_conv_id
+            for msg in message or []:
+                if isinstance(msg, dict) and not msg.get('conversation_id'):
+                    msg['conversation_id'] = browser_conv_id
+            projection = self._browser_message_projection
+            incoming_conv = str(message[0].get('conversation_id') or '') if message else ''
+            incremental = event_type in {'message.upsert', 'message.remove'}
+            if message:
+                seq = message[0].get('_seq', 0)
+                if seq > 0 and seq <= projection.state.last_seq:
+                    return
+                if incoming_conv and incoming_conv != projection.state.conversation_id:
+                    if incremental:
+                        self._request_browser_resync()
+                        return
+                    projection.reset()
+                change = projection.apply_messages(message)
+                if change['type'] in {'stale', 'empty', 'resync_needed'}:
+                    return
+                projection.state.conversation_id = incoming_conv
+            else:
+                projection.reset()
+            self._browser_all_messages = projection.get_ordered_messages()
             visible, has_more = self.message_window_service.slice_messages('browser', self._browser_all_messages)
+            if incremental:
+                self.browser_msg_area.render_incremental(message, round_state=self._browser_round_state)
+                self.browser_msg_area.set_load_more_visible(has_more)
+                return
             browser_round_state = self._browser_round_state
             if browser_round_state == 'idle':
                 _raw = getattr(self.worker, 'browser_round_state', None)
