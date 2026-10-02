@@ -71,24 +71,24 @@ class CompleteBuildTests(unittest.TestCase):
                     local_build.public_resources(root)
 
     def test_current_pi_lock_with_verified_supplement(self):
-        lock = json.loads((ROOT / "runtime/pi/package-lock.json").read_text())
+        lock = json.loads((ROOT / "runtime/pi/package-lock.json").read_text(encoding="utf-8"))
         local_build.validate_npm_lock(lock)
         missing = [name for name, item in lock["packages"].items() if name and not item.get("integrity")]
         self.assertEqual(len(missing), 7)
 
     def test_pi_without_integrity_and_supplement_fails(self):
-        lock = json.loads((ROOT / "runtime/pi/package-lock.json").read_text())
+        lock = json.loads((ROOT / "runtime/pi/package-lock.json").read_text(encoding="utf-8"))
         with self.assertRaises(ValueError):
             local_build.validate_npm_lock(lock, {})
 
     def test_pi_wrong_version_fails(self):
-        lock = json.loads((ROOT / "runtime/pi/package-lock.json").read_text())
+        lock = json.loads((ROOT / "runtime/pi/package-lock.json").read_text(encoding="utf-8"))
         lock["packages"]["node_modules/@earendil-works/pi-coding-agent"]["version"] = "0.99.2"
         with self.assertRaises(ValueError):
             local_build.validate_npm_lock(lock)
 
     def test_pi_nonofficial_registry_fails(self):
-        lock = json.loads((ROOT / "runtime/pi/package-lock.json").read_text())
+        lock = json.loads((ROOT / "runtime/pi/package-lock.json").read_text(encoding="utf-8"))
         lock["packages"]["node_modules/@earendil-works/pi-coding-agent"]["resolved"] = "https://registry.npmjs.org.evil.invalid/pkg"
         with self.assertRaises(ValueError):
             local_build.validate_npm_lock(lock)
@@ -103,7 +103,7 @@ class CompleteBuildTests(unittest.TestCase):
                 local_build.node_target()
 
     def test_node_sources_are_fixed_and_sufficiently_new(self):
-        records = json.loads((ROOT / "licenses/local/node-sources.json").read_text())
+        records = json.loads((ROOT / "licenses/local/node-sources.json").read_text(encoding="utf-8"))
         self.assertEqual(records["version"], local_build.NODE_VERSION)
         self.assertGreaterEqual(tuple(map(int, records["version"].split("."))), (22, 19, 0))
         for name in (f"node-v{local_build.NODE_VERSION}-darwin-arm64.tar.gz", f"node-v{local_build.NODE_VERSION}-win-x64.zip"):
@@ -147,7 +147,7 @@ class ComplianceTests(unittest.TestCase):
             self.assertFalse(local_compliance.copy_text(source, Path(directory) / "notices/LICENSE"))
 
     def test_workflow_never_uploads_binary_or_log(self):
-        workflow = (ROOT / ".github/workflows/local-desktop-build.yml").read_text()
+        workflow = (ROOT / ".github/workflows/local-desktop-build.yml").read_text(encoding="utf-8")
         upload = workflow.split("uses: actions/upload-artifact@", 1)[1]
         self.assertEqual(upload.count(".json"), 3)
         for forbidden in ("dist/", "node_modules", "install-report", "*.zip", "*.exe", "*.log", "if: always()"):
