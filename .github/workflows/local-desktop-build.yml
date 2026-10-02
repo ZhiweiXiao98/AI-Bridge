@@ -77,14 +77,14 @@ jobs:
           python -m pip check
       - name: 核验本地打包约束
         run: python -m unittest discover -s tests/public_ci -p "test_local_desktop*.py" -v
-      - name: 构建本地核心、UI、RAG、浏览器与 Pi
-        run: python tools/desktop/local_build.py
       - name: 准备仅自检使用的固定官方 Chrome 与匹配驱动
         if: runner.os != 'Windows'
         run: python tools/desktop/local_browser_fixture.py --output build/local-desktop/browser-test
       - name: 核验 Windows 预装官方 Chrome 与固定匹配驱动
         if: runner.os == 'Windows'
         run: python tools/desktop/local_preinstalled_browser.py --output build/local-desktop/browser-test
+      - name: 构建本地核心、UI、RAG、浏览器与 Pi
+        run: python tools/desktop/local_build.py
       - name: 无宿主 Python 或 Node 的完整本地冒烟
         run: python tools/desktop/local_smoke.py --browser-fixture build/local-desktop/browser-test/runtime.json
       # 只上传下面三个明确 JSON。即使构建成功，也不得上传 dist、依赖归档、

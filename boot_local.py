@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 
 
 def select_startup_mode(explicit, saved, smoke=False):
@@ -25,15 +26,17 @@ def _stdio(home: Path):
 
 
 def main(argv=None):
+    started_at = time.monotonic()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("api", "browser"), default=None)
     smoke_options = parser.add_mutually_exclusive_group()
     smoke_options.add_argument("--local-smoke-test", action="store_true", help="只使用本机模拟模型验证完整链路")
     smoke_options.add_argument("--local-browser-smoke-test", action="store_true", help="使用独立 Chrome 和本机模拟网页验证浏览器模式")
     smoke_options.add_argument("--local-resume-smoke-test", action="store_true", help="仅重开先前自检产生的专用数据")
+    smoke_options.add_argument("--local-native-smoke-test", action="store_true", help="仅验证冻结程序的原生主窗口启动与退出")
     args = parser.parse_args(argv)
-    smoke = args.local_smoke_test or args.local_resume_smoke_test or args.local_browser_smoke_test
-    if args.local_smoke_test or args.local_browser_smoke_test:
+    smoke = args.local_smoke_test or args.local_resume_smoke_test or args.local_browser_smoke_test or args.local_native_smoke_test
+    if args.local_smoke_test or args.local_browser_smoke_test or args.local_native_smoke_test:
         supplied_home = os.environ.get("AI_BRIDGE_LOCAL_HOME")
         if not supplied_home:
             parser.error("自检必须通过 AI_BRIDGE_LOCAL_HOME 指定一个新的空目录，不能使用真实用户数据")
@@ -49,6 +52,10 @@ def main(argv=None):
     from app.core.local_paths import configure_local_paths
     home = configure_local_paths()
     _stdio(home)
+    if args.local_native_smoke_test:
+        from app.core.local_gui_probe import initial_report, write_report
+        # Leave a safe stage marker even if loading the native QPA plugin aborts.
+        write_report(home, initial_report())
 
     from PySide6.QtCore import QLockFile
     from PySide6.QtWidgets import QApplication, QLabel, QMessageBox
@@ -62,12 +69,19 @@ def main(argv=None):
         return 2
 
     worker = window = browser_fixture = None
+    native_old_hook = None
+    native_failures = []
     splash = QLabel("AI Bridge\n正在加载本地核心与界面…")
     splash.setWindowTitle("启动完整本地客户端")
     splash.setMinimumSize(420, 100)
     splash.show()
     app.processEvents()
     try:
+        if args.local_native_smoke_test:
+            # Catch startup slots before constructing/showing the main window,
+            # including event processing inside its initialization helpers.
+            native_old_hook = sys.excepthook
+            sys.excepthook = lambda *_: native_failures.append(True)
         from app.core.config import ConfigManager
         # ConfigManager 的导入会生成默认配置；单独标识首次本地配置，保留所有现有设置。
         marker = home / ".local-initialized"
@@ -81,6 +95,8 @@ def main(argv=None):
 
         saved_mode = ConfigManager.load().get("startup_mode", "api")
         args.mode = select_startup_mode(args.mode, saved_mode, smoke)
+        if args.local_native_smoke_test:
+            args.mode = "api"  # Never launch Chrome or call a model in this probe.
         if args.local_browser_smoke_test:
             from app.core.local_selftest import prepare_browser_selftest
             browser_fixture = prepare_browser_selftest(home)
@@ -115,6 +131,10 @@ def main(argv=None):
         remember_mode(args.mode)
         window.show()
         splash.close()
+        if args.local_native_smoke_test:
+            from app.core.local_gui_probe import run_native_smoke
+            result = run_native_smoke(app, window, worker, home, started_at, failures=native_failures)
+            return 0 if result["passed"] else 1
         app.processEvents()
 
         if smoke:
@@ -180,6 +200,8 @@ def main(argv=None):
             QMessageBox.critical(None, "本地客户端启动失败", f"{type(exc).__name__}: {exc}\n\n请检查安装完整性。日志在：{home / 'local-startup.log'}")
         return 1
     finally:
+        if native_old_hook is not None:
+            sys.excepthook = native_old_hook
         if worker is not None:
             worker.stop_worker()
         if browser_fixture is not None:

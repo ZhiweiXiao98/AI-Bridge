@@ -88,6 +88,9 @@ Pi 原锁中七个 `@earendil-works` 子包缺 `integrity`。`licenses/local/npm
 4. 原生 Pi 会话保存与续聊成功，项目锁释放，Worker 和 Pi 正常退出
 5. 再启动第二个真正的应用进程，看到原会话、历史及相同 Pi 会话，且模拟模型密钥已清除
 6. 用另一个全新空目录启动第三个冻结应用进程，显式提供已校验的官方 Chrome 与匹配驱动，验证真实 UI 发送、回执、流式/最终文本、停止和待发队列清除；点击 UI 重连并正常关闭专用 Chrome 后，要求旧进程退出、新进程恢复同一资料目录的至少四条消息；另验证活动生成中关闭主窗口，以及所有已观察到的自有后代退出
+7. Windows/macOS 再用独立空目录启动原生窗口探针，要求冻结应用实际使用 `windows` / `cocoa` 平台插件、主窗口显示与曝光、有效原生窗口标识、非空窗口渲染捕获和正常退出；此进程最多运行 60 秒，不发送模型请求
+
+前面的功能自检使用 Qt `offscreen`，原生窗口探针单独验证系统平台插件和窗口启动，不接受 `offscreen` 回退。探针只捕获自身空测试窗口，不截取桌面；图片只留本轮临时目录，公开 JSON 仅保留布尔结论、版本、耗时及退出证据。此门槛不等于人眼视觉验收、安装包安装测试或 Apple Developer ID 签名/公证通过。
 
 浏览器检查记录 WebDriver capabilities 暴露的精确 Chrome/驱动版本、实际分块快照数量与进程清理证据。此恢复测试限定为应用拥有的 Chrome 正常关闭后重连，记录 `browser_restart_method=owned-graceful-reconnect`、`crash_recovery_tested=false`，不代表强杀、崩溃或断电后历史一定恢复。Chrome 进程重启与应用进程重启严格区分：`application_process_restart=false` 明确保留浏览器链路应用重启恢复未覆盖的边界，不能把 API 链路的第二进程恢复当成浏览器恢复。
 

@@ -138,7 +138,7 @@ def failure_diagnostic(log_path: Path, state: Path) -> str:
     return "\n".join(messages) or "未找到可安全输出的 traceback；未上传原始日志或测试状态"
 
 
-def run_application(executable: Path, argument: str, state: Path, env: dict, log_path: Path) -> dict:
+def run_application(executable: Path, argument: str, state: Path, env: dict, log_path: Path, *, timeout_seconds=300) -> dict:
     import psutil
     kwargs = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if sys.platform == "win32" else {"start_new_session": True}
     with log_path.open("w", encoding="utf-8") as log:
@@ -151,7 +151,7 @@ def run_application(executable: Path, argument: str, state: Path, env: dict, log
         expected_chrome = os.path.normcase(str(Path(env["AI_BRIDGE_TEST_CHROME"]).resolve())) if env.get("AI_BRIDGE_TEST_CHROME") else None
         expected_driver = os.path.normcase(str(Path(env["AI_BRIDGE_TEST_CHROMEDRIVER"]).resolve())) if env.get("AI_BRIDGE_TEST_CHROMEDRIVER") else None
         try:
-            deadline = time.monotonic() + 300
+            deadline = time.monotonic() + timeout_seconds
             while process.poll() is None:
                 try:
                     for child in psutil.Process(process.pid).children(recursive=True):
@@ -164,7 +164,7 @@ def run_application(executable: Path, argument: str, state: Path, env: dict, log
                 except psutil.NoSuchProcess:
                     pass
                 if time.monotonic() >= deadline:
-                    raise subprocess.TimeoutExpired(str(executable), 300)
+                    raise subprocess.TimeoutExpired(str(executable), timeout_seconds)
                 time.sleep(0.05)
             code = process.wait()
             if code:
@@ -240,6 +240,64 @@ def validate_browser_report(report: dict, fixture: dict) -> dict:
             "same_profile_history_restored", "cancelled_queue_sent", "request_count", "response_count")}
 
 
+REQUIRED_NATIVE_CHECKS = {
+    "隔离空数据目录", "原生Qt平台插件", "真实主窗口显示与曝光",
+    "主窗口非空渲染捕获", "主窗口正常关闭", "本地Worker与运行时停止",
+}
+NATIVE_BOOLEAN_FIELDS = (
+    "frozen", "window_visible", "window_exposed", "window_enabled", "window_nonzero_size",
+    "native_window_id_valid", "api_mode_ready", "window_capture_nonempty", "screenshot_saved",
+    "normal_close", "window_closed", "worker_stopped", "runtime_stopped", "passed",
+)
+
+
+def validate_native_report(report: dict, expected_qt: str) -> dict:
+    platform_plugin = {"darwin": "cocoa", "win32": "windows"}.get(sys.platform)
+    if (report.get("schema_version") != 1 or not platform_plugin or report.get("platform_plugin") != platform_plugin
+            or report.get("mode") != "native-gui" or report.get("fixture") != "isolated-empty-home"
+            or report.get("stage") != "complete" or report.get("qt") != expected_qt
+            or any(report.get(field) is not True for field in NATIVE_BOOLEAN_FIELDS)
+            or type(report.get("qt_exception_count")) is not int or report["qt_exception_count"] != 0
+            or type(report.get("startup_ready_ms")) is not int or not 0 <= report["startup_ready_ms"] <= 60000
+            or not REQUIRED_NATIVE_CHECKS.issubset(report.get("checks", []))):
+        raise RuntimeError("原生窗口启动、曝光、捕获或正常退出证据不完整；不能退回 offscreen 冒充通过")
+    result = {key: report[key] for key in (*NATIVE_BOOLEAN_FIELDS, "mode", "fixture", "stage", "qt",
+              "platform_plugin", "qt_exception_count", "startup_ready_ms")}
+    result["checks"] = sorted(REQUIRED_NATIVE_CHECKS)
+    return result
+
+
+def native_failure_probe(state: Path) -> dict:
+    """原生初始化可能早于窗口失败；仅取本轮固定报告内严格受限的诊断值。"""
+    try:
+        report = json.loads((state / "local-native-smoke.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"stage": "unknown"}
+    if not isinstance(report, dict):
+        return {"stage": "unknown"}
+    stages = {"qt_startup", "native_platform", "window_ready", "window_capture",
+              "screenshot_save", "normal_close", "complete"}
+    plugins = {"cocoa", "windows", "offscreen", "minimal", "xcb", "wayland"}
+    stage = report.get("stage")
+    result = {"stage": stage if isinstance(stage, str) and stage in stages else "unknown"}
+    plugin = report.get("platform_plugin")
+    if isinstance(plugin, str) and plugin in plugins:
+        result["platform_plugin"] = plugin
+    qt = report.get("qt")
+    if isinstance(qt, str) and re.fullmatch(r"\d{1,3}\.\d{1,3}\.\d{1,3}", qt):
+        result["qt"] = qt
+    for field in NATIVE_BOOLEAN_FIELDS:
+        if type(report.get(field)) is bool:
+            result[field] = report[field]
+    for field, maximum in (("qt_exception_count", 1000), ("startup_ready_ms", 60000)):
+        if type(report.get(field)) is int and 0 <= report[field] <= maximum:
+            result[field] = report[field]
+    checks = report.get("checks")
+    if isinstance(checks, list):
+        result["checks"] = sorted({item for item in checks if isinstance(item, str) and item in REQUIRED_NATIVE_CHECKS})
+    return result
+
+
 def safe_failure_report(stage: str, error: Exception, output: Path) -> dict:
     summary = redact_known_paths(str(error), (str(output), str(ROOT), str(Path.home())), "<构建目录>")
     summary = re.sub(r"(?:[A-Za-z]:[/\\]|/(?:tmp|var|private|Users|home|workspace|opt)/)[^\s\"'\n]*", "<自检目录>", summary)
@@ -296,6 +354,26 @@ def run_checks(output: Path, args, progress: dict) -> None:
             safe["browser_probe"]["process_cleanup_probe"] = process_probe
     else:
         safe["browser_probe"] = {"status": "未运行；本次显式选择了 --api-only，不能作为浏览器验收"}
+    if sys.platform in {"darwin", "win32"}:
+        with tempfile.TemporaryDirectory(prefix="ai-bridge-native-smoke-") as directory:
+            state = Path(directory)
+            env = smoke_environment(state)
+            env["QT_QPA_PLATFORM"] = "cocoa" if sys.platform == "darwin" else "windows"
+            progress["stage"] = "原生平台窗口启动"
+            try:
+                process_probe = run_application(executable_path(output), "--local-native-smoke-test", state, env,
+                                                output / "local-native-smoke.log", timeout_seconds=60)
+            except Exception as error:
+                probe = json.dumps(native_failure_probe(state), ensure_ascii=False, sort_keys=True)
+                diagnostic = failure_diagnostic(output / "local-native-smoke.log", state)
+                raise RuntimeError(f"原生窗口自检失败（{type(error).__name__}）：{probe}\n{diagnostic}") from error
+            report = json.loads((state / "local-native-smoke.json").read_text(encoding="utf-8"))
+            safe["native_gui_probe"] = validate_native_report(report, inventory["runtime_build_environment"]["qt"])
+            safe["native_gui_probe"]["process_cleanup_probe"] = process_probe
+            safe["native_gui_probe"]["host_python_node_removed_from_path"] = True
+            safe["native_gui_probe"]["fresh_state_directory"] = True
+    else:
+        safe["native_gui_probe"] = {"status": "未运行；仅 Windows/macOS 目标启用原生窗口启动门槛"}
     progress["stage"] = "保存脱敏验证证据"
     safe.update(schema_version=2, status="passed", binary_distribution_approved=False)
     write_json(output / "review/local-smoke.json", safe)

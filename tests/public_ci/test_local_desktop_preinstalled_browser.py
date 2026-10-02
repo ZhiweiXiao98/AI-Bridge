@@ -15,6 +15,31 @@ from local_build import digest
 
 
 class PreinstalledBrowserTests(unittest.TestCase):
+    def test_query_failure_diagnostic_is_fixed_and_private_values_are_dropped(self):
+        result = json.loads(installed.query_failure_diagnostic(
+            {'stage': 'signature', 'error_kind': 'RuntimeException', 'signature_status': 'NotTrusted',
+             'registry_found': True, 'file_found': True, 'publisher_matched': False,
+             'message': 'private certificate', 'path': 'C:/private/chrome.exe'}, 'private stderr'))
+        self.assertEqual(result['stage'], 'signature')
+        self.assertEqual(result['signature_status'], 'NotTrusted')
+        self.assertFalse(result['publisher_matched'])
+        self.assertNotIn('private', json.dumps(result))
+        bad = json.loads(installed.query_failure_diagnostic(
+            {'stage': ['private'], 'error_kind': 'private', 'signature_status': {'private': True},
+             'registry_found': 1, 'file_found': 'yes'}, 'private stderr'))
+        self.assertEqual(bad, {'stage': 'powershell_start_or_parse', 'error_kind': 'other', 'signature_status': 'unknown'})
+
+    def test_parse_failure_only_exposes_known_error_class(self):
+        result = json.loads(installed.query_failure_diagnostic(None, 'ParserError in C:/private/script.ps1'))
+        self.assertEqual(result['error_kind'], 'ParserError')
+        self.assertNotIn('private', json.dumps(result))
+
+    def test_browser_preparation_precedes_expensive_freeze(self):
+        workflow = (ROOT / '.github/workflows/local-desktop-build.yml').read_text(encoding='utf-8')
+        for helper in ('local_browser_fixture.py', 'local_preinstalled_browser.py'):
+            self.assertLess(workflow.index('python tools/desktop/' + helper),
+                            workflow.index('python tools/desktop/local_build.py'))
+
     def metadata(self, root):
         chrome = root / 'Program Files/Google/Chrome/Application/chrome.exe'
         chrome.parent.mkdir(parents=True, exist_ok=True)

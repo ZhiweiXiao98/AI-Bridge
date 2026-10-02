@@ -19,15 +19,30 @@ from local_build import ROOT, configure_console, digest, write_json
 _CHROME_QUERY = r'''
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$stage = 'registry'
+$signatureState = 'not_checked'
+$registryFound = $false
+$fileFound = $false
+$publisherMatched = $false
+try {
 $registry = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe'
 $chrome = [string](Get-ItemProperty -LiteralPath $registry).'(default)'
 if (-not $chrome) { throw '标准注册表没有已安装 Chrome' }
+$registryFound = $true
+$stage = 'chrome_file'
 $item = Get-Item -LiteralPath $chrome
+$fileFound = $true
+$stage = 'signature'
 $signature = Get-AuthenticodeSignature -LiteralPath $item.FullName
+$signatureState = [string]$signature.Status
 if ($signature.Status -ne 'Valid' -or -not $signature.SignerCertificate) { throw 'Chrome 官方签名无效' }
+$stage = 'publisher'
 $publisher = $signature.SignerCertificate.GetNameInfo([System.Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false)
 if ($publisher -ne 'Google LLC') { throw 'Chrome 签名发布者不符合预期' }
+$publisherMatched = $true
+$stage = 'metadata'
 @{
+  ok = $true
   chrome = $item.FullName
   version = $item.VersionInfo.ProductVersion
   publisher = $publisher
@@ -36,6 +51,12 @@ if ($publisher -ne 'Google LLC') { throw 'Chrome 签名发布者不符合预期'
   program_files = [Environment]::GetFolderPath([Environment+SpecialFolder]::ProgramFiles)
   program_files_x86 = [Environment]::GetFolderPath([Environment+SpecialFolder]::ProgramFilesX86)
 } | ConvertTo-Json -Compress
+} catch {
+  @{ ok = $false; stage = $stage; error_kind = $_.Exception.GetType().Name;
+     signature_status = $signatureState; registry_found = $registryFound;
+     file_found = $fileFound; publisher_matched = $publisherMatched } | ConvertTo-Json -Compress
+  exit 1
+}
 '''
 
 
@@ -67,6 +88,31 @@ def validate_chrome_metadata(metadata: dict) -> tuple[Path, dict]:
                               ('version', 'publisher', 'authenticode_status', 'signer_thumbprint')}
 
 
+def query_failure_diagnostic(metadata, stderr: str) -> str:
+    """只回显固定状态及严格布尔；丢弃 PowerShell 异常正文、路径和证书详情。"""
+    metadata = metadata if isinstance(metadata, dict) else {}
+    stages = {'registry', 'chrome_file', 'signature', 'publisher', 'metadata'}
+    kinds = {'RuntimeException', 'ItemNotFoundException', 'DriveNotFoundException', 'ParameterBindingException',
+             'CommandNotFoundException', 'SecurityException', 'IOException'}
+    statuses = {'Valid', 'NotSigned', 'UnknownError', 'NotTrusted', 'HashMismatch',
+                'NotSupportedFileFormat', 'Incompatible', 'not_checked'}
+    result = {}
+    for field, allowed, default in (('stage', stages, 'powershell_start_or_parse'),
+                                    ('error_kind', kinds, 'other'), ('signature_status', statuses, 'unknown')):
+        value = metadata.get(field)
+        result[field] = value if isinstance(value, str) and value in allowed else default
+    for field in ('registry_found', 'file_found', 'publisher_matched'):
+        if type(metadata.get(field)) is bool:
+            result[field] = metadata[field]
+    # 解析失败时 catch 本身尚未运行；只识别固定类别，不转发 stderr。
+    if not metadata:
+        for token in ('ParserError', 'ParameterBindingException', 'CommandNotFoundException'):
+            if token in stderr:
+                result['error_kind'] = token
+                break
+    return json.dumps(result, ensure_ascii=False, sort_keys=True)
+
+
 def read_preinstalled_chrome() -> tuple[Path, dict]:
     identity = runner_identity()
     system_root = Path(os.environ.get('SYSTEMROOT', ''))
@@ -75,10 +121,14 @@ def read_preinstalled_chrome() -> tuple[Path, dict]:
         raise RuntimeError('未找到 Windows 自带的只读签名查询工具')
     result = subprocess.run([str(powershell), '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', _CHROME_QUERY],
                             capture_output=True, encoding='utf-8-sig', timeout=40, check=False)
-    if result.returncode:
-        raise RuntimeError('只读 Chrome 注册表/官方签名查询失败，未调整任何系统设置')
     try:
-        chrome, metadata = validate_chrome_metadata(json.loads(result.stdout))
+        metadata = json.loads(result.stdout)
+    except (ValueError, TypeError):
+        metadata = {}
+    if result.returncode or not isinstance(metadata, dict) or metadata.get('ok') is not True:
+        raise RuntimeError('只读 Chrome 查询失败：' + query_failure_diagnostic(metadata, result.stderr))
+    try:
+        chrome, metadata = validate_chrome_metadata(metadata)
     except (ValueError, TypeError, KeyError) as error:
         raise RuntimeError('只读 Chrome 查询未返回有效的版本与签名证据') from error
     return chrome, {**identity, **metadata}
@@ -166,7 +216,14 @@ def main() -> None:
     parser.add_argument('--output', type=Path, default=ROOT / 'build/local-desktop/browser-test')
     parser.add_argument('--archive-cache', type=Path)
     args = parser.parse_args()
-    prepare(args.output.resolve(), archive_cache=args.archive_cache)
+    output = args.output.resolve()
+    try:
+        prepare(output, archive_cache=args.archive_cache)
+    except Exception as error:
+        from local_smoke import safe_failure_report
+        write_json(output.parent / 'review/local-smoke.json',
+                   safe_failure_report('预装浏览器只读准备', error, output.parent))
+        raise
 
 
 if __name__ == '__main__':
