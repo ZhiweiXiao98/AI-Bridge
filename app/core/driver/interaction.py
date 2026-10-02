@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from .config import SELECTORS, SCRIPTS, CODE_BLOCK_SELECTORS
+from .local_chrome import origin
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +35,12 @@ TARGET_ICONS = ALL_COLLAPSED + ALL_EXPANDED
 TARGET_XPATH = " or ".join([f"contains(@class, '{icon}')" for icon in TARGET_ICONS])
 
 class InteractionManager:
-    def __init__(self, driver):
+    def __init__(self, driver, allowed_origin=None, strict_origin=False):
         self.driver = driver
         self.fixed_registry = set()
         self.target_handle = None
+        self.allowed_origin = allowed_origin
+        self.strict_origin = strict_origin
 
     def find_element(self, selector):
         return self.driver.find_element(By.CSS_SELECTOR, selector)
@@ -96,13 +99,17 @@ class InteractionManager:
         except: pass
         return False
 
-    def send_message(self, text):
+    def send_message(self, text, cancel_check=None):
         try:
+            if cancel_check and cancel_check():
+                return False, "发送已取消"
             logger.info("[Interaction] send_message start | text_len=%d current_url=%s", len(text or ""), getattr(self.driver, "current_url", ""))
             web_input = self.find_element(SELECTORS["input_area"])
             before = self._chat_submit_state()
             logger.info("[Interaction] send_message before state | %s", before)
             use_js_injection = len(text) > 10 or "\n" in text or not text.isascii()
+            if cancel_check and cancel_check():
+                return False, "发送已取消"
             if use_js_injection:
                 self.driver.execute_script(SCRIPTS["react_input"], web_input, text)
                 time.sleep(0.1)
@@ -112,6 +119,8 @@ class InteractionManager:
                         btns = self.driver.find_elements(By.XPATH, xpath)
                         for btn in btns:
                             if btn.is_displayed():
+                                if cancel_check and cancel_check():
+                                    return False, "发送已取消"
                                 self.driver.execute_script("arguments[0].click();", btn)
                                 clicked = True
                                 break
@@ -120,10 +129,14 @@ class InteractionManager:
                     except Exception:
                         pass
                 if not clicked:
+                    if cancel_check and cancel_check():
+                        return False, "发送已取消"
                     web_input.send_keys(Keys.ENTER)
             else:
                 web_input.send_keys(text)
                 time.sleep(0.05)
+                if cancel_check and cancel_check():
+                    return False, "发送已取消"
                 web_input.send_keys(Keys.ENTER)
             if not self._wait_for_user_message_after_submit(before, timeout=8):
                 after = self._chat_submit_state()
@@ -135,6 +148,53 @@ class InteractionManager:
         except Exception as e:
             logger.exception("[Interaction] send_message exception")
             return False, f"发送失败: {e}"
+
+    def cancel_generation(self):
+        if not self.is_busy():
+            return True, "当前没有正在生成的回复"
+        selectors = ["//button[contains(@class, 'n-button--error-type') and .//span[contains(text(), '停止')]]",
+                     "//button[.//i[contains(@class, 'fa-stop')]]"]
+        for selector in selectors:
+            for button in self.driver.find_elements(By.XPATH, selector):
+                if button.is_displayed() and button.is_enabled():
+                    button.click()
+                    try:
+                        WebDriverWait(self.driver, 3).until(lambda _: not self.is_busy())
+                        return True, "已停止网页生成"
+                    except Exception:
+                        return False, "停止请求已发送，但网页尚未确认停止，请检查专用 Chrome 窗口"
+        return False, "当前页面未找到受支持的停止按钮，请在专用 Chrome 窗口中停止生成"
+
+    def new_chat(self):
+        before = self.driver.current_url
+        active = self.driver.find_elements(By.CSS_SELECTOR, SELECTORS["session_active"])
+        previous = active[0].get_attribute("outerHTML") if active else ""
+        candidates = self.driver.find_elements(By.XPATH,
+            "//button[@data-action='new-chat' or @aria-label='新建对话' or @aria-label='新建聊天' "
+            "or @aria-label='创建新对话' or normalize-space(.)='新建对话' "
+            "or normalize-space(.)='新建聊天' or normalize-space(.)='创建新对话']")
+        def usable(button):
+            return (button.is_displayed() and button.is_enabled()
+                    and button.get_attribute("aria-disabled") != "true")
+
+        visible = [button for button in candidates if usable(button)]
+        if not visible:
+            # 新版侧栏把名称放在独立 tooltip；只识别该侧栏控件中的可见加号，
+            # 不把消息附件、模型管理等任意加号当作新建会话，也不绕过禁用状态。
+            sidebar = self.driver.find_elements(By.CSS_SELECTOR, "button.aa-sidebar-toolbar__btn")
+            visible = [button for button in sidebar if usable(button)
+                       and any(icon.is_displayed() for icon in button.find_elements(By.CSS_SELECTOR, ".fa-plus"))]
+        if len(visible) != 1:
+            return False, "网页没有唯一可识别的“新建对话”按钮，请在专用 Chrome 窗口中新建"
+        visible[0].click()
+        def changed(_):
+            current = self.driver.find_elements(By.CSS_SELECTOR, SELECTORS["session_active"])
+            return self.driver.current_url != before or (current and current[0].get_attribute("outerHTML") != previous)
+        try:
+            WebDriverWait(self.driver, 5).until(changed)
+            return True, "已新建网页会话"
+        except Exception:
+            return False, "已点击新建，但网页未确认会话切换"
 
     def _chat_submit_state(self):
         try:
@@ -382,7 +442,9 @@ class InteractionManager:
             return True, "粘贴成功"
         except Exception as e: return False, f"粘贴失败: {e}"
 
-    def upload_file(self, file_paths):
+    def upload_file(self, file_paths, cancel_check=None):
+        if cancel_check and cancel_check():
+            return False, "上传已取消"
         if isinstance(file_paths, list):
             valid_paths = [p for p in file_paths if os.path.exists(p)]
             if not valid_paths: return False, "所有文件均不存在"
@@ -396,6 +458,8 @@ class InteractionManager:
             clicked = False
             for btn in triggers:
                 if btn.is_displayed():
+                    if cancel_check and cancel_check():
+                        return False, "上传已取消"
                     btn.click()
                     clicked = True; break
 
@@ -407,15 +471,21 @@ class InteractionManager:
             file_input = self._wait_for_file_input(timeout=8)
             if not file_input:
                 return False, "upload_input_not_created: 未找到文件输入框"
+            if cancel_check and cancel_check():
+                return False, "上传已取消"
             file_input.send_keys(paths_str)
 
             wait_time = 1.0 + 0.5 * paths_str.count('\n')
             time.sleep(wait_time)
 
             # 3. 确认上传 (如果有确认按钮的话)
+            if cancel_check and cancel_check():
+                return False, "上传确认已取消"
             confirms = self.driver.find_elements(By.XPATH, SELECTORS["upload_confirm"])
             for btn in confirms:
                 if btn.is_displayed():
+                    if cancel_check and cancel_check():
+                        return False, "上传确认已取消"
                     btn.click()
                     break
 
@@ -997,26 +1067,33 @@ class InteractionManager:
     def switch_to_chat_tab(self):
         try:
             def has_chat_surface():
+                if self.strict_origin and (not self.allowed_origin or origin(self.driver.current_url) != self.allowed_origin):
+                    return False
                 return (
                     len(self.find_elements(SELECTORS["chat_items"])) > 0
                     or len(self.find_elements(SELECTORS["input_area"])) > 0
                 )
 
+            handles = self.driver.window_handles
+            if self.strict_origin and self.target_handle not in handles:
+                self.target_handle = None
             if self.target_handle:
                 try:
                     if self.driver.current_window_handle == self.target_handle:
                         if has_chat_surface():
-                            return
+                            return True
                 except:
                     self.target_handle = None
-            handles = self.driver.window_handles
             if len(handles) == 1:
+                if self.strict_origin:
+                    self.driver.switch_to.window(handles[0])
                 self.target_handle = handles[0]
-                return
+                return has_chat_surface() if self.strict_origin else True
             for handle in handles:
                 self.driver.switch_to.window(handle)
                 if "chrome://" in self.driver.current_url: continue
                 if has_chat_surface():
                     self.target_handle = handle
-                    return
+                    return True
         except: pass
+        return False

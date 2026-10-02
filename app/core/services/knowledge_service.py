@@ -45,6 +45,9 @@ class KnowledgeService:
     def on_project_switched(self, new_root: str, new_db_path: str):
         self._v2.on_project_switched(new_root, new_db_path)
 
+    def shutdown(self, timeout=5.0):
+        return self._v2.stop_executor(timeout=timeout)
+
 
 # 保持单例导出（兼容所有调用方）
 knowledge_engine = KnowledgeService()

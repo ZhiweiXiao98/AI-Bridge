@@ -1,0 +1,102 @@
+name: 完整本地客户端构建审查
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'boot_local.py'
+      - 'runtime/pi/**'
+      - 'plugins/**'
+      - 'requirements-desktop-local-build.txt'
+      - 'tools/desktop/local_*.py'
+      - 'licenses/local/**'
+      - 'docs/LOCAL_DESKTOP.md'
+      - 'tests/public_ci/test_local_desktop*.py'
+      - '.github/workflows/local-desktop-build.yml'
+  push:
+    paths:
+      - 'app/**'
+      - 'boot_local.py'
+      - 'runtime/pi/**'
+      - 'plugins/**'
+      - 'requirements-desktop-local-build.txt'
+      - 'tools/desktop/local_*.py'
+      - 'licenses/local/**'
+      - 'docs/LOCAL_DESKTOP.md'
+      - 'tests/public_ci/test_local_desktop*.py'
+      - '.github/workflows/local-desktop-build.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-desktop-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: 未签名完整本地包 / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            architecture: x64
+          - os: macos-latest
+            architecture: arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    env:
+      PYTHONUTF8: '1'
+      HF_HUB_OFFLINE: '1'
+      TRANSFORMERS_OFFLINE: '1'
+      ANONYMIZED_TELEMETRY: 'False'
+    steps:
+      - name: 检出精确源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: 配置固定 Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12.10'
+          architecture: ${{ matrix.architecture }}
+      # 构建脚本取得经固定 SHA-256 验证的官方 Node 22.23.3 及归档内 npm。
+      # npm 仅作为临时构建工具；最终包使用同一 Node，不依赖宿主 Node/npm。
+      - name: 检查构建工具及目标架构
+        run: |
+          python -c "import platform; print(platform.machine()); assert platform.machine().lower() in ('amd64','x86_64') if '${{ matrix.architecture }}' == 'x64' else platform.machine().lower() in ('arm64','aarch64')"
+      - name: 建立一次性隔离构建环境
+        run: |
+          python -m venv .local-desktop-venv
+          python -c "import os; from pathlib import Path; p = Path('.local-desktop-venv') / ('Scripts' if os.name == 'nt' else 'bin'); open(os.environ['GITHUB_PATH'], 'a', encoding='utf-8').write(str(p.resolve()) + '\n'); Path('build/local-desktop').mkdir(parents=True, exist_ok=True)"
+      - name: 安装完整固定依赖并保留 wheel 来源
+        run: |
+          python -m pip install --only-binary=:all: --report build/local-desktop/install-report.json -r requirements-desktop-local-build.txt
+          python -m pip check
+      - name: 核验本地打包约束
+        run: python -m unittest discover -s tests/public_ci -p "test_local_desktop*.py" -v
+      - name: 准备仅自检使用的固定官方 Chrome 与匹配驱动
+        if: runner.os != 'Windows'
+        run: python tools/desktop/local_browser_fixture.py --output build/local-desktop/browser-test
+      - name: 核验 Windows 预装官方 Chrome 与固定匹配驱动
+        if: runner.os == 'Windows'
+        run: python tools/desktop/local_preinstalled_browser.py --output build/local-desktop/browser-test
+      - name: 构建本地核心、UI、RAG、浏览器与 Pi
+        run: python tools/desktop/local_build.py
+      - name: 无宿主 Python 或 Node 的完整本地冒烟
+        run: python tools/desktop/local_smoke.py --browser-fixture build/local-desktop/browser-test/runtime.json
+      # 只上传下面三个明确 JSON。即使构建成功，也不得上传 dist、依赖归档、
+      # 原始 pip 报告、日志、用户状态、会话或模型；不提供绕过审查的输入开关。
+      - name: 仅上传审查清单
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: AI-Bridge-Local-review-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
+          path: |
+            build/local-desktop/review/local-build-inputs.json
+            build/local-desktop/review/local-desktop-inventory.json
+            build/local-desktop/review/local-smoke.json
+          if-no-files-found: error
+          retention-days: 7

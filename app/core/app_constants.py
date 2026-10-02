@@ -2,6 +2,7 @@ import os
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 APP_ROOT = PROJECT_ROOT
+RESOURCE_ROOT = PROJECT_ROOT
 
 # ============================================================
 # 集中配置 — 修改以下值即可全局生效

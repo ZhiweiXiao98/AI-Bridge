@@ -1,4 +1,5 @@
 import json
+import os
 import logging
 from copy import deepcopy
 from datetime import datetime
@@ -106,6 +107,12 @@ class SettingsApiSection(QFrame):
         self.api_provider_combo.addItem("Xiaomi MiMo", "mimo")
         self.api_provider_combo.addItem("Google Gemini (SDK)", "gemini")
         self.api_provider_combo.addItem("网页 AI（无上下文）", "web_ai")
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+            item = self.api_provider_combo.model().item(self.api_provider_combo.findData("web_ai"))
+            item.setEnabled(False)
+            item.setToolTip("本地版本请使用聊天页的浏览器标签，不启用会清空网页对话的无状态 Profile")
+            self.api_browser_profile_add_btn.setEnabled(False)
+            self.api_browser_profile_add_btn.setToolTip("请使用聊天页的浏览器标签")
         self.api_provider_combo.currentIndexChanged.connect(self._on_api_provider_changed)
         card_provider.add_field(SettingsField("Provider", self.api_provider_combo))
 
@@ -151,7 +158,9 @@ class SettingsApiSection(QFrame):
 
         self.browser_source_combo = ScrollSafeComboBox()
         self.browser_source_combo.addItem("外接 Chrome 调试端口", "external_chrome")
-        self.browser_source_combo.addItem("内置浏览器 WebEngine", "embedded_qt")
+        self.browser_source_combo.addItem("内置浏览器 WebEngine（尚不支持自动对话）", "embedded_qt")
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+            self.browser_source_combo.model().item(1).setEnabled(False)
         card_browser.add_field(SettingsField(
             "浏览器源",
             self.browser_source_combo,
@@ -615,6 +624,8 @@ class SettingsApiSection(QFrame):
 
     def _refresh_profile_kind_ui(self):
         is_browser = self._current_provider() == "web_ai"
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+            self.browser_provider_hint.setText("此本地版本未启用无状态网页 Profile；请使用聊天页的浏览器标签，避免自动清空网站对话。")
         is_gemini = self._current_provider() == "gemini"
         self._card_browser.setVisible(is_browser)
         self._card_model.setVisible(not is_browser)
@@ -746,6 +757,9 @@ class SettingsApiSection(QFrame):
             UIHelper.warning(self, "创建失败", str(e))
 
     def _create_browser_profile(self):
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+            UIHelper.warning(self, "请使用浏览器标签", "本地版本不启用会清空网站对话的无状态网页 Profile。")
+            return
         name, ok = QInputDialog.getText(self, "新建浏览器 Profile", "请给这套浏览器 Profile 起个名字")
         if not ok or not name.strip():
             return

@@ -6,15 +6,30 @@ import re
 from pathlib import Path
 from typing import Optional
 
+from app.core.python_runtime import (
+    PythonRuntimeUnavailable, resolve_project_python, python_subprocess_environment,
+)
+
+
+def _project_python(purpose):
+    from app.core.config import ConfigManager
+    from app.core.project_context import ProjectContext
+    root = ProjectContext.get().get_project_root()
+    configured = ConfigManager.load().get("sandbox_local_python", "")
+    return root, resolve_project_python(root, configured, purpose=purpose)
+
 
 def _run_pip(*args) -> tuple[bool, str]:
-    """用当前解释器的 pip 执行命令，返回 (ok, output)"""
+    """用项目解释器的 pip 执行命令，绝不将打包应用当成 Python。"""
     try:
+        root, python = _project_python("运行 pip")
         result = subprocess.run(
-            [sys.executable, "-m", "pip"] + list(args),
+            [python, "-m", "pip"] + list(args),
             capture_output=True,
             text=True,
             timeout=120,
+            cwd=root,
+            env=python_subprocess_environment(),
         )
         ok = result.returncode == 0
         output = (result.stdout + result.stderr).strip()
@@ -38,6 +53,11 @@ def env_info() -> dict:
         f"sys.prefix   : {sys.prefix}",
         f"平台         : {sys.platform}",
     ]
+    try:
+        root, python = _project_python("项目包管理")
+        lines.extend([f"项目目录     : {root}", f"项目解释器   : {python}"])
+    except PythonRuntimeUnavailable as exc:
+        lines.append(f"项目解释器   : 未配置\n{exc}")
     return {"ok": True, "output": "\n".join(lines)}
 
 

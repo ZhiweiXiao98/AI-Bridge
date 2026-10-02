@@ -90,9 +90,6 @@ class CodeExecutionSkill(BaseSkill):
         if not self.docker:
             return "❌ Error: Docker 环境不可用"
         
-        if not self.docker.available:
-            return "❌ Error: Docker 未连接"
-        
         try:
             exit_code, output = self.docker.execute_code(
                 code=code,

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "version": "154.0.8037.57",
+  "verified_at_utc": "2026-10-02",
+  "official_manifest_url": "https://googlechromelabs.github.io/chrome-for-testing/154.0.8037.57.json",
+  "official_manifest_sha256": "abcaab82429f631a88a1ad004ad97fb82c92dc38f66903438db5fc480d4abb3e",
+  "purpose": "仅CI/工程验证使用的官方浏览器与匹配driver；不进入客户端分发包",
+  "archives": [
+    {
+      "kind": "chrome",
+      "platform": "linux64",
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.57/linux64/chrome-linux64.zip",
+      "sha256": "ceee2972074d441ea7c4ba8bcc0eaab77e7e87680f6653d73d3065851fe10302",
+      "size": 196223440
+    },
+    {
+      "kind": "chrome",
+      "platform": "mac-arm64",
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.57/mac-arm64/chrome-mac-arm64.zip",
+      "sha256": "0e6b3439469c1b8b95b2e89c72ea29f7af00fb2c28a8878358a0b6002b6d3a64",
+      "size": 191429663
+    },
+    {
+      "kind": "chrome",
+      "platform": "win64",
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.57/win64/chrome-win64.zip",
+      "sha256": "676f51fb82608330db5510ffba53d9e2762d3d7a99464afce54f9e9e25ad6bf7",
+      "size": 205808814
+    },
+    {
+      "kind": "chromedriver",
+      "platform": "linux64",
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.57/linux64/chromedriver-linux64.zip",
+      "sha256": "48edfc7f6e02ed85c45357110f18a54a82d8993b908cc9bfff9517b12abc96d9",
+      "size": 11911979
+    },
+    {
+      "kind": "chromedriver",
+      "platform": "mac-arm64",
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.57/mac-arm64/chromedriver-mac-arm64.zip",
+      "sha256": "97a96253f407512086744a953a3def997461fc7c37882b4f9cca297bab5f644e",
+      "size": 9302980
+    },
+    {
+      "kind": "chromedriver",
+      "platform": "win64",
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.57/win64/chromedriver-win64.zip",
+      "sha256": "51bea6d1ef7ac5b79b3f96fc5235e77e99a1ce6e9d2181bc5aa057d931128468",
+      "size": 11510220
+    }
+  ]
+}

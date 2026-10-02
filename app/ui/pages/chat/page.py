@@ -1,5 +1,6 @@
 # filename: app/ui/pages/chat/page.py
 import time
+import os
 import json
 
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QSplitter, QMessageBox, QApplication, QStackedWidget, QPushButton, QHBoxLayout, QFrame, QTabWidget, QGraphicsOpacityEffect, QLabel, QSizePolicy)
@@ -16,6 +17,7 @@ from .api_skill_references import ApiSkillReferenceHandler
 from .services.message_window_service import MessageWindowService
 from app.ui.components.chat import ChatBubble
 from app.core.config import ConfigManager
+from app.core.browser_sync import ChatProjectionReducer
 from app.core.app_constants import UI_SIZES
 from app.ui.theme import theme_manager
 from app.ui.components.collapsible_sidebar import CollapsibleSideBar
@@ -37,6 +39,9 @@ class ChatPage(QWidget):
             step_turns=int(cfg.get('chat_message_load_step_turns', 50)),
         )
         self._browser_all_messages = []
+        # Keep the complete history independently of MessageArea's visible window.
+        self._browser_message_projection = ChatProjectionReducer()
+        self._browser_message_projection.set_resync_callback(self._request_browser_resync)
         self._api_all_messages = []
         self._api_approval_dialog = None
         self._api_pending_approval = None
@@ -99,6 +104,21 @@ class ChatPage(QWidget):
         self.browser_page.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         browser_layout = QVBoxLayout(self.browser_page)
         browser_layout.setContentsMargins(0, 0, 0, 0)
+        self.browser_controls = QFrame()
+        browser_controls_layout = QHBoxLayout(self.browser_controls)
+        browser_controls_layout.setContentsMargins(8, 6, 8, 6)
+        self.browser_settings_btn = QPushButton("连接设置")
+        self.browser_reconnect_btn = QPushButton("重新连接")
+        self.browser_stop_btn = QPushButton("停止生成")
+        for button in (self.browser_settings_btn, self.browser_reconnect_btn, self.browser_stop_btn):
+            browser_controls_layout.addWidget(button)
+        browser_controls_layout.addStretch()
+        local_browser = os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1"
+        self.browser_controls.setVisible(local_browser)
+        self.browser_settings_btn.clicked.connect(self._configure_local_browser)
+        self.browser_reconnect_btn.clicked.connect(self._reconnect_local_browser)
+        self.browser_stop_btn.clicked.connect(self._stop_browser_request)
+        browser_layout.addWidget(self.browser_controls)
         self.browser_msg_area = MessageArea()
         self.browser_input_area = InputArea()
         self.browser_msg_area.setMinimumWidth(0)
@@ -341,6 +361,11 @@ class ChatPage(QWidget):
         if hasattr(self.worker, "subagent_suggestion_signal"):
             self.worker.subagent_suggestion_signal.connect(self._on_subagent_suggestion)
 
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+            self.browser_input_area.local_browser_submit = self._submit_local_browser
+            browser_results = getattr(self.worker, "browser_send_result_signal", None)
+            if browser_results is not None:
+                browser_results.connect(self.browser_input_area.on_browser_send_result)
         self.browser_input_area.request_send_text.connect(lambda t: self._send_text_in_mode("browser", t))
         self.api_input_area.request_send_text.connect(lambda t: self._send_text_in_mode("api", t))
         self.browser_input_area.request_send_compound.connect(lambda text, files: self._send_compound_in_mode("browser", text, files))
@@ -671,7 +696,10 @@ class ChatPage(QWidget):
             return
         visible, has_more = self.message_window_service.slice_messages('browser', self._browser_all_messages)
         incoming_id = visible[0].get('id', '') if visible else ''
-        self.browser_msg_area.render_messages(visible, incoming_id)
+        # Expanding the local window is not a replay of an old Worker event.
+        # Cached messages can carry different historical sequence numbers.
+        window = [dict(msg, _seq=0, _event='conversation.snapshot') for msg in visible]
+        self.browser_msg_area.render_messages(window, incoming_id)
         self.browser_msg_area.set_load_more_visible(has_more)
 
     def update_api_sessions(self, conversations):
@@ -782,6 +810,33 @@ class ChatPage(QWidget):
         self.api_msg_area.render_messages(visible, local_msg.get("id", ""))
         self.api_msg_area.flush_render()  # 确保本地气泡立刻同步渲染完毕，防止与后续的流式气泡产生顺序竞态
         self.api_msg_area.set_load_more_visible(has_more)
+
+    def _submit_local_browser(self, text, attachments, request_id):
+        if self.current_mode != "browser":
+            return False
+        if attachments:
+            return bool(self.worker.send_compound(text, attachments, browser_request_id=request_id))
+        return bool(self.worker.send_text("div.aa-chat-input textarea", text, browser_request_id=request_id))
+
+    def _configure_local_browser(self):
+        from app.ui.components.local_browser_settings import LocalBrowserSettingsDialog
+        dialog = LocalBrowserSettingsDialog(self)
+        if dialog.exec():
+            self.header.set_status("浏览器设置已保存，请点重新连接")
+
+    def _reconnect_local_browser(self):
+        request = getattr(self.worker, "request_browser_reconnect", None)
+        if callable(request):
+            request()
+            self.header.set_status("正在重新连接浏览器…")
+
+    def _stop_browser_request(self):
+        self.browser_input_area.cancel_queue()
+        self.browser_input_area.cancel_local_browser_submission()
+        cancel = getattr(self.worker, "browser_cancel", None)
+        if callable(cancel):
+            cancel()
+            self.header.set_status("已请求网页停止生成，等待确认…")
 
     def on_mode_switch(self, mode):
         if self._api_runtime_busy():
@@ -940,24 +995,43 @@ class ChatPage(QWidget):
             _raw = self.worker.__dict__.get('current_chat_id', '')
             browser_conv_id = str(_raw) if isinstance(_raw, str) else ''
             event_type = (message[0].get('_event', '') if message else '')
-            if event_type == 'message.upsert':
-                for msg in message or []:
-                    if isinstance(msg, dict) and not msg.get('conversation_id'):
-                        msg['conversation_id'] = browser_conv_id
-                self.browser_msg_area.render_incremental(message, round_state=self._browser_round_state)
-                return
-            self._browser_all_messages = list(message or [])
-            if browser_conv_id:
-                for msg in self._browser_all_messages:
-                    if isinstance(msg, dict) and not msg.get('conversation_id'):
-                        msg['conversation_id'] = browser_conv_id
+            for msg in message or []:
+                if isinstance(msg, dict) and not msg.get('conversation_id'):
+                    msg['conversation_id'] = browser_conv_id
+            projection = self._browser_message_projection
+            incoming_conv = str(message[0].get('conversation_id') or '') if message else ''
+            incremental = event_type in {'message.upsert', 'message.remove'}
+            if message:
+                seq = message[0].get('_seq', 0)
+                if seq > 0 and seq <= projection.state.last_seq:
+                    return
+                if incoming_conv and incoming_conv != projection.state.conversation_id:
+                    if incremental:
+                        self._request_browser_resync()
+                        return
+                    projection.reset()
+                change = projection.apply_messages(message)
+                if change['type'] in {'stale', 'empty', 'resync_needed'}:
+                    return
+                projection.state.conversation_id = incoming_conv
+            else:
+                projection.reset()
+            self._browser_all_messages = projection.get_ordered_messages()
             visible, has_more = self.message_window_service.slice_messages('browser', self._browser_all_messages)
+            if incremental:
+                self.browser_msg_area.render_incremental(message, round_state=self._browser_round_state)
+                self.browser_msg_area.set_load_more_visible(has_more)
+                return
             browser_round_state = self._browser_round_state
             if browser_round_state == 'idle':
                 _raw = getattr(self.worker, 'browser_round_state', None)
                 if isinstance(_raw, str) and _raw:
                     browser_round_state = _raw
-            self.browser_msg_area.render_messages(visible, incoming_id, round_state=browser_round_state)
+            # Unchanged cached messages retain their original event metadata.
+            # A resync is a new snapshot even if its first message is unchanged.
+            snapshot_seq = message[0].get('_seq', 0) if message else 0
+            window = [dict(msg, _seq=snapshot_seq, _event='conversation.snapshot') for msg in visible]
+            self.browser_msg_area.render_messages(window, incoming_id, round_state=browser_round_state)
             self.browser_msg_area.set_load_more_visible(has_more)
 
     def _on_browser_ai_state(self, payload):
@@ -1094,6 +1168,12 @@ class ChatPage(QWidget):
         return snapshot
 
     def _render_api_messages_with_tool_status(self):
+        # Pi 工具往返会在同一流中多次发布历史快照。直到流结束，历史不得
+        # 删除 MessageAreaStreamManager 持有的临时气泡。
+        stream = getattr(self, "_api_stream_manager", None)
+        if stream is not None and getattr(stream, "_active_stream_id", None):
+            self._api_messages_pending_render = True
+            return
         visible, has_more = self.message_window_service.slice_messages('api', self._api_all_messages)
         enriched_visible = []
         status_snapshot = self._build_tool_status_snapshot()

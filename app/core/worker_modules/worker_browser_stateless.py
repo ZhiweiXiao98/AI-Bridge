@@ -1,4 +1,5 @@
 import uuid
+import os
 
 from app.core.logging.trace_context import get_current_trace
 from app.core.logging import get_logger
@@ -60,6 +61,9 @@ class WorkerBrowserStatelessBridge:
 
     def handle_send(self, text: str, profile: dict):
         worker = self.worker
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+            worker.safe_emit_status("⚠️ 本地客户端未开放会清空网页对话的无状态 Profile，请使用浏览器标签页。")
+            return False
         api_source = worker.api_source
         active_conv_id = (
             api_source.conv_store.active_id

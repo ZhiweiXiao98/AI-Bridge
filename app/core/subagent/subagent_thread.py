@@ -20,6 +20,7 @@ class SubagentThread(QThread):
         self._tasks: dict = {}
         self._running = False
         self._organize_timer = None
+        self._subscriptions = []
 
     def run(self):
         logger.info(
@@ -29,7 +30,7 @@ class SubagentThread(QThread):
             bool(getattr(self._config, 'api_key', '') or ''),
             getattr(self._config, 'provider', ''),
         )
-        if not self._config.enabled:
+        if not self._config.enabled or self.isInterruptionRequested():
             logger.info("[SubagentThread] Subagent已禁用，跳过启动")
             return
 
@@ -37,22 +38,30 @@ class SubagentThread(QThread):
         logger.info("[SubagentThread] LLM 路由器初始化完成: available=%s", self._llm.available)
         if not self._llm.available:
             logger.warning("[SubagentThread] Subagent LLM 不可用（API key 未配置或初始化失败），降级为静默模式")
-            self._running = True
-            self.exec()
+            if not self.isInterruptionRequested():
+                self._running = True
+                self.exec()
             return
 
         self._register_tasks()
         self._subscribe_events()
 
+        if self.isInterruptionRequested():
+            return
         self._running = True
         logger.info("[SubagentThread] Subagent已启动 (任务: %s)", list(self._tasks.keys()))
         self.exec()
 
-    def stop(self):
+    def stop(self, timeout=3.0):
         self._running = False
+        self.requestInterruption()
+        for subscription in self._subscriptions:
+            self.event_bus.unsubscribe(subscription)
+        self._subscriptions.clear()
         self.quit()
-        self.wait(3000)
-        logger.info("Subagent已停止")
+        if QThread.currentThread() is not self:
+            self.wait(max(0, int(timeout * 1000)))
+        return not self.isRunning()
 
     def _register_tasks(self):
         logger.info("[SubagentThread] 开始注册任务: suggest_enabled=%s organize_enabled=%s", self._config.suggest.enabled, self._config.organize.enabled)
@@ -78,14 +87,14 @@ class SubagentThread(QThread):
 
     def _subscribe_events(self):
         logger.info("[SubagentThread] 开始订阅事件: reply_completed")
-        self.event_bus.subscribe(
+        self._subscriptions.append(self.event_bus.subscribe(
             SubagentEventBus.EVENT_REPLY_COMPLETED,
             self._on_reply_completed,
-        )
-        self.event_bus.subscribe(
+        ))
+        self._subscriptions.append(self.event_bus.subscribe(
             SubagentEventBus.EVENT_DOC_CONVERT_REQUESTED,
             self._on_doc_convert_requested,
-        )
+        ))
         logger.info("[SubagentThread] 事件订阅完成: reply_completed, doc_convert_requested")
 
         if self._config.organize.enabled and self._config.organize.trigger == "polling":
@@ -96,6 +105,8 @@ class SubagentThread(QThread):
             logger.info("[SubagentThread] organize 定时器已启动: interval=%ds", self._config.organize.interval_seconds)
 
     def _on_reply_completed(self, payload: dict):
+        if not self._running:
+            return
         logger.info(
             "[SubagentThread] 收到 reply_completed: payload_keys=%s reply_len=%d mode=%s chat_id=%s",
             list(payload.keys()) if isinstance(payload, dict) else type(payload).__name__,
@@ -117,6 +128,8 @@ class SubagentThread(QThread):
             logger.warning("[SubagentThread] 建议任务异常: %s", e)
 
     def _on_doc_convert_requested(self, payload: dict):
+        if not self._running:
+            return
         task = self._tasks.get("organize")
         if not task:
             logger.info("[SubagentThread] 未找到 organize 任务，跳过文档转换")
@@ -130,6 +143,8 @@ class SubagentThread(QThread):
             logger.warning("[SubagentThread] 文档转换任务异常: %s", e)
 
     def _on_organize_tick(self):
+        if not self._running:
+            return
         task = self._tasks.get("organize")
         if not task:
             return

@@ -576,11 +576,14 @@ class KnowledgeServiceV2:
         self._use_executor = True
         logger.info("KnowledgeExecutor 已启动，知识操作将串行化执行")
 
-    def stop_executor(self):
+    def stop_executor(self, timeout=5.0):
         """停止固定执行线程"""
         if self._executor:
-            self._executor.stop()
-            self._use_executor = False
+            stopped = self._executor.stop(timeout=timeout)
+            if stopped:
+                self._use_executor = False
+            return stopped
+        return True
 
     WARMUP_PHASE_CHROMA = "chroma"
     WARMUP_PHASE_EMBEDDER = "embedder"

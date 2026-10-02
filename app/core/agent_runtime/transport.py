@@ -5,6 +5,7 @@ from pathlib import Path
 import queue
 import subprocess
 import threading
+import time
 import uuid
 
 
@@ -24,6 +25,7 @@ class JsonlProcess:
         self._pending = {}
         self._lock = threading.RLock()
         self._write_lock = threading.Lock()
+        self._close_lock = threading.Lock()
         self._failure = None
         self._closed = False
         self.stderr_bytes = 0
@@ -88,7 +90,7 @@ class JsonlProcess:
                 return
             self.stderr_bytes += len(chunk)
 
-    def send(self, kind, **payload):
+    def send(self, kind, *, cancel_if=None, **payload):
         with self._lock:
             if self._failure:
                 raise self._failure
@@ -107,6 +109,13 @@ class JsonlProcess:
             def write_packet():
                 try:
                     with self._write_lock:
+                        # Admission and cancellation must be ordered with the
+                        # actual pipe write, not with spawning writer threads.
+                        # An abort can overtake a writer waiting for this lock.
+                        if cancel_if is not None and cancel_if():
+                            slot["value"] = {"success": True, "data": {"disposition": "cancelled"}}
+                            slot["ready"].set()
+                            return
                         offset = 0
                         while offset < len(packet):
                             count = self.process.stdin.write(packet[offset:])
@@ -152,23 +161,34 @@ class JsonlProcess:
                 raise self._failure
             return None
 
-    def close(self):
-        if self._closed:
-            return
-        self._closed = True
-        self._fail("Agent transport closed")
-        if self.process:
-            if self.process.poll() is None:
-                self.process.terminate()
+    def close(self, timeout=3.0):
+        deadline = time.monotonic() + max(0.0, timeout)
+        if not self._close_lock.acquire(timeout=max(0.0, timeout)):
+            return False
+        try:
+            self._closed = True
+            self._fail("Agent transport closed")
+            process = self.process
+            if not process:
+                return True
+            if process.poll() is None:
+                process.terminate()
                 try:
-                    self.process.wait(timeout=3)
+                    process.wait(timeout=min(1.0, max(0.0, deadline - time.monotonic())))
                 except subprocess.TimeoutExpired:
-                    self.process.kill()
-                    self.process.wait(timeout=3)
-            for pipe in (self.process.stdin, self.process.stdout, self.process.stderr):
+                    process.kill()
+                    try:
+                        process.wait(timeout=max(0.0, deadline - time.monotonic()))
+                    except subprocess.TimeoutExpired:
+                        return False
+            for pipe in (process.stdin, process.stdout, process.stderr):
                 try:
                     pipe.close()
-                except OSError:
+                except (OSError, ValueError):
                     pass
             for thread in getattr(self, "_threads", []):
-                thread.join(timeout=1)
+                if thread is not threading.current_thread():
+                    thread.join(timeout=max(0.0, deadline - time.monotonic()))
+            return True
+        finally:
+            self._close_lock.release()

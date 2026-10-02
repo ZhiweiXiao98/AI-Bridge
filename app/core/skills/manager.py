@@ -14,8 +14,9 @@ logger = get_logger("app.core.skills.manager", side="worker")
 class SkillsManager:
     '''Skills 管理器，负责扫描、加载、管理所有 Skills'''
 
-    def __init__(self, skills_root: str = "app/core/skills", docker_manager=None, knowledge_engine=None):
-        self.skills_root = skills_root
+    def __init__(self, skills_root: str = None, docker_manager=None, knowledge_engine=None):
+        from app.core.local_paths import resource_path
+        self.skills_root = skills_root or str(resource_path("app", "core", "skills"))
         self.docker_manager = docker_manager  # 保存 docker_manager
         self.knowledge_engine = knowledge_engine  # 保存 knowledge_engine
         self.config_file: Optional[str] = None                # 配置文件路径

@@ -1,5 +1,6 @@
 # filename: app/ui/pages/chat/input_area.py
 import os
+import uuid
 import unicodedata
 from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout, QLabel,
                                QPushButton, QPlainTextEdit, QListWidget, QListWidgetItem,
@@ -203,6 +204,9 @@ class InputArea(QFrame):
         self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
 
         self.pending_attachments = []
+        self.local_browser_submit = None
+        self._local_browser_submission = None
+        self._failed_browser_submission = None
         self.queued_payload = None
         self.is_ai_busy = False
         self.is_view_paused = False
@@ -387,6 +391,47 @@ class InputArea(QFrame):
 
         self.ai_state_bar.show()
 
+    def _browser_draft_snapshot(self):
+        return (self.staging_area.toPlainText(), self.input_box.toPlainText(), tuple(self.pending_attachments))
+
+    def _submit_local_browser(self, text, attachments):
+        if self._local_browser_submission is not None:
+            self.log_message.emit("正在等待网页确认上一条消息，未重复发送")
+            return False
+        request_id = uuid.uuid4().hex
+        snapshot = self._browser_draft_snapshot()
+        self._local_browser_submission = (request_id, snapshot, text, tuple(attachments))
+        accepted = self.local_browser_submit(text, list(attachments), request_id)
+        if not accepted:
+            self._local_browser_submission = None
+            self.log_message.emit("浏览器尚未接受发送，草稿已保留")
+            return False
+        self.send_btn.setEnabled(False)
+        self.log_message.emit("正在等待网页确认发送；草稿暂时保留")
+        return True
+
+    def on_browser_send_result(self, payload):
+        if not isinstance(payload, dict) or self._local_browser_submission is None:
+            return
+        request_id, snapshot, text, attachments = self._local_browser_submission
+        if payload.get("request_id") != request_id:
+            return
+        self._local_browser_submission = None
+        self.send_btn.setEnabled(True)
+        if payload.get("ok"):
+            if self._browser_draft_snapshot() == snapshot:
+                self.clear_inputs()
+            self._failed_browser_submission = None
+            self.log_message.emit("网页已确认收到消息")
+        else:
+            self._failed_browser_submission = (snapshot, text, attachments)
+            self.log_message.emit(str(payload.get("message") or "网页未确认收到消息") + "；未清除草稿")
+
+    def cancel_local_browser_submission(self):
+        # Late acknowledgements cannot clear a draft after the user's Stop.
+        self._local_browser_submission = None
+        self.send_btn.setEnabled(True)
+
     def check_auto_send(self):
         if not self.is_ai_busy and self.queued_payload:
             # 已通过「随工具发送」路径消费，跳过重复发送
@@ -397,6 +442,12 @@ class InputArea(QFrame):
                 return
             self.log_message.emit("🚀 正在自动发送挂起任务...")
             text, attachments = self.queued_payload
+            if callable(self.local_browser_submit):
+                accepted = self._submit_local_browser(text, attachments)
+                self.cancel_queue()
+                if not accepted:
+                    self.log_message.emit("待发消息没有发送，内容已保留供重试")
+                return
             if hasattr(self.worker, 'send_compound'):
                 self.worker.send_compound(text, attachments)
             else:
@@ -431,6 +482,10 @@ class InputArea(QFrame):
             except: pass
             self.send_btn.clicked.connect(self.cancel_queue)
             self.log_message.emit("⏳ 任务已挂起，等待 AI 就绪...")
+            return
+
+        if callable(self.local_browser_submit):
+            self._submit_local_browser(final_text, list(self.pending_attachments))
             return
 
         # 根据内容类型分发：有附件优先走 compound，由上层页面按模式处理

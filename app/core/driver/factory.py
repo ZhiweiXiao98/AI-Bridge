@@ -42,4 +42,4 @@ def create_browser_connector(config: dict[str, Any] | None = None):
 
     port = int(config.get("chrome_port", CHROME_PORT) or CHROME_PORT)
     logger.info("[BrowserSource] using external Chrome connector | port=%s", port)
-    return ChromeConnector(port=port)
+    return ChromeConnector(port=port, config=config)

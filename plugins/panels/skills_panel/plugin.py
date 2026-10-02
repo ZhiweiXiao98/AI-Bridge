@@ -78,9 +78,8 @@ class SkillsPanelPlugin(BasePanelPlugin):
             if hasattr(self.worker, 'skills_list'):
                 self.worker.skills_list()
         else:
-            self.skills_manager = SkillsManager()
-            self.skills_manager.config_file = 'config/skills_config.json'
-            self.skills_manager.scan_all_skills()
+            # 本地面板必须控制执行工具所用的同一个管理器，避免只修改显示副本。
+            self.skills_manager = self.worker.agent.skills_manager
             logger.info("💻 本地模式：使用本地 Skills")
 
             initial_skills = self.skills_manager.list_all_skills()
@@ -95,7 +94,8 @@ class SkillsPanelPlugin(BasePanelPlugin):
                 if hasattr(self.worker, 'skills_refresh'):
                     self.worker.skills_refresh()
             else:
-                self.skills_manager.scan_all_skills()
+                # 保留 Worker 注入的文件／Docker／知识服务依赖，不重新创建独立实例。
+                self.skills_manager.load_config()
                 skills_data = self.skills_manager.list_all_skills()
                 if self.panel_instance:
                     self.panel_instance.update_skills_data(skills_data)

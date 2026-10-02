@@ -8,7 +8,8 @@ import threading
 import collections
 import traceback
 import warnings
-from concurrent.futures import ThreadPoolExecutor
+import inspect
+from concurrent.futures import CancelledError, ThreadPoolExecutor
 from PySide6.QtCore import QThread, Signal, QMutex
 
 from app.core.driver.factory import create_browser_connector
@@ -75,9 +76,13 @@ class WorkerThread(QThread):
     subagent_suggestion_signal = Signal(object)  # Subagent回复建议
     daemon_suggestion_signal = Signal(object)
     pending_message_consumed_signal = Signal()  # 待发消息被消费（工具回流或idle发送）
+    browser_send_result_signal = Signal(object)  # 网页确认后才能清除本地输入草稿
 
     def __init__(self, startup_mode=None):
         super().__init__()
+        self._shutdown_lock = threading.Lock()
+        self._shutdown_started = False
+        self._shutdown_complete = False
         self.config = ConfigManager.load()
         self.connector = create_browser_connector(self.config)
         self.file_service = FileService(self.config)
@@ -184,6 +189,7 @@ class WorkerThread(QThread):
         self.current_user = "System"
         self.was_busy = False
         self.last_messages_snapshot = []
+        self._browser_snapshot_pending = False
         self.last_session_scan = 0
         self.last_queue_scan = 0
         self.last_occupancy_scan = 0
@@ -209,6 +215,71 @@ class WorkerThread(QThread):
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
         logger.info("Worker 线程已就绪 (Monitor V2.0)")
+
+    def shutdown(self, timeout=5.0):
+        """Request cooperative cancellation and wait within one shared deadline.
+
+        A False result means a Python/native tool is still unwinding. Keep the
+        worker alive and retry; never terminate a QThread or discard a live one.
+        """
+        deadline = time.monotonic() + max(0.0, timeout)
+        if not self._shutdown_lock.acquire(timeout=max(0.0, timeout)):
+            return False
+        try:
+            if self._shutdown_complete:
+                return True
+            browser = getattr(self, "browser_command_bridge", None)
+            if browser:
+                with browser._lock:
+                    browser._invalidate()
+            self.running = False
+            self.requestInterruption()
+            self.quit()
+            from app.core.services.knowledge_service import knowledge_engine
+            components = [getattr(self, name, None) for name in
+                          ("agent_runtime_bridge", "stream_bridge", "subagent_bridge", "knowledge_service", "test_runner_bridge")]
+            if knowledge_engine not in components:
+                components.append(knowledge_engine)
+            components.append(getattr(self, "docker_manager", None))
+            connector = getattr(self, "connector", None)
+            if callable(getattr(type(connector), "shutdown", None)):
+                components.append(connector)
+            components = [item for item in components if item is not None]
+            if not self._shutdown_started:
+                self._shutdown_started = True
+                # Signal every component before spending the waiting budget on
+                # any one of them. ThreadPoolExecutor cancels only queued work.
+                for component in components:
+                    try:
+                        component.shutdown(timeout=0)
+                    except Exception:
+                        logger.exception("关闭组件时发生异常: %s", type(component).__name__)
+                executor = getattr(self, "executor", None)
+                if executor:
+                    executor.shutdown(wait=False, cancel_futures=True)
+            complete = True
+            for component in components:
+                try:
+                    stopped = component.shutdown(timeout=max(0.0, deadline - time.monotonic()))
+                    complete = bool(stopped) and complete
+                except Exception:
+                    logger.exception("等待组件停止失败: %s", type(component).__name__)
+                    complete = False
+            executor = getattr(self, "executor", None)
+            for thread in list(getattr(executor, "_threads", ())):
+                if thread is not threading.current_thread():
+                    thread.join(timeout=max(0.0, deadline - time.monotonic()))
+                complete = not thread.is_alive() and complete
+            if QThread.currentThread() is not self:
+                self.wait(max(0, int((deadline - time.monotonic()) * 1000)))
+            complete = not self.isRunning() and complete
+            self._shutdown_complete = complete
+            return complete
+        finally:
+            self._shutdown_lock.release()
+
+    def stop_worker(self, timeout=5.0):
+        return self.shutdown(timeout=timeout)
 
     def init_api_stream_bridge(self):
         """在 _init_api_source 完成后调用，注入流式桥接"""
@@ -353,6 +424,10 @@ class WorkerThread(QThread):
 
     def _execute_task(self, task):
         try:
+            browser = getattr(self, "browser_command_bridge", None)
+            if browser and not browser.task_is_current(task):
+                browser.finish_send(task, False, "发送已取消；未自动重发。")
+                return
             user = getattr(task, 'username', 'System')
             self.current_user = user
 
@@ -361,9 +436,9 @@ class WorkerThread(QThread):
                 return
 
             if task.action in ["do_server_backup", "run_remote_tests"]:
-                self.executor.submit(self._execute_task_bg, task)
+                return self.executor.submit(self._execute_task_bg, task)
             else:
-                self._execute_task_sync(task)
+                return self._execute_task_sync(task)
 
         except Exception as e:
             logger.error("调度器异常: %s", e, extra=get_trace_extra())
@@ -419,27 +494,18 @@ class WorkerThread(QThread):
                 else:
                     self.current_chat_id = f"new_chat_{id(self)}"
                 self._normalizer.clear()
+                # 新会话可以为空，必须用完整快照清除旧 UI；读取失败沿现有路径重试。
+                self._browser_snapshot_pending = True
                 self.safe_emit_status("✨ 新会话已创建")
             self.agent.shift_roles_for_new_chat()
 
-        elif task.action == "real_send_text":
-            self._pre_send_ai_fingerprint = self._get_last_ai_fingerprint()
-            self.connector.send_message(task.args[0], task.args[1])
-            time.sleep(0.5)  # 等待消息上屏
-            if self.connector.interact:
-                self.connector.interact.scroll_to_bottom()  # 滚动到底部
-
-        elif task.action == "compound_send_task":
-            self._pre_send_ai_fingerprint = self._get_last_ai_fingerprint()
-            text, file_paths = task.args
-            if file_paths and self.connector.interact:
-                self.connector.interact.upload_file(file_paths)
-                time.sleep(1.5)
-            if text:
-                self.connector.send_message("div.aa-chat-input textarea", text)
+        elif task.action in {"real_send_text", "compound_send_task"}:
+            return self._execute_browser_send(task)
 
         elif task.action == "upload_file_task":
-            self.connector.interact.upload_file(task.args[0])
+            if self.connector.interact:
+                return self.connector.interact.upload_file(task.args[0])
+            self.safe_emit_status("❌ 浏览器未连接，未上传文件。")
 
         elif task.action == "task_fix_all":
             self._batch_fix_all()
@@ -463,6 +529,71 @@ class WorkerThread(QThread):
                 self.browser_message_sync_bridge.emit_browser_messages_snapshot(
                     reason="wake_up"
                 )
+
+    def _execute_browser_send(self, task):
+        """A send becomes busy only after the webpage confirms submission."""
+        bridge = self.browser_command_bridge
+        epoch = bridge.epoch
+        if not bridge.task_is_current(task):
+            bridge.finish_send(task, False, "发送已取消；未自动重发。")
+            return False
+        confirmed = False
+        result_message = "发送已取消；未自动重发。"
+        try:
+            ready = getattr(self.connector, "ready_for_input", None)
+            ok, message = ready() if ready else (bool(self.connector.interact), "浏览器未连接")
+            if not ok:
+                raise RuntimeError(message)
+            selector, text = task.args[:2] if task.action == "real_send_text" else ("div.aa-chat-input textarea", task.args[0])
+            file_paths = task.args[1] if task.action == "compound_send_task" else []
+            if file_paths:
+                if not bridge.is_current(epoch):
+                    return False
+                result = self.connector.interact.upload_file(file_paths)
+                if isinstance(result, tuple) and not result[0]:
+                    raise RuntimeError(result[1])
+                if result is False:
+                    raise RuntimeError("附件上传失败")
+            if not text:
+                result_message = "附件已上传；请输入消息后发送。" if file_paths else "消息为空，未发送。"
+                return False
+            if not bridge.is_current(epoch):
+                return False
+            self._pre_send_ai_fingerprint = self._get_last_ai_fingerprint()
+            # A cancellation can arrive while Selenium is awaiting its result;
+            # never retry this send, and suppress all follow-up work afterwards.
+            send = self.connector.send_message
+            parameters = inspect.signature(send).parameters
+            cancellable = "cancel_check" in parameters or any(
+                parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in parameters.values()
+            )
+            if not bridge.is_current(epoch):
+                return False
+            result = send(selector, text, cancel_check=lambda: not bridge.is_current(epoch)) if cancellable else send(selector, text)
+            ok, message = result if isinstance(result, tuple) else (bool(result), "网页未确认发送成功")
+            if not bridge.is_current(epoch):
+                return False
+            if not ok:
+                raise RuntimeError(message)
+            self.last_send_time = time.time()
+            self.was_busy = True
+            self._round_sm.handle_event(RoundStateEvent.BUSY_DETECTED)
+            self._update_ai_state("busy")
+            self.safe_emit_status("✅ 网页已确认发送")
+            confirmed = True
+            result_message = "网页已确认发送"
+            return True
+        except Exception as exc:
+            result_message = f"发送失败：{exc}。未自动重发，请确认网页后手动重试。"
+            self.last_send_time = 0
+            self.was_busy = False
+            self._pre_send_ai_fingerprint = None
+            self._round_sm.handle_event(RoundStateEvent.ERROR_RESET)
+            self._update_ai_state("idle")
+            self.safe_emit_status(f"❌ {result_message}")
+            return False
+        finally:
+            bridge.finish_send(task, confirmed, result_message)
 
     def _execute_task_bg(self, task):
         try:
@@ -505,11 +636,17 @@ class WorkerThread(QThread):
     def _notify_subagent_reply_completed(self, mode: str, chat_id: str = ""):
         return self.subagent_notify_bridge.notify_reply_completed(mode, chat_id)
 
-    def _background_process_ai_response(self):
+    def _background_process_ai_response(self, browser_epoch=None):
+        bridge = getattr(self, "browser_command_bridge", None)
+        browser_epoch = bridge.epoch if bridge and browser_epoch is None else browser_epoch
+        if bridge and not bridge.is_current(browser_epoch):
+            return
         try:
             self._round_sm.handle_event(RoundStateEvent.PIPELINE_START)
             logger.info("流水线: 开始处理 AI 回复...")
             time.sleep(2.0)
+            if bridge and not bridge.is_current(browser_epoch):
+                return
 
             # [message_id 去重] 用 DOM 的 data-message-id 判断是否已处理
             # 不依赖内容指纹（text[:150] 不稳定，AutoFix 可能改任意位置）
@@ -542,7 +679,9 @@ class WorkerThread(QThread):
             self.executor.submit(self._emit_browser_messages_snapshot, reason='after_autofix')
 
             # [工具识别与执行] AutoFix 完成后立即进入，不依赖外部事件
-            self._check_and_handle_tool()
+            self._check_and_handle_tool(browser_epoch=browser_epoch)
+            if bridge and not bridge.is_current(browser_epoch):
+                return
             self._last_processed_ai_msg_id = ai_msg_id
             self._pre_send_ai_fingerprint = None
 
@@ -558,8 +697,12 @@ class WorkerThread(QThread):
             traceback.print_exc()
             self._round_sm.handle_event(RoundStateEvent.ERROR_RESET)
 
-    def _background_process_ai_response_direct(self):
+    def _background_process_ai_response_direct(self, browser_epoch=None):
         """超时兜底 / 修复按钮专用：跳过指纹对比，直接执行流水线"""
+        bridge = getattr(self, "browser_command_bridge", None)
+        browser_epoch = bridge.epoch if bridge and browser_epoch is None else browser_epoch
+        if bridge and not bridge.is_current(browser_epoch):
+            return
         try:
             logger.info("兜底流水线: 直接执行...")
 
@@ -590,7 +733,9 @@ class WorkerThread(QThread):
             self.executor.submit(self._emit_browser_messages_snapshot, reason='after_autofix_direct')
 
             self._pre_send_ai_fingerprint = None
-            self._check_and_handle_tool()
+            self._check_and_handle_tool(browser_epoch=browser_epoch)
+            if bridge and not bridge.is_current(browser_epoch):
+                return
 
             # 显式收尾：同主流水线，只有 FIXING 才回 IDLE
             if self._round_sm.state == BrowserRoundState.FIXING:
@@ -623,7 +768,11 @@ class WorkerThread(QThread):
             logger.warning(f"获取工具指纹失败: {e}")
         return None
 
-    def _check_and_handle_tool(self):
+    def _check_and_handle_tool(self, browser_epoch=None):
+        browser = getattr(self, "browser_command_bridge", None)
+        browser_epoch = browser.epoch if browser and browser_epoch is None else browser_epoch
+        if browser and not browser.is_current(browser_epoch):
+            return
         try:
             if not self.connector.interact:
                 return
@@ -711,22 +860,33 @@ class WorkerThread(QThread):
                   mode="structured" if used_structured else "fallback",
                   ai_msg_id=ai_msg_id)
 
+            if browser and not browser.is_current(browser_epoch):
+                return
             self._round_sm.handle_event(RoundStateEvent.TOOL_EXECUTION_START)
 
             logger.info("[工具路由] 开始工具识别与执行 | ai_msg_id=%s | 消息数=%s",
                         ai_msg_id, len(candidate_messages))
             _t0 = time.time()
+            def on_browser_intent_start(intent, index):
+                if browser and not browser.is_current(browser_epoch):
+                    raise CancelledError("浏览器请求已取消，未启动后续工具")
+                self._handle_runtime_tool_start(intent, index)
+                if browser and not browser.is_current(browser_epoch):
+                    raise CancelledError("浏览器请求已取消，未启动后续工具")
+
             response = self.tool_router.maybe_handle_tool_from_messages(
                 chat_id=self.current_chat_id,
                 messages=candidate_messages,
                 allow=True,
-                on_intent_start=self._handle_runtime_tool_start,
+                on_intent_start=on_browser_intent_start,
                 on_intent_end=self._handle_runtime_tool_end,
             )
             logger.info("[工具路由] 工具识别与执行完成 | 耗时=%.1fs | ai_msg_id=%s",
                         time.time() - _t0, ai_msg_id)
 
             response_text = self._build_browser_tool_feedback_text(response)
+            if browser and not browser.is_current(browser_epoch):
+                return
 
             probe("tool_router_response", level="debug", side="worker",
                   resp_type=type(response).__name__,
@@ -774,7 +934,8 @@ class WorkerThread(QThread):
                     logger.info("[工具路由] 无待发消息，跳过 pending 附加")
 
                 self._round_sm.handle_event(RoundStateEvent.TOOL_RESULT_READY)
-                self.scheduler.add_task(
+                enqueue = (lambda *a, **kw: browser.enqueue_feedback(browser_epoch, *a, **kw)) if browser else self.scheduler.add_task
+                enqueue(
                     "Host",
                     "real_send_text",
                     "div.aa-chat-input textarea",
@@ -785,6 +946,8 @@ class WorkerThread(QThread):
                 )
                 logger.info("[工具路由] 工具结果已入队 scheduler | ai_msg_id=%s | tool_call_id=%s", ai_msg_id, primary_tc_id)
 
+        except CancelledError:
+            logger.info("浏览器请求已取消，后续工具与回传已停止")
         except Exception as e:
             logger.error("工具路由异常: %s", e)
             traceback.print_exc()
@@ -792,7 +955,8 @@ class WorkerThread(QThread):
             # 正常路径：工具成功/失败都有 response_text → TOOL_RESULT_READY → SYSTEM_SENDING
             # 异常路径：maybe_handle_tool_from_messages 抛异常 → state 仍在 TOOL_EXECUTING
             # 此处只处理异常路径，正常路径 state 已经是 SYSTEM_SENDING，不动
-            self._round_sm.try_tool_failed()
+            if not browser or browser.is_current(browser_epoch):
+                self._round_sm.try_tool_failed()
 
     def send_context_pack(self, pack_key, session_index, goal_text="", client_id="Host", **kwargs):
         try:
@@ -1267,6 +1431,9 @@ class WorkerThread(QThread):
         """浏览器模式事件驱动工具触发：消息一旦稳定命中结构化工具块，尽快执行。"""
         if self.mode != 'browser':
             return False
+        browser = getattr(self, "browser_command_bridge", None)
+        if browser and not browser.is_current():
+            return False
         if not self.connector.interact:
             return False
         if self.connector.is_busy():
@@ -1319,76 +1486,108 @@ class WorkerThread(QThread):
     def get_system_prompt(self, client_id="Host", **kwargs):
         return self.skills_bridge.get_system_prompt(client_id=client_id, **kwargs)
 
+    def request_browser_reconnect(self, start_browser=False, **kwargs):
+        return self.browser_command_bridge.reconnect(start_browser=start_browser, **kwargs)
+
+    def browser_cancel(self, **kwargs):
+        return self.browser_command_bridge.cancel(**kwargs)
+
+    def _recreate_browser_connector(self):
+        """Apply saved local settings without touching a server's shared Chrome."""
+        with self._shutdown_lock:
+            if not self.running or self._shutdown_started:
+                return False
+            close = getattr(self.connector, "shutdown", None)
+            if close and close(timeout=1.0) is False:
+                return False
+            self.config = ConfigManager.load()
+            self.connector = create_browser_connector(self.config)
+            return True
+
     def run(self):
-        """主循环入口：根据 mode 分发"""
-        if self.mode == "api":
-            self._run_api_loop()
-        else:
-            self._run_browser_loop()
-
-    def _run_browser_loop(self):
-        """浏览器模式主循环"""
-        self._check_and_emit_sync(True)
-        if not self._connect_browser():
-            return
-
+        """Keep the worker alive across unavailable services and mode changes."""
         while self.running:
             try:
-                if self.mode != "browser":
-                    self.safe_emit_status("🔄 退出Browser循环，切换到API模式")
+                if self.mode == "api":
                     self._run_api_loop()
+                else:
+                    self._run_browser_loop()
+            except Exception as exc:
+                logger.exception("Worker 模式循环异常")
+                self.safe_emit_status(f"⚠️ 当前模式暂不可用：{exc}；可修改设置后重连。")
+            if self.running:
+                time.sleep(0.3)
+
+    def _run_browser_loop(self):
+        """An unavailable Chrome/driver/login page is recoverable, not terminal."""
+        bridge = self.browser_command_bridge
+        self._check_and_emit_sync(True)
+        while self.running and self.mode == "browser":
+            try:
+                bridge.process_controls()
+                if not self.running or self.mode != "browser":
                     return
+                if not bridge.connected:
+                    if time.monotonic() >= bridge.next_connect_at:
+                        bridge.connected = self._connect_browser()
+                        bridge.ready = bridge.connected
+                        bridge.next_connect_at = time.monotonic() + 3.0
+                    if not bridge.connected:
+                        time.sleep(0.3)
+                        continue
 
                 self._browser_scan_queues()
-
                 current_busy, next_state = self._browser_detect_state()
-
                 self.was_busy = current_busy
                 self._update_ai_state(next_state)
-
+                if not bridge.connected:
+                    continue
                 self._browser_process_messages()
-
-                self._process_toggle_queue()
-
+                if bridge.is_current():
+                    self._process_toggle_queue()
                 if time.time() - self.last_occupancy_scan > 2:
-                    occ = self.scheduler.get_occupancy_map()
-                    self.occupancy_signal.emit(occ)
+                    self.occupancy_signal.emit(self.scheduler.get_occupancy_map())
                     self.last_occupancy_scan = time.time()
-
-            except Exception as e:
-                logger.error("Worker主循环异常: %s", e)
-                traceback.print_exc()
-                self.safe_emit_status(f"❌ 主循环错误: {e}")
-                time.sleep(2.0)
-
+            except Exception as exc:
+                logger.warning("浏览器暂不可用: %s", exc)
+                bridge.connected = False
+                bridge.ready = False
+                bridge.next_connect_at = time.monotonic() + 3.0
+                self.was_busy = False
+                self.last_send_time = 0
+                self._round_sm.handle_event(RoundStateEvent.ERROR_RESET)
+                bridge.report_connection(f"⚠️ 浏览器暂不可用：{exc}；正在等待重连。")
             time.sleep(0.3)
 
     def _connect_browser(self):
-        connected = False
-        for i in range(5):
-            if not self.running:
-                return False
-            self.safe_emit_status(f"正在连接浏览器 ({i+1})...")
-            ok, msg = self.connector.connect()
-            if ok:
-                self.safe_emit_status(f"✅ 浏览器连接成功: {msg}")
-                connected = True
-                if self.connector.interact:
-                    time.sleep(1.0)
-                    self.executor.submit(self._initial_expand_bg)
-                # 启动时标记当前已有消息为"已处理"，防止旧消息被当成新工具调用
-                try:
-                    startup_msg_id = self.connector.get_last_ai_message_id()
-                    if startup_msg_id:
-                        self._last_processed_ai_msg_id = startup_msg_id
-                        logger.info("[启动] 记录初始 AI 消息 ID | ai_msg_id=%s", startup_msg_id)
-                except Exception:
-                    pass
-                break
-            time.sleep(2)
-        if not connected:
-            self.safe_emit_status("❌ 无法连接到浏览器，请检查端口")
-        return connected
+        if not self.running or self.mode != "browser":
+            return False
+        bridge = self.browser_command_bridge
+        try:
+            ok, message = self.connector.connect()
+        except Exception as exc:
+            ok, message = False, str(exc)
+        if not self.running or self.mode != "browser":
+            return False
+        if not ok:
+            self._round_sm.handle_event(RoundStateEvent.ERROR_RESET)
+            self._update_ai_state("idle")
+            bridge.report_connection(f"⚠️ {message}；请检查浏览器设置或完成网页登录，可点击重连。")
+            return False
+        bridge.report_connection(f"✅ 浏览器已就绪：{message}")
+        # Mark pre-existing content handled so reconnect does not replay tools.
+        try:
+            initial_id = self.connector.get_last_ai_message_id()
+            if initial_id:
+                self._last_processed_ai_msg_id = initial_id
+        except Exception:
+            pass
+        self.last_session_scan = 0
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+            # A new transport needs an authoritative projection even when its
+            # recovered DOM is identical to the prior canonical cache.
+            self._browser_snapshot_pending = True
+        return True
 
     def _browser_scan_queues(self):
         if time.time() - self.last_queue_scan > 1.5:
@@ -1422,66 +1621,92 @@ class WorkerThread(QThread):
             self.last_session_scan = time.time()
 
     def _browser_detect_state(self):
+        bridge = self.browser_command_bridge
         current_busy = self.connector.is_busy()
-        is_fixing_queue = len(self.toggle_queue) > 0
-        next_state = "idle"
-
-        if current_busy:
-            next_state = "busy"
-            self._round_sm.handle_event(RoundStateEvent.BUSY_DETECTED)
-            self.last_send_time = 0
-        elif self.was_busy and not current_busy:
-            next_state = "fixing"
-            self._round_sm.handle_event(RoundStateEvent.BUSY_TO_IDLE)
-            self.safe_emit_status("✅ 生成结束，处理输出...")
-            self.executor.submit(self._background_process_ai_response)
-            self.last_send_time = 0
-
-        elif is_fixing_queue:
-            next_state = "fixing"
-        else:
-            if self.last_send_time > 0 and time.time() - self.last_send_time > 10:
-                current_fp = self._get_last_ai_fingerprint(live=True)
-                pre_send_fp = getattr(self, '_pre_send_ai_fingerprint', None)
+        if not current_busy:
+            ready = getattr(self.connector, "ready_for_input", None)
+            ok, message = ready() if ready else (bool(self.connector.interact), "浏览器未连接")
+            bridge.ready = bool(ok)
+            if not ok:
+                with bridge._lock:
+                    bridge._invalidate()
+                bridge.connected = False
+                bridge.next_connect_at = time.monotonic() + 3.0
+                self.was_busy = False
                 self.last_send_time = 0
-
-                if current_fp != pre_send_fp and current_fp:
-                    self.safe_emit_status("⏰ 延迟检测到新回复，执行流水线...")
-                    self._pre_send_ai_fingerprint = None
-                    self.executor.submit(self._background_process_ai_response_direct)
-                else:
-                    self.safe_emit_status("⚠️ 10s 后仍无新回复，等待手动修复")
-
+                self._round_sm.handle_event(RoundStateEvent.ERROR_RESET)
+                bridge.report_connection(f"⚠️ {message}；未发送待发内容，请检查网页后重试。")
+                return False, "idle"
+        if bridge.cancelled:
+            # Stop may fail on an unsupported site. Do not restart a cancelled
+            # tool pipeline or send queued content when the site later idles.
+            self.last_send_time = 0
+            self._round_sm.handle_event(RoundStateEvent.FORCE_IDLE)
             task = self.scheduler.get_next_task()
             if task:
-                if task.action == "switch_session_task":
-                    next_state = "switching"
-                elif "task_agent_loop" in task.action:
-                    next_state = "fixing"
-                else:
-                    next_state = "busy"
-                # 异步执行任务，不阻塞轮询循环
-                self._update_ai_state(next_state)
-                if task.action in ["real_send_text", "compound_send_task"]:
-                    # 发送类任务：标记 busy 后异步执行，轮询下一轮自然检测 busy
-                    current_busy = True
-                    self.was_busy = current_busy
-                    self.executor.submit(self._execute_task, task)
-                else:
-                    # 非发送类任务：异步执行，短暂让出 CPU
-                    self.executor.submit(self._execute_task, task)
-                    self.was_busy = current_busy
-                time.sleep(0.1)
-                return current_busy, next_state
+                try:
+                    self._execute_task(task)  # its guard rejects stale browser actions
+                finally:
+                    self.scheduler.mark_task_complete()
+            return False, "idle"
+        if current_busy:
+            self._round_sm.handle_event(RoundStateEvent.BUSY_DETECTED)
+            self.last_send_time = 0
+            return True, "busy"
+        if self.was_busy:
+            # Allow a just-committed request time to reveal its Stop indicator.
+            if self.last_send_time and time.time() - self.last_send_time < 1.0:
+                return True, "busy"
+            if self.last_send_time:
+                current_fp = self._get_last_ai_fingerprint(live=True)
+                if not current_fp or current_fp == self._pre_send_ai_fingerprint:
+                    if time.time() - self.last_send_time < 10:
+                        return True, "busy"
+                    self.last_send_time = 0
+                    self._round_sm.handle_event(RoundStateEvent.ERROR_RESET)
+                    self.safe_emit_status("⚠️ 网页已确认提交，但尚未检测到新回复。请查看网页；不会自动重发。")
+                    return False, "idle"
+            self._round_sm.handle_event(RoundStateEvent.BUSY_TO_IDLE)
+            self.safe_emit_status("✅ 生成结束，处理输出...")
+            self.executor.submit(self._background_process_ai_response, bridge.epoch)
+            self.last_send_time = 0
+            return False, "fixing"
+        if self.toggle_queue:
+            return False, "fixing"
+        if self._round_sm.ui_state in {"fixing", "tool_executing"}:
+            return False, self._round_sm.ui_state
 
-        return current_busy, next_state
+        task = self.scheduler.get_next_task()
+        if task:
+            try:
+                if not bridge.task_is_current(task):
+                    bridge.finish_send(task, False, "发送已取消；未自动重发。")
+                    return False, "idle"
+                # Selenium sends and UI navigation are serialized on the worker
+                # lane. Never fire overlapping sends in the shared executor.
+                result = self._execute_task(task)
+                if task.action in {"real_send_text", "compound_send_task"}:
+                    return bool(result), "busy" if result else "idle"
+            finally:
+                complete = getattr(self.scheduler, "mark_task_complete", None)
+                if complete:
+                    complete()
+        return False, self._round_sm.ui_state
 
     def _browser_process_messages(self):
         detected_title_id = self.connector.get_chat_title_id()
-        if detected_title_id != self.current_chat_id:
+        if detected_title_id and detected_title_id != self.current_chat_id:
             self.safe_emit_status(f"🔄 识别会话变更: {detected_title_id[:6]}")
             self.current_chat_id = detected_title_id
             self._check_and_emit_sync(True)
+
+        if getattr(self, "_browser_snapshot_pending", False):
+            restored = self.browser_message_sync_bridge.emit_browser_messages_snapshot(
+                reason="reconnect", force_full=True, allow_auto_export=False,
+            )
+            if restored:
+                self._browser_snapshot_pending = False
+            return
 
         # 状态机驱动推送决策
         transient_mode = bool(self.was_busy or len(self.toggle_queue) > 0)

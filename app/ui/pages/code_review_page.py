@@ -232,7 +232,11 @@ class CodeReviewPage(QWidget):
                 UIHelper.info(self, "指令已发送", "已通知服务端执行更新。")
                 self.update_list.clear()
             else:
-                self.update_mgr.apply(rel_paths=paths)
+                try:
+                    self.update_mgr.apply(rel_paths=paths)
+                except RuntimeError as exc:
+                    UIHelper.warning(self, "无法应用更新", str(exc))
+                    return
                 UIHelper.info(self, "更新完成", "文件已更新，无需重启。")
                 self.scan_updates()
 

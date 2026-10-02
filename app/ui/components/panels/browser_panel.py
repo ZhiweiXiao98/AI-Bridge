@@ -135,6 +135,7 @@ class WebEngineRuntime:
     QWebEngineProfile: Optional[type] = None
     QWebEngineSettings: Optional[type] = None
     QWebEngineScript: Optional[type] = None
+    QWebEngineProfileBuilder: Optional[type] = None
 
 
 @dataclass
@@ -153,6 +154,7 @@ def load_webengine_runtime() -> WebEngineRuntime:
         from PySide6.QtWebEngineCore import (  # type: ignore
             QWebEnginePage,
             QWebEngineProfile,
+            QWebEngineProfileBuilder,
             QWebEngineScript,
             QWebEngineSettings,
         )
@@ -167,6 +169,7 @@ def load_webengine_runtime() -> WebEngineRuntime:
         QWebEngineProfile=QWebEngineProfile,
         QWebEngineSettings=QWebEngineSettings,
         QWebEngineScript=QWebEngineScript,
+        QWebEngineProfileBuilder=QWebEngineProfileBuilder,
     )
 
 
@@ -263,6 +266,7 @@ class BrowserPanel(DockablePanel):
         self._tabs: list[BrowserTab] = []
         self._active_device_mode = "desktop"
         self._tab_counter = 0
+        self._device_profiles = {}
         self.init_content()
 
     @property
@@ -376,9 +380,21 @@ class BrowserPanel(DockablePanel):
 
         self._tab_counter += 1
         profile_name = f"ai_bridge_embedded_browser_{self._tab_counter}_{device_mode}"
-        profile = runtime.QWebEngineProfile(profile_name, self)
-        profile.setCachePath(str(profile_root / device_mode / "cache"))
-        profile.setPersistentStoragePath(str(profile_root / device_mode / "storage"))
+        profile = self._device_profiles.get(device_mode)
+        if profile is None:
+            if runtime.QWebEngineProfileBuilder is not None:
+                # 创建前指定目录，避免先在 QStandardPaths 真实用户目录建立缓存。
+                builder = runtime.QWebEngineProfileBuilder()
+                builder.setCachePath(str(profile_root / device_mode / "cache"))
+                builder.setPersistentStoragePath(str(profile_root / device_mode / "storage"))
+                profile = builder.createProfile(profile_name, self)
+            else:
+                profile = runtime.QWebEngineProfile(profile_name, self)
+                profile.setCachePath(str(profile_root / device_mode / "cache"))
+                profile.setPersistentStoragePath(str(profile_root / device_mode / "storage"))
+            if profile is None:
+                raise RuntimeError("无法创建应用私有浏览器配置目录")
+            self._device_profiles[device_mode] = profile
         profile.setDownloadPath(str(profile_root / "downloads"))
         if hasattr(profile, "setHttpUserAgent"):
             profile.setHttpUserAgent(device_config["user_agent"])
@@ -477,6 +493,22 @@ class BrowserPanel(DockablePanel):
         if 0 <= index < len(self._tabs):
             return self._tabs[index]
         return None
+
+    def dispose(self) -> None:
+        """先销毁使用 profile 的页面，再销毁 profile；不碰外部 Chrome。"""
+        from PySide6.QtCore import QCoreApplication, QEvent
+        for tab in self._tabs:
+            if tab.view is not None:
+                tab.view.stop()
+                tab.view.page().deleteLater()
+            tab.widget.deleteLater()
+        self._tabs.clear()
+        self._view = self._profile = None
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        for profile in self._device_profiles.values():
+            profile.deleteLater()
+        self._device_profiles.clear()
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
 
     def load_url(self, raw_url: str) -> None:
         url = normalize_browser_url(raw_url, APP_ROOT)

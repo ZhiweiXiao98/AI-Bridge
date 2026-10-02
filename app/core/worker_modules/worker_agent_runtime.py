@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 import uuid
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -25,6 +26,7 @@ class WorkerAgentRuntimeBridge:
         self._thread = None
         self._active = None
         self._pending = None
+        self._closed = False
 
     @property
     def is_running(self):
@@ -60,6 +62,8 @@ class WorkerAgentRuntimeBridge:
             return failure("Agent runtime requires a verified account login")
         worker = self.worker
         with self._lock:
+            if self._closed:
+                return failure("客户端正在关闭，无法启动新的 Pi 请求")
             source = worker.api_source
             store = source.conv_store
             conv_id = store.active_id
@@ -244,7 +248,8 @@ class WorkerAgentRuntimeBridge:
             with self._lock:
                 self._pending = approval
             self.worker.agent_runtime_approval_signal.emit(approval)
-        if kind in {"started", "tool_approval", "tool_started", "tool_result", "completed", "cancelled", "failed", "diagnostic"}:
+        # SDK message_start/turn_end 等诊断不能覆盖等待批准或流式中的语义状态。
+        if kind in {"started", "tool_approval", "tool_started", "tool_result", "completed", "cancelled", "failed"}:
             state = {"started": "streaming_initial_reply", "tool_approval": "awaiting_approval", "tool_started": "running_tools",
                      "tool_result": "waiting_followup", "completed": "finalized", "failed": "failed", "cancelled": "cancelled"}.get(kind, payload.get("event_type", "running"))
             with self._lock:
@@ -275,6 +280,24 @@ class WorkerAgentRuntimeBridge:
         # Do not hold the bridge lock while waiting for the sidecar's abort ACK.
         runtime.cancel()
         return {"ok": True, "state": "cancelling"}
+
+    def shutdown(self, timeout=3.0):
+        """Stop the owned runtime even when its request belongs to another UI device."""
+        self._closed = True
+        deadline = time.monotonic() + max(0.0, timeout)
+        if not self._lock.acquire(timeout=max(0.0, timeout)):
+            return False
+        try:
+            active = self._active
+            self._pending = None
+            thread = self._thread
+        finally:
+            self._lock.release()
+        if active:
+            active["runtime"].shutdown(timeout=max(0.0, deadline - time.monotonic()))
+        if thread and thread is not threading.current_thread():
+            thread.join(timeout=max(0.0, deadline - time.monotonic()))
+        return not bool(thread and thread.is_alive())
 
     def approve(self, conversation_id, request_id, call_id, approved, **kwargs):
         with self._lock:

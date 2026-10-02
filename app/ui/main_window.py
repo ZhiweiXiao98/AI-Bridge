@@ -22,6 +22,7 @@ from app.ui.theme import theme_manager
 from app.ui.components.preview_dialog import CodePreviewDialog
 from app.ui.components.overlay import OverlayWidget
 from app.core.config import ConfigManager
+from app.core.local_paths import resource_path
 from app.core.project_paths import project_config_path
 from app.core.app_constants import UPDATE_EXIT_CODE, RESTART_EXIT_CODE, UI_COLORS, UI_SIZES, APP_ROOT
 from app.core.utils.text_utils import is_test_log
@@ -276,7 +277,7 @@ class MainWindow(QMainWindow):
 
     def handle_scan_request(self):
         is_remote = self._is_remote()
-        if is_remote:
+        if is_remote or hasattr(self.worker, 'do_server_scan'):
             self.worker.do_server_scan()
         else:
             if hasattr(self, 'log_panel'):
@@ -284,7 +285,7 @@ class MainWindow(QMainWindow):
 
     def handle_apply_request(self, paths):
         is_remote = self._is_remote()
-        if is_remote:
+        if is_remote or hasattr(self.worker, 'do_server_apply'):
             self.worker.do_server_apply(paths)
         else:
             if hasattr(self, 'runtime_log_panel'):
@@ -670,7 +671,7 @@ class MainWindow(QMainWindow):
         btn.setChecked(active)
         btn.setFixedSize(*UI_SIZES["sidebar_button"])
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-        icon_path = os.path.join(APP_ROOT, "assets", "icons", icon_name)
+        icon_path = str(resource_path("assets", "icons", icon_name))
         if not os.path.exists(icon_path) and icon_name == "console.png":
             btn.setText("User")
         elif not os.path.exists(icon_path) and icon_name == "layers.png":
@@ -811,6 +812,31 @@ class MainWindow(QMainWindow):
 
     def handle_restart_request(self, is_update=False):
         self.save_layout()
+        if not self._is_remote() and (
+            getattr(sys, "frozen", False) or os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1"
+        ):
+            if is_update and getattr(sys, "frozen", False):
+                message = (
+                    "当前使用完整打包应用，源码更改不会替换内置组件。\n"
+                    "项目文件可直接保存；升级 AI-Bridge 请退出后替换完整应用。"
+                )
+                self.chat_page.log_status(message)
+                QMessageBox.information(self, "应用更新", message)
+                return
+            if is_update:
+                reply = QMessageBox.question(
+                    self, "应用更新", "项目更改已保存，是否立即重启客户端？",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.Yes,
+                )
+                if reply != QMessageBox.StandardButton.Yes:
+                    return
+            self.chat_page.log_status("♻️ 正在停止本地任务并重启应用...")
+            # closeEvent performs orderly worker/runtime cleanup and retries
+            # when work is still stopping; boot_local handles this exit code.
+            self._local_exit_code = RESTART_EXIT_CODE
+            self.close()
+            return
         if is_update:
             reply = QMessageBox.question(
                 self, "应用更新",
@@ -903,9 +929,11 @@ class MainWindow(QMainWindow):
         self.panel_manager.panel_hidden.connect(lambda: self.refresh_panel_menu())
 
         # 🔌 初始化插件系统，并先扫描启用插件数量，避免 expected_panels_count 过早触发
-        self.plugin_loader = PanelPluginLoader([
-            "plugins/panels",  # 用户插件目录
-        ])
+        builtin_plugins = str(resource_path("plugins", "panels"))
+        user_plugins = os.path.join(APP_ROOT, "plugins", "panels")
+        self.plugin_loader = PanelPluginLoader(list(dict.fromkeys([
+            builtin_plugins, user_plugins,
+        ])))
         plugin_infos = self.plugin_loader.scan_plugins()
         enabled_plugin_count = sum(1 for p in plugin_infos if getattr(p, "enabled", False))
 
@@ -924,7 +952,7 @@ class MainWindow(QMainWindow):
         print("🎉 面板注册流程完成，开始恢复布局...")
 
         layout_file = os.path.join(APP_ROOT, ".config", "panel_layout.json")
-        default_layout_file = os.path.join(APP_ROOT, "config", "panel_layout_default.json")
+        default_layout_file = str(resource_path("config", "panel_layout_default.json"))
         layout_loaded = False
 
         if os.path.exists(layout_file):
@@ -1667,14 +1695,42 @@ class MainWindow(QMainWindow):
                          "一个智能的 AI 辅助开发工具")
 
     def closeEvent(self, event):
+        if self._is_remote():
+            # RemoteWorker dynamically turns unknown attributes into RPCs.
+            # Never discover/call `shutdown` through its __getattr__ fallback.
+            stopped = self.worker.stop_worker()
+            if stopped is None:
+                stopped = not self.worker.isRunning()
+        elif hasattr(self.worker, "shutdown"):
+            stopped = self.worker.shutdown(timeout=1.0)
+        elif hasattr(self.worker, "stop_worker"):
+            stopped = self.worker.stop_worker()
+        else:
+            stopped = True
+            if hasattr(self.worker, "isRunning") and self.worker.isRunning():
+                self.worker.requestInterruption()
+                self.worker.quit()
+                stopped = self.worker.wait(1000)
+        if stopped is False:
+            event.ignore()
+            self.statusBar().showMessage("正在安全停止后台任务，请稍候…")
+            if not getattr(self, "_close_retry_pending", False):
+                self._close_retry_pending = True
+                def retry_close():
+                    self._close_retry_pending = False
+                    self.close()
+                QTimer.singleShot(250, retry_close)
+            return
         try:
             theme_manager.theme_changed.disconnect(self.apply_theme)
         except Exception as e:
             logger.warning(e)
         self.save_layout()
-        if hasattr(self.worker, "stop_worker"):
-            self.worker.stop_worker()
-        elif hasattr(self.worker, "isRunning") and self.worker.isRunning():
-            self.worker.terminate()
-            self.worker.wait()
+        browser_panel = getattr(self, "embedded_browser_panel", None)
+        if browser_panel is not None:
+            browser_panel.dispose()
         super().closeEvent(event)
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1" and event.isAccepted():
+            app = QApplication.instance()
+            if app:
+                app.exit(getattr(self, "_local_exit_code", 0))

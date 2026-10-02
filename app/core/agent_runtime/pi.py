@@ -1,25 +1,26 @@
 """Pi SDK sidecar adapter. Pi alone owns inference, tools loop, retry and compaction."""
 from pathlib import Path
-import shutil
 import threading
 import time
 
 from .contracts import AgentEvent
 from .transport import JsonlProcess, ProtocolError
 from .tools import normalize_tools
+from .paths import node_executable, sidecar_path
 
 
-SIDECAR = Path(__file__).resolve().parents[3] / "runtime" / "pi" / "sidecar.mjs"
+SIDECAR = sidecar_path()
 
 
 class PiRuntime:
     def __init__(self, command=None, *, approval_timeout=240, idle_timeout=600):
-        self.command = list(command) if command else [shutil.which("node") or "node", str(SIDECAR)]
+        self.command = list(command) if command else [node_executable() or "node", str(sidecar_path())]
         self.approval_timeout = approval_timeout
         self.idle_timeout = idle_timeout
         self._lock = threading.RLock()
         self._running = False
         self._cancelled = threading.Event()
+        self._shutdown = threading.Event()
         self._pending_approvals = {}
         self._process = None
         self._identity = None
@@ -45,19 +46,29 @@ class PiRuntime:
             for slot in self._pending_approvals.values():
                 slot["ready"].set()
             process = self._process
-            if process:
-                try:
-                    process.send("abort")
-                except ProtocolError:
-                    process.close()
+        if process:
+            try:
+                process.send("abort")
+            except ProtocolError:
+                process.close()
 
     def close(self):
-        self.cancel()
+        self.shutdown()
+
+    def shutdown(self, timeout=3.0):
+        """Close our sidecar without waiting for an abort ACK from a stuck child."""
+        self._shutdown.set()
+        self._cancelled.set()
         with self._lock:
-            if self._process:
-                self._process.close()
+            for slot in self._pending_approvals.values():
+                slot["ready"].set()
+            process = self._process
+        closed = process.close(timeout=timeout) if process else True
+        with self._lock:
+            if closed and self._process is process:
                 self._process = None
                 self._identity = None
+        return closed
 
     def _start(self, request):
         root = Path(request.project_root).resolve(strict=True)
@@ -81,9 +92,13 @@ class PiRuntime:
             return
         if self._process:
             self._process.close()
-        self._process = JsonlProcess(self.command, root, directory / "isolated-home")
-        self._process.start()
-        _, data = self._process.send(
+        process = JsonlProcess(self.command, root, directory / "isolated-home")
+        with self._lock:
+            if self._cancelled.is_set() or self._shutdown.is_set():
+                raise ProtocolError("Agent runtime is shutting down")
+            self._process = process
+            process.start()
+        _, data = process.send(
             "init", provider=request.provider, model=request.model, api=request.api,
             apiKey=request.api_key, baseUrl=request.base_url, systemPrompt=request.system_prompt,
             reasoning=request.reasoning, thinkingLevel=request.thinking_level,
@@ -107,7 +122,7 @@ class PiRuntime:
         last_assistant = {}
         observed = {}
         try:
-            if self._cancelled.is_set():
+            if self._cancelled.is_set() or self._shutdown.is_set():
                 yield event("cancelled", session_path=self.session_path)
                 return
             self._start(request)
@@ -115,11 +130,11 @@ class PiRuntime:
             if self._cancelled.is_set():
                 yield event("cancelled", session_path=self.session_path)
                 return
-            with self._lock:
-                if self._cancelled.is_set():
-                    accepted, command_id = {"disposition": "cancelled"}, None
-                else:
-                    command_id, accepted = self._process.send("prompt", message=request.message)
+            if self._cancelled.is_set():
+                accepted, command_id = {"disposition": "cancelled"}, None
+            else:
+                command_id, accepted = self._process.send(
+                    "prompt", message=request.message, cancel_if=self._cancelled.is_set)
             if accepted.get("disposition") == "cancelled":
                 yield event("cancelled", session_path=self.session_path)
                 return
@@ -224,4 +239,5 @@ class PiRuntime:
             with self._lock:
                 self._pending_approvals.clear()
                 self._running = False
-                self._cancelled.clear()
+                if not self._shutdown.is_set():
+                    self._cancelled.clear()

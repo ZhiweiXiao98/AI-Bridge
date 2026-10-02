@@ -3,7 +3,7 @@ import threading
 import time
 from uuid import uuid4
 from concurrent.futures import Future
-from queue import Queue
+from queue import Queue, Empty
 from app.core.logging import get_logger
 from app.core.debug import probe
 from app.core.tool_runtime.task_meta import ToolTaskMeta
@@ -23,6 +23,7 @@ class KnowledgeExecutor:
         self._queue = Queue()
         self._thread = None
         self._stopping = False
+        self._lifecycle_lock = threading.Lock()
         self._current_task = None
         self._current_task_started_at = 0.0
         self._on_task_state_change = None
@@ -32,12 +33,23 @@ class KnowledgeExecutor:
         self._thread.start()
         logger.info("KnowledgeExecutor 已启动")
 
-    def stop(self):
-        self._stopping = True
-        self._queue.put(None)
-        if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=5)
-        logger.info("KnowledgeExecutor 已停止")
+    def stop(self, timeout=5.0):
+        with self._lifecycle_lock:
+            self._stopping = True
+            # Resolve queued futures so waiting tool callers are not stranded.
+            while True:
+                try:
+                    item = self._queue.get_nowait()
+                except Empty:
+                    break
+                if item is not None:
+                    item[1].cancel()
+            self._queue.put(None)
+        if self._thread and self._thread is not threading.current_thread():
+            self._thread.join(timeout=max(0.0, timeout))
+        stopped = not bool(self._thread and self._thread.is_alive())
+        logger.info("KnowledgeExecutor %s", "已停止" if stopped else "正在等待当前检索结束")
+        return stopped
 
 
     def _new_task_id(self) -> str:
@@ -78,18 +90,21 @@ class KnowledgeExecutor:
         if had_task:
             self._emit_task_state_change('idle')
     def submit_search(self, query: str, top_k: int = 5, task_meta: ToolTaskMeta | None = None) -> Future:
-        future = Future()
-        self._queue.put(("search", future, query, top_k, task_meta))
-        return future
+        return self._submit("search", query, top_k, task_meta)
 
     def submit_index(self, file_path: str, content: str) -> Future:
-        future = Future()
-        self._queue.put(("index", future, file_path, content))
-        return future
+        return self._submit("index", file_path, content)
 
     def submit_warmup(self) -> Future:
+        return self._submit("warmup")
+
+    def _submit(self, operation, *args):
         future = Future()
-        self._queue.put(("warmup", future))
+        with self._lifecycle_lock:
+            if self._stopping:
+                future.cancel()
+            else:
+                self._queue.put((operation, future, *args))
         return future
 
     def _run(self):
@@ -99,6 +114,11 @@ class KnowledgeExecutor:
                 if item is None:
                     break
                 op, future, *args = item
+                if self._stopping:
+                    future.cancel()
+                    continue
+                if not future.set_running_or_notify_cancel():
+                    continue
                 try:
                     result = self._execute(op, *args)
                     future.set_result(result)
