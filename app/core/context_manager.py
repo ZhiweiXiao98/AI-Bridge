@@ -4,7 +4,7 @@
 职责：分层记忆管理、Token 计数、消息组装、滑动窗口
 设计原则：独立于传输通道（API/Browser），只负责"组装什么内容"
 
-参考: docs/context_system_plan.md
+参考: docs/上下文系统建设计划.md
 """
 
 import time
@@ -15,7 +15,6 @@ from typing import List, Dict, Any, Optional
 
 import tiktoken
 
-from app.core.app_constants import DEFAULT_API_MODEL
 from app.core.context_message_models import (
     ConversationMessage,
     MESSAGE_KIND_TEXT,
@@ -40,7 +39,7 @@ class ContextConfig:
     short_term_budget: int = 80000
     output_reserve: int = 16000
     max_history_turns: int = 50
-    model: str = DEFAULT_API_MODEL
+    model: str = "gpt-4o"
 
     @property
     def safety_margin(self) -> int:
@@ -59,7 +58,7 @@ class ContextConfig:
 class TokenCounter:
     """Token 计数，tiktoken 精确计数+ 降级估算"""
 
-    def __init__(self, model: str = DEFAULT_API_MODEL):
+    def __init__(self, model: str = "gpt-4o"):
         self._encoder = None
         self._model = model
         try:
@@ -252,7 +251,7 @@ class ContextManager:
     # 消息组装（核心方法）
     # ----------------------------------------------------------
 
-    def build_messages(self) -> List[dict]:
+    def build_messages(self, system_prompt_role: str = "system") -> List[dict]:
         """
         组装发送给 LLM 的 messages 列表
 
@@ -263,11 +262,14 @@ class ContextManager:
           4. 对话历史（滑动窗口）
         """
         messages = []
+        prompt_role = str(system_prompt_role or "system").strip().lower()
+        if prompt_role not in ("system", "developer"):
+            prompt_role = "system"
 
         # 1. 系统层
         if self._system_content:
             messages.append({
-                "role": "system",
+                "role": prompt_role,
                 "content": self._system_content
             })
 
@@ -294,7 +296,15 @@ class ContextManager:
                 continue
             if msg.kind == 'meta':
                 continue
-            if msg.kind in ('tool_feedback', 'compact_summary', 'text'):
+            if msg.kind == 'tool_feedback':
+                messages.append({
+                    "role": "tool_feedback",
+                    "content": msg.content,
+                    "kind": msg.kind,
+                    "meta": dict(msg.meta or {}),
+                })
+                continue
+            if msg.kind in ('compact_summary', 'text'):
                 messages.append({"role": msg.role, "content": msg.content})
                 continue
             messages.append(msg.to_chat_dict())

@@ -1,0 +1,86 @@
+📘 AI Model Hub - 开发者生存指南 (v2.0)
+写给未来的自己：当你打开这个项目却一脸懵逼时，请仔细阅读本文档。
+1. 🚀 如何启动项目 (标准流程)
+现在采用了 “总控台 (Launcher)” 架构，请尽量避免直接运行 main_window.py，否则你看不到运行日志。
+第一步：启动总控台
+
+在终端运行：python launcher.py
+你会看到一个黑色背景的控制台窗口，这里是查看系统报错和日志的地方。
+第二步：启动“大脑” (Chrome)
+
+点击总控台里的 [1. 启动 Chrome 服务]。
+关键：确保弹出了一个新的 Chrome 窗口，且不要关闭它。
+第三步：启动“身体” (数据监控台)
+
+点击总控台里的 [2. 启动数据监控台]。
+UI 界面出现，且总控台日志显示 [INFO] 界面初始化完成，即为成功。
+2. 🧠 如何与 AI 协作 (记忆同步)
+当你需要 AI (ChatGPT/Gemini) 帮你写新功能时，为了防止它瞎写，必须先让它同步当前代码：
+====== 复制以下内容作为 AI 角色预设 (System Prompt) ======= 
+你是一个资深的 Python PyQt6 开发专家及数据管道架构师，专门协助我开发 "AI Bridge" (原 AI Model Hub) 桌面中间件。
+【项目愿景】 这是一个 "AI 数据泵" (Data Pipeline)。 核心目标：通过 Selenium 接管网页版 AI，将其生成的代码、图片等数据实时提取并分发到本地文件系统（支持相对路径归类），供 Rhino、ComfyUI、UE5 等工具调用。
+【核心协议：文件名解析】 我们定义了一套 "文件名协议"，Worker 会扫描 AI 生成代码的前 5 行：
+格式：# filename: <subfolder>/<name>.ext
+逻辑：支持相对路径（如 rhino/script.py），Worker 会自动创建子文件夹。
+安全：严禁包含 .. 或绝对路径，防止路径遍历攻击。
+【项目架构】
+Launcher (launcher.py): 总控台，负责进程管理和日志捕获。
+Core (browser_driver.py): Selenium 驱动，负责网页交互。
+Worker (worker.py): 业务逻辑核心。支持全量消息回溯、增量写入、智能重启检测。
+UI (main_window.py): 主界面，负责布局和增量渲染。
+Components (app/ui/components/): UI 组件库（按领域拆分）。
+【当前文件结构】
+launcher.py: 启动器与日志台。
+app/core/browser_driver.py: 浏览器驱动。
+app/ui/main_window.py: 主窗口逻辑。
+app/ui/settings_page.py: 设置页 (含智能重启逻辑)。
+app/ui/worker.py: 后台线程 (自动导出、小尾巴注入)。
+app/ui/widgets.py: 组件库入口 (兼容层)。
+UI组件库:
+app/ui/components/base.py: 基础组件 (ImageLoader)。
+app/ui/components/editor.py: 代码编辑器 (Highlighter)。
+app/ui/components/chat.py: 聊天气泡与容器。
+app/ui/components/input.py: 输入框逻辑。
+【回复原则】
+完整性: 必须提供完整 Python 代码。
+中间件思维: 关注数据的流转与分发。
+维护协议: 涉及架构变动时，主动提醒更新 dump_code.py。 
+=======================================================
+====== 发送快照 (Snapshot) ========
+生成快照：在终端运行 python dump_code.py
+复制内容：打开生成的 FULL_PROJECT_CONTEXT.txt，全选复制。
+发送给 AI：在对话框输入：“这是当前项目的完整代码，请基于此帮我实现 [新功能]...”
+3. 🛠️ 项目维护守则 (修改代码必读)
+A. 如果我加了新文件... 比如你新建了一个 app/utils/helper.py：
+必须 打开 dump_code.py，把新文件路径加到 target_files 列表里。
+否则下次给 AI 发快照时，AI 会“失忆”！
+B. 如果我想改界面... 现在组件已经拆分，别再去 widgets.py 里找了！
+改代码高亮/行号：去 app/ui/components/editor.py
+改气泡样式/复制按钮：去 app/ui/components/chat.py
+改输入框/回车发送：去 app/ui/components/input.py
+改主窗口布局：去 app/ui/main_window.py
+C. 如果我想改爬虫逻辑...
+改消息解析：去 app/core/browser_driver.py。
+改自动导出/重启逻辑：去 app/ui/worker.py。
+4. 🚑 常见故障排除
+Q: 软件疯狂提示“建议重启”刷屏？
+A: 请更新 worker.py 到最新版（支持 Batch Write 批处理模式）。
+Q: 回车键发不出消息？
+A: 检查 app/ui/components/input.py 是否包含 keyPressEvent 修复逻辑。
+Q: 运行 dump_code.py 报错找不到文件？
+A: 你可能重构了文件夹但没更新 dump 脚本。请使用下方的最新版脚本。
+
+测试框架
+一键运行全部（推荐）
+& .\.venv\Scripts\python.exe -m pytest tests/ -v --cov=app --cov-report=html --cov-report=term
+start htmlcov\index.html
+
+
+有几点我需要告知你：
+1.免费的api额度容易用尽需要经常修改使用的模型api。
+2.网页端的ai是被我买断的永久会员，可以不限量使用，目前可以上下文25w Tokens依然正常对话运行，只是需要经常进行快照同步。
+3.将来我们也需要在开发其他项目的时候使用我们现有的开发软件进行开发，但是现阶段是开发开发软件自身。
+4.当前项目就我一个人在开发，还处在利用下班时间进行业余开发的状态，但是我是抱着能赚钱的想法来开发这款软件的，商业化是必然，只不过目前只处在开发开发工具的阶段，个人也在开发开发工具的过程中去学习如何更好的去利用ai开发软件。以后也可能会利用该开发经历去面试其他企业。
+5.是否需要采用双脑架构还需要论证。
+
+拉取 git reset --hard origin/main

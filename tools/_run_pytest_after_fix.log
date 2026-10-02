@@ -1,0 +1,440 @@
+Start pytest verification after test fixes
+
+====================================================================================================
+[CMD] /usr/local/bin/python -m pytest tests/test_remote_protocol.py -vv
+[TIMEOUT] 240s
+----------------------------------------------------------------------------------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 3 items
+
+tests/test_remote_protocol.py::TestRemoteProtocol::test_handle_status_signal FAILED [ 33%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_notify_pull_mechanism ERROR [ 66%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_pong_latency_calculation ERROR [100%]
+
+==================================== ERRORS ====================================
+_______ ERROR at setup of TestRemoteProtocol.test_notify_pull_mechanism ________
+
+self = <test_remote_protocol.TestRemoteProtocol object at 0x7c8cec2a6530>
+
+    @pytest.fixture
+    def worker(self):
+>       with patch.object(RemoteWorker, "start", return_value=None):
+
+tests/test_remote_protocol.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.10/unittest/mock.py:1447: in __enter__
+    original, local = self.get_original()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <unittest.mock._patch object at 0x7c8cec19bc10>
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+>           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: <MagicMock spec='str' id='136944699459280'> does not have the attribute 'start'
+
+/usr/local/lib/python3.10/unittest/mock.py:1420: AttributeError
+______ ERROR at setup of TestRemoteProtocol.test_pong_latency_calculation ______
+
+self = <test_remote_protocol.TestRemoteProtocol object at 0x7c8cec2a5f60>
+
+    @pytest.fixture
+    def worker(self):
+>       with patch.object(RemoteWorker, "start", return_value=None):
+
+tests/test_remote_protocol.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.10/unittest/mock.py:1447: in __enter__
+    original, local = self.get_original()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <unittest.mock._patch object at 0x7c8cec0a7ac0>
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+>           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: <MagicMock spec='str' id='136944699459280'> does not have the attribute 'start'
+
+/usr/local/lib/python3.10/unittest/mock.py:1420: AttributeError
+=================================== FAILURES ===================================
+_________________ TestRemoteProtocol.test_handle_status_signal _________________
+
+self = <MagicMock name='mock.QObject.status_changed.emit' id='136944699701808'>
+args = ('Connected',), kwargs = {}, expected = call('Connected'), cause = None
+actual = [], expected_string = "emit('Connected')"
+
+    def assert_any_call(self, /, *args, **kwargs):
+        """assert the mock has been called with the specified arguments.
+    
+        The assert passes if the mock has *ever* been called, unlike
+        `assert_called_with` and `assert_called_once_with` that only pass if
+        the call is the most recent one."""
+        expected = self._call_matcher(_Call((args, kwargs), two=True))
+        cause = expected if isinstance(expected, Exception) else None
+        actual = [self._call_matcher(c) for c in self.call_args_list]
+        if cause or expected not in _AnyComparer(actual):
+            expected_string = self._format_mock_call_signature(args, kwargs)
+>           raise AssertionError(
+                '%s call not found' % expected_string
+            ) from cause
+E           AssertionError: emit('Connected') call not found
+
+/usr/local/lib/python3.10/unittest/mock.py:1000: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+self = <test_remote_protocol.TestRemoteProtocol object at 0x7c8cec2a6860>
+mock_proxy_cls = <MagicMock name='QNetworkProxy' id='136944699464416'>
+mock_ws_cls = <MagicMock name='QWebSocket' id='136944699589632'>
+
+    @patch("app.core.remote_worker.QWebSocket")
+    @patch("app.core.remote_worker.QNetworkProxy")
+    def test_handle_status_signal(self, mock_proxy_cls, mock_ws_cls):
+        ws = MagicMock()
+        mock_ws_cls.return_value = ws
+    
+        agent = SocketAgent("ws://test")
+        agent.status_changed = MagicMock()
+        agent.send_payload = MagicMock()
+    
+        agent.setup()
+        agent.on_connected()
+    
+>       agent.status_changed.emit.assert_any_call("Connected")
+E       AssertionError: emit('Connected') call not found
+
+tests/test_remote_protocol.py:31: AssertionError
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.10.19-final-0 _______________
+
+Name                                        Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------
+app/__init__.py                                 0      0   100%
+app/core/__init__.py                            0      0   100%
+app/core/agent_manager.py                     174    174     0%   2-248
+app/core/auth_service.py                      112    112     0%   2-159
+app/core/config.py                             25      8    68%   20-21, 28-29, 33-37
+app/core/connection_manager.py                 41     41     0%   2-75
+app/core/docker_manager.py                     74     74     0%   2-140
+app/core/driver/__init__.py                   144    144     0%   2-196
+app/core/driver/config.py                       4      4     0%   2-50
+app/core/driver/connection.py                  63     63     0%   2-125
+app/core/driver/interaction.py                297    297     0%   2-469
+app/core/driver/parser.py                     137    137     0%   2-191
+app/core/git_manager.py                        48     48     0%   2-82
+app/core/remote_worker.py                     281    213    24%   20-23, 26-33, 36-37, 40-43, 46-48, 51-53, 57-58, 61, 89-112, 115-129, 134-135, 138, 141-142, 146-152, 157-162, 165-170, 173-185, 190-227, 231-242, 245-286, 289-290, 294-297, 300-308, 312-316, 319-336, 340, 345, 348-349, 357-362
+app/core/self_update.py                        98     98     0%   2-196
+app/core/services/__init__.py                   0      0   100%
+app/core/services/context_pack_service.py     141    141     0%   2-337
+app/core/services/context_scanner.py           96     96     0%   2-197
+app/core/services/file_service.py             156    156     0%   2-204
+app/core/services/knowledge_service.py         72     72     0%   2-121
+app/core/services/scheduler_service.py         89     89     0%   2-150
+app/core/services/state_service.py             68     68     0%   2-98
+app/core/services/tool_router_service.py       86     86     0%   2-142
+app/core/services/update_service.py           133    133     0%   2-181
+app/core/utils/__init__.py                      0      0   100%
+app/core/utils/error_reporter.py               31     31     0%   2-33
+app/core/worker.py                            620    620     0%   2-897
+app/ui/__init__.py                              0      0   100%
+app/ui/login_window.py                        100    100     0%   2-153
+app/ui/main_window.py                         340    340     0%   2-412
+app/ui/modeling_page.py                       210    210     0%   2-305
+app/ui/settings_page.py                       302    302     0%   2-411
+app/ui/theme.py                               152    152     0%   2-422
+app/ui/widgets.py                               5      5     0%   3-7
+-------------------------------------------------------------------------
+TOTAL                                        4099   4014     2%
+Coverage HTML written to dir htmlcov
+Coverage JSON written to file coverage.json
+=========================== short test summary info ============================
+FAILED tests/test_remote_protocol.py::TestRemoteProtocol::test_handle_status_signal - AssertionError: emit('Connected') call not found
+ERROR tests/test_remote_protocol.py::TestRemoteProtocol::test_notify_pull_mechanism - AttributeError: <MagicMock spec='str' id='136944699459280'> does not have the attribute 'start'
+ERROR tests/test_remote_protocol.py::TestRemoteProtocol::test_pong_latency_calculation - AttributeError: <MagicMock spec='str' id='136944699459280'> does not have the attribute 'start'
+========================= 1 failed, 2 errors in 7.39s ==========================
+[EXIT] 1 | elapsed=10.55s
+
+====================================================================================================
+[CMD] /usr/local/bin/python -m pytest tests/test_ui_logic.py -vv
+[TIMEOUT] 240s
+----------------------------------------------------------------------------------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... /usr/local/lib/python3.10/site-packages/coverage/control.py:958: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.13.4/messages.html#warning-no-data-collected
+  self._warn("No data was collected.", slug="no-data-collected")
+collected 0 items
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.10.19-final-0 _______________
+
+Name                                        Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------
+app/__init__.py                                 0      0   100%
+app/core/__init__.py                            0      0   100%
+app/core/agent_manager.py                     174    174     0%   2-248
+app/core/auth_service.py                      112    112     0%   2-159
+app/core/config.py                             25     25     0%   2-39
+app/core/connection_manager.py                 41     41     0%   2-75
+app/core/docker_manager.py                     74     74     0%   2-140
+app/core/driver/__init__.py                   144    144     0%   2-196
+app/core/driver/config.py                       4      4     0%   2-50
+app/core/driver/connection.py                  63     63     0%   2-125
+app/core/driver/interaction.py                297    297     0%   2-469
+app/core/driver/parser.py                     137    137     0%   2-191
+app/core/git_manager.py                        48     48     0%   2-82
+app/core/remote_worker.py                     281    281     0%   2-365
+app/core/self_update.py                        98     98     0%   2-196
+app/core/services/__init__.py                   0      0   100%
+app/core/services/context_pack_service.py     141    141     0%   2-337
+app/core/services/context_scanner.py           96     96     0%   2-197
+app/core/services/file_service.py             156    156     0%   2-204
+app/core/services/knowledge_service.py         72     72     0%   2-121
+app/core/services/scheduler_service.py         89     89     0%   2-150
+app/core/services/state_service.py             68     68     0%   2-98
+app/core/services/tool_router_service.py       86     86     0%   2-142
+app/core/services/update_service.py           133    133     0%   2-181
+app/core/utils/__init__.py                      0      0   100%
+app/core/utils/error_reporter.py               31     31     0%   2-33
+app/core/worker.py                            620    620     0%   2-897
+app/ui/__init__.py                              0      0   100%
+app/ui/login_window.py                        100    100     0%   2-153
+app/ui/main_window.py                         340    340     0%   2-412
+app/ui/modeling_page.py                       210    210     0%   2-305
+app/ui/settings_page.py                       302    302     0%   2-411
+app/ui/theme.py                               152    152     0%   2-422
+app/ui/widgets.py                               5      5     0%   3-7
+-------------------------------------------------------------------------
+TOTAL                                        4099   4099     0%
+Coverage HTML written to dir htmlcov
+Coverage JSON written to file coverage.json
+============================ no tests ran in 5.74s =============================
+[EXIT] 5 | elapsed=7.41s
+
+====================================================================================================
+[CMD] /usr/local/bin/python -m pytest tests/test_ui_startup_lock.py -vv
+[TIMEOUT] 240s
+----------------------------------------------------------------------------------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... /usr/local/lib/python3.10/site-packages/coverage/control.py:958: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.13.4/messages.html#warning-no-data-collected
+  self._warn("No data was collected.", slug="no-data-collected")
+collected 0 items
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.10.19-final-0 _______________
+
+Name                                        Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------
+app/__init__.py                                 0      0   100%
+app/core/__init__.py                            0      0   100%
+app/core/agent_manager.py                     174    174     0%   2-248
+app/core/auth_service.py                      112    112     0%   2-159
+app/core/config.py                             25     25     0%   2-39
+app/core/connection_manager.py                 41     41     0%   2-75
+app/core/docker_manager.py                     74     74     0%   2-140
+app/core/driver/__init__.py                   144    144     0%   2-196
+app/core/driver/config.py                       4      4     0%   2-50
+app/core/driver/connection.py                  63     63     0%   2-125
+app/core/driver/interaction.py                297    297     0%   2-469
+app/core/driver/parser.py                     137    137     0%   2-191
+app/core/git_manager.py                        48     48     0%   2-82
+app/core/remote_worker.py                     281    281     0%   2-365
+app/core/self_update.py                        98     98     0%   2-196
+app/core/services/__init__.py                   0      0   100%
+app/core/services/context_pack_service.py     141    141     0%   2-337
+app/core/services/context_scanner.py           96     96     0%   2-197
+app/core/services/file_service.py             156    156     0%   2-204
+app/core/services/knowledge_service.py         72     72     0%   2-121
+app/core/services/scheduler_service.py         89     89     0%   2-150
+app/core/services/state_service.py             68     68     0%   2-98
+app/core/services/tool_router_service.py       86     86     0%   2-142
+app/core/services/update_service.py           133    133     0%   2-181
+app/core/utils/__init__.py                      0      0   100%
+app/core/utils/error_reporter.py               31     31     0%   2-33
+app/core/worker.py                            620    620     0%   2-897
+app/ui/__init__.py                              0      0   100%
+app/ui/login_window.py                        100    100     0%   2-153
+app/ui/main_window.py                         340    340     0%   2-412
+app/ui/modeling_page.py                       210    210     0%   2-305
+app/ui/settings_page.py                       302    302     0%   2-411
+app/ui/theme.py                               152    152     0%   2-422
+app/ui/widgets.py                               5      5     0%   3-7
+-------------------------------------------------------------------------
+TOTAL                                        4099   4099     0%
+Coverage HTML written to dir htmlcov
+Coverage JSON written to file coverage.json
+============================ no tests ran in 5.75s =============================
+[EXIT] 5 | elapsed=7.28s
+
+====================================================================================================
+[CMD] /usr/local/bin/python -m pytest tests/ -q --maxfail=20
+[TIMEOUT] 240s
+----------------------------------------------------------------------------------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 110 items
+
+tests/test_agent_manager.py::TestAgentManager::test_parse_tool_read PASSED [  0%]
+tests/test_agent_manager.py::TestAgentManager::test_parse_code_block PASSED [  1%]
+tests/test_agent_manager.py::TestAgentManager::test_path_redirection_logic PASSED [  2%]
+tests/test_agent_manager.py::TestAgentManager::test_tool_read_file_safety PASSED [  3%]
+tests/test_agent_manager.py::TestAgentManager::test_safe_apply_rollback_on_failure 
+-------------------------------- live log call ---------------------------------
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+PASSED                                                                   [  4%]
+tests/test_agent_manager.py::TestAgentManager::test_safe_apply_commit_on_success PASSED [  5%]
+tests/test_agent_tools.py::TestAgentFileTools::test_read_file_not_found PASSED [  6%]
+tests/test_agent_tools.py::TestAgentFileTools::test_read_file_security_check PASSED [  7%]
+tests/test_agent_tools.py::TestToolExecution::test_code_execution_failure_feedback PASSED [  8%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_add_and_persist_blacklist PASSED [  9%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_save_code_interception PASSED [ 10%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_remove_ignore_logic PASSED [ 10%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_auto_cleanup_staging PASSED [ 11%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_content_mismatch_safety PASSED [ 12%]
+tests/test_blacklist_logic.py::TestBlacklistLogic::test_discard_only_affects_fingerprint PASSED [ 13%]
+tests/test_blacklist_logic.py::TestBlacklistLogic::test_manual_permanent_ignore PASSED [ 14%]
+tests/test_config.py::TestConfigManagerBasic::test_default_config_structure PASSED [ 15%]
+tests/test_config.py::TestConfigManagerBasic::test_chrome_port_default_value PASSED [ 16%]
+tests/test_config.py::TestConfigManagerBasic::test_auto_export_default_enabled PASSED [ 17%]
+tests/test_config.py::TestConfigManagerBasic::test_export_paths_are_strings PASSED [ 18%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_save_and_load_custom_config PASSED [ 19%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_load_creates_default_if_missing PASSED [ 20%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_config_persistence_across_instances PASSED [ 20%]
+tests/test_config.py::TestConfigManagerValidation::test_port_is_integer PASSED [ 21%]
+tests/test_config.py::TestConfigManagerValidation::test_auto_export_is_boolean PASSED [ 22%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[9527] PASSED [ 23%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[8765] PASSED [ 24%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[3000] PASSED [ 25%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[5000] PASSED [ 26%]
+tests/test_config.py::TestConfigManagerEdgeCases::test_empty_path_strings PASSED [ 27%]
+tests/test_config.py::TestConfigManagerEdgeCases::test_config_not_modified_by_load PASSED [ 28%]
+tests/test_context_packing.py::TestContextPacking::test_pack_context_logic PASSED [ 29%]
+tests/test_docker_sandbox.py::TestDockerSandbox::test_code_execution_via_base64 
+-------------------------------- live log setup --------------------------------
+WARNING  DockerSandbox:docker_manager.py:46 ❌ Docker not available: Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))
+SKIPPED (Container not running)                                          [ 30%]
+tests/test_driver_interaction.py::TestInteractionManager::test_find_elements_wrapper PASSED [ 30%]
+tests/test_driver_interaction.py::TestInteractionManager::test_send_message_short PASSED [ 31%]
+tests/test_driver_interaction.py::TestInteractionManager::test_send_message_long PASSED [ 32%]
+tests/test_driver_interaction.py::TestInteractionManager::test_is_busy_logic PASSED [ 33%]
+tests/test_driver_interaction.py::TestInteractionManager::test_fingerprint_speed_optimization PASSED [ 34%]
+tests/test_driver_interaction.py::TestInteractionManager::test_smart_height_polling PASSED [ 35%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_id_standard PASSED [ 36%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_id_new_chat PASSED [ 37%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_resilience PASSED [ 38%]
+tests/test_driver_perception.py::TestDriverPerception::test_role_recognition_logic PASSED [ 39%]
+tests/test_file_service.py::TestFileService::test_http_image_download PASSED [ 40%]
+tests/test_interaction_core.py::TestInteractionCore::test_fast_expand_logic PASSED [ 40%]
+tests/test_interaction_core.py::TestInteractionCore::test_scroll_traverse_variable_speed PASSED [ 41%]
+tests/test_interaction_core.py::TestInteractionCore::test_scan_and_fix_last_message PASSED [ 42%]
+tests/test_interaction_core.py::TestInteractionCore::test_scroll_traverse_interrupt PASSED [ 43%]
+tests/test_local_worker.py::TestLocalWorker::test_fix_all_batch_logic FAILED [ 44%]
+tests/test_local_worker.py::TestLocalWorker::test_process_batch_resilience ERROR [ 45%]
+tests/test_local_worker_strategy_e.py::TestWorkerStrategyE::test_binary_star_hash ERROR [ 46%]
+tests/test_local_worker_strategy_e.py::TestWorkerStrategyE::test_deduce_state_logic ERROR [ 47%]
+tests/test_parser_core.py::TestParserCore::test_clean_monaco_structure PASSED [ 48%]
+tests/test_parser_core.py::TestParserCore::test_anchor_alignment_logic PASSED [ 49%]
+tests/test_parser_core.py::TestParserCore::test_fallback_mode PASSED     [ 50%]
+tests/test_parser_core.py::TestParserCore::test_n_image_structure PASSED [ 50%]
+tests/test_parser_merge.py::TestParserMerge::test_merge_adjacent_text PASSED [ 51%]
+tests/test_parser_merge.py::TestParserMerge::test_merge_adjacent_code_forbidden PASSED [ 52%]
+tests/test_parser_merge.py::TestParserMerge::test_mixed_interleave PASSED [ 53%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_handle_status_signal FAILED [ 54%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_notify_pull_mechanism ERROR [ 55%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_pong_latency_calculation ERROR [ 56%]
+tests/test_saas_features.py::TestSessionIsolation::test_auto_lock_first_session PASSED [ 57%]
+tests/test_saas_features.py::TestSessionIsolation::test_block_alien_session PASSED [ 58%]
+tests/test_saas_features.py::TestSessionIsolation::test_active_switch_acceptance PASSED [ 59%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_detect_new_file PASSED [ 60%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_detect_overwrite_file PASSED [ 60%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_ignore_same_content_crlf PASSED [ 61%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_apply_update_action PASSED [ 62%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_trigger_csharp_build PASSED [ 63%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_ignore_system_files PASSED [ 64%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_sync_messages_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/messages "HTTP/1.1 200 OK"
+PASSED                                                                   [ 65%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_sync_code_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/code "HTTP/1.1 200 OK"
+PASSED                                                                   [ 66%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_upload_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/upload "HTTP/1.1 200 OK"
+PASSED                                                                   [ 67%]
+tests/test_state_service.py::TestStateService::test_initial_state PASSED [ 68%]
+tests/test_state_service.py::TestStateService::test_update_user_turn PASSED [ 69%]
+tests/test_state_service.py::TestStateService::test_manual_correction PASSED [ 70%]
+tests/test_state_service.py::TestStateService::test_snapshot_logic PASSED [ 70%]
+tests/test_state_service.py::TestStateService::test_should_emit_sync PASSED [ 71%]
+tests/test_state_service.py::TestStateService::test_persistence PASSED   [ 72%]
+tests/test_tool_router.py::TestToolRouter::test_extract_code_block_standard PASSED [ 73%]
+tests/test_tool_router.py::TestToolRouter::test_extract_code_block_robustness PASSED [ 74%]
+tests/test_tool_router.py::TestToolRouter::test_gatekeeper_blocks_invalid_syntax PASSED [ 75%]
+tests/test_tool_router.py::TestToolRouter::test_idempotency PASSED       [ 76%]
+tests/test_ui_persistence.py::TestUIPersistence::test_window_geometry_persistence 
+TIMEOUT: process killed
+[EXIT] -9 | elapsed=529.18s
+
+====================================================================================================
+RESULT CODES: [1, 5, 5, -9]
+HAS FAILURES
+Log file: /workspace/tools/_run_pytest_after_fix.log

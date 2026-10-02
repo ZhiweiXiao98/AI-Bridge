@@ -448,6 +448,10 @@ class DOMParser:
             language = self._extract_code_language_from_dom(node)
             if language:
                 segment['language'] = language
+            elif not code.strip():
+                detected = self._detect_code_placeholder_language(node)
+                if detected:
+                    segment['language'] = detected
             segments.append(segment)
             return segments
 
@@ -491,6 +495,12 @@ class DOMParser:
                 if pending_lang:
                     seg['language'] = pending_lang
                     pending_lang = None
+                current_lang = str(seg.get('language', '') or '').strip().lower()
+                code_text = str(seg.get('content', '') or '').strip()
+                if current_lang != 'tool_call' and self._looks_like_tool_call_json(code_text):
+                    seg['language'] = 'tool_call'
+                if not code_text and not seg.get('language'):
+                    seg['language'] = 'code'
                 cleaned.append(seg)
 
             elif seg['type'] == 'text':

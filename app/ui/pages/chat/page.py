@@ -1,5 +1,7 @@
 # filename: app/ui/pages/chat/page.py
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QSplitter, QMessageBox, QApplication, QStackedWidget, QPushButton, QHBoxLayout, QFrame, QTabWidget, QGraphicsOpacityEffect, QLabel)
+import time
+
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QSplitter, QMessageBox, QApplication, QStackedWidget, QPushButton, QHBoxLayout, QFrame, QTabWidget, QGraphicsOpacityEffect, QLabel, QSizePolicy)
 from PySide6.QtCore import Qt, QTimer, Signal, QPropertyAnimation, QEasingCurve, QPoint, QRect, QVariantAnimation
 from PySide6.QtGui import QColor, QCursor, QPainter, QBrush, QPen
 
@@ -8,10 +10,12 @@ from .session_list import SessionList
 from .api_session_list import APISessionList
 from .input_area import InputArea
 from .message_area import MessageArea
-from .status_bar import ApiModelUsageBar
+from .status_bar import ApiModelUsageBar, BrowserProjectBar
+from .api_skill_references import ApiSkillReferenceHandler
 from .services.message_window_service import MessageWindowService
 from app.ui.components.chat import ChatBubble
 from app.core.config import ConfigManager
+from app.core.app_constants import UI_SIZES
 from app.ui.theme import theme_manager
 from app.ui.components.collapsible_sidebar import CollapsibleSideBar
 from app.core.logging import get_logger
@@ -28,15 +32,16 @@ class ChatPage(QWidget):
         self.worker = worker
         cfg = ConfigManager.load()
         self.message_window_service = MessageWindowService(
-            default_turns=int(cfg.get('chat_message_load_turns', 20)),
-            step_turns=int(cfg.get('chat_message_load_step_turns', 10)),
+            default_turns=int(cfg.get('chat_message_load_turns', 200)),
+            step_turns=int(cfg.get('chat_message_load_step_turns', 50)),
         )
         self._browser_all_messages = []
         self._api_all_messages = []
+        self.api_skill_references = ApiSkillReferenceHandler(self)
         self.init_ui()
         self.connect_signals()
         self.sidebar_expanded = True
-        self.last_sidebar_width = 260
+        self.last_sidebar_width = UI_SIZES["default_sidebar_width"]
         self.safety_timer = QTimer(self)
         self.safety_timer.setSingleShot(True)
         self.safety_timer.timeout.connect(self.reset_fix_btn)
@@ -81,26 +86,49 @@ class ChatPage(QWidget):
         self.v_splitter = QSplitter(Qt.Orientation.Vertical)
         # ===== 内部子分页，用于Browser/API消息区和输入区分离 =====
         self.inner_stack = QStackedWidget()
+        self.inner_stack.setMinimumWidth(0)
+        self.inner_stack.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
 
         self.browser_page = QWidget()
+        self.browser_page.setMinimumWidth(0)
+        self.browser_page.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         browser_layout = QVBoxLayout(self.browser_page)
         browser_layout.setContentsMargins(0, 0, 0, 0)
         self.browser_msg_area = MessageArea()
         self.browser_input_area = InputArea()
+        self.browser_msg_area.setMinimumWidth(0)
+        self.browser_input_area.setMinimumWidth(0)
+        self.browser_msg_area.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
+        self.browser_input_area.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.browser_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.browser_splitter.setMinimumWidth(0)
+        self.browser_splitter.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.browser_splitter.setHandleWidth(4)
         self.browser_splitter.setStyleSheet(
             "QSplitter::handle { background-color: #1E293B; height: 4px; }"
             "QSplitter::handle:hover { background-color: #6366F1; }"
         )
+        self.browser_input_panel = QWidget()
+        self.browser_input_panel.setMinimumWidth(0)
+        self.browser_input_panel.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
+        browser_input_panel_layout = QVBoxLayout(self.browser_input_panel)
+        browser_input_panel_layout.setContentsMargins(0, 0, 0, 0)
+        browser_input_panel_layout.setSpacing(0)
+        self.browser_project_bar = BrowserProjectBar()
+        self.browser_project_bar.setMinimumWidth(0)
+        self.browser_project_bar.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        browser_input_panel_layout.addWidget(self.browser_input_area)
+        browser_input_panel_layout.addWidget(self.browser_project_bar)
         self.browser_splitter.addWidget(self.browser_msg_area)
-        self.browser_splitter.addWidget(self.browser_input_area)
+        self.browser_splitter.addWidget(self.browser_input_panel)
         self.browser_splitter.setStretchFactor(0, 8)
         self.browser_splitter.setStretchFactor(1, 2)
         self.browser_splitter.setSizes([700, 180])
         browser_layout.addWidget(self.browser_splitter)
 
         self.api_page = QWidget()
+        self.api_page.setMinimumWidth(0)
+        self.api_page.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         api_layout = QVBoxLayout(self.api_page)
         api_layout.setContentsMargins(0, 0, 0, 0)
         self.api_selection_toolbar = QFrame()
@@ -118,14 +146,24 @@ class ChatPage(QWidget):
         api_layout.addWidget(self.api_selection_toolbar)
         self.api_msg_area = MessageArea()
         self.api_input_area = InputArea()
+        self.api_msg_area.setMinimumWidth(0)
+        self.api_input_area.setMinimumWidth(0)
+        self.api_msg_area.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
+        self.api_input_area.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.api_input_panel = QWidget()
+        self.api_input_panel.setMinimumWidth(0)
+        self.api_input_panel.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         api_input_panel_layout = QVBoxLayout(self.api_input_panel)
         api_input_panel_layout.setContentsMargins(0, 0, 0, 0)
         api_input_panel_layout.setSpacing(0)
         self.api_model_usage_bar = ApiModelUsageBar()
+        self.api_model_usage_bar.setMinimumWidth(0)
+        self.api_model_usage_bar.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         api_input_panel_layout.addWidget(self.api_input_area)
         api_input_panel_layout.addWidget(self.api_model_usage_bar)
         self.api_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.api_splitter.setMinimumWidth(0)
+        self.api_splitter.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.api_splitter.setHandleWidth(4)
         self.api_splitter.setStyleSheet(
             "QSplitter::handle { background-color: #1E293B; height: 4px; }"
@@ -142,6 +180,8 @@ class ChatPage(QWidget):
         self.inner_stack.addWidget(self.api_page)
 
         self.v_splitter.setHandleWidth(4)
+        self.v_splitter.setMinimumWidth(0)
+        self.v_splitter.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.v_splitter.setStyleSheet(
             "QSplitter::handle { background-color: #1E293B; height: 4px; }"
             "QSplitter::handle:hover { background-color: #6366F1; }"
@@ -151,11 +191,43 @@ class ChatPage(QWidget):
 
         self.splitter.addWidget(self.v_splitter)
         self.splitter.setCollapsible(0, False)
-        self.splitter.setSizes([260, 800])
+        self.splitter.setCollapsible(1, True)
+        self.splitter.setChildrenCollapsible(True)
+        self.splitter.setSizes([UI_SIZES["default_sidebar_width"], 900])
         layout.addWidget(self.splitter)
+
+        # Issue 3: 建议栏显示/隐藏时调整 splitter 给输入区额外空间
+        self._suggestion_extra = 0
+        self.browser_input_area.extra_space_requested.connect(
+            lambda px: self._adjust_splitter_for_suggestions(self.browser_splitter, px)
+        )
+        self.api_input_area.extra_space_requested.connect(
+            lambda px: self._adjust_splitter_for_suggestions(self.api_splitter, px)
+        )
 
         self._apply_tab_theme()
         theme_manager.theme_changed.connect(self._apply_tab_theme)
+
+    def _adjust_splitter_for_suggestions(self, splitter, extra_px):
+        """建议栏显示时扩大输入面板，隐藏时恢复。"""
+        sizes = splitter.sizes()
+        if len(sizes) < 2:
+            return
+        prev_extra = self._suggestion_extra
+        if extra_px > 0 and prev_extra == 0:
+            # 扩大输入面板
+            delta = extra_px
+            sizes[0] = max(100, sizes[0] - delta)
+            sizes[1] = sizes[1] + delta
+            self._suggestion_extra = delta
+        elif extra_px == 0 and prev_extra > 0:
+            # 恢复
+            sizes[0] = sizes[0] + prev_extra
+            sizes[1] = max(100, sizes[1] - prev_extra)
+            self._suggestion_extra = 0
+        else:
+            return
+        splitter.setSizes(sizes)
 
     def _apply_tab_theme(self):
         p = theme_manager.get_palette()
@@ -163,7 +235,8 @@ class ChatPage(QWidget):
             QTabWidget::pane {{ border: none; }}
             QTabBar::tab {{
                 background-color: {p.BG_SECONDARY}; color: {p.TEXT_SECONDARY};
-                padding: 8px 16px; border: none; border-bottom: 2px solid transparent;
+                padding: 5px 10px; border: none; border-bottom: 2px solid transparent;
+                font-size: 11px;
             }}
             QTabBar::tab:selected {{
                 color: {p.TEXT_PRIMARY}; border-bottom: 2px solid {p.ACCENT_PRIMARY};
@@ -187,7 +260,7 @@ class ChatPage(QWidget):
             self.anim.setStartValue(left_w)
             self.anim.setEndValue(16)
         else:
-            target_w = self.last_sidebar_width if self.last_sidebar_width > 100 else 260
+            target_w = self.last_sidebar_width if self.last_sidebar_width > 100 else UI_SIZES["default_sidebar_width"]
             self.side_container.set_content_visible(True)
             self.anim.setStartValue(left_w)
             self.anim.setEndValue(target_w)
@@ -229,9 +302,7 @@ class ChatPage(QWidget):
         self.worker.input_area = self.browser_input_area
 
         self.worker.status_signal.connect(self.header.set_status)
-        self.worker.context_health_signal.connect(lambda t, g: self.header.update_health(g))
         self.worker.sessions_signal.connect(self._dispatch_sessions)
-        self.worker.state_sync_signal.connect(self.header.update_stats)
         self.worker.batch_complete_signal.connect(self.reset_fix_btn)
         self.worker.occupancy_signal.connect(self.session_list.update_occupancy)
 
@@ -255,14 +326,17 @@ class ChatPage(QWidget):
             self.worker.ai_state_signal.connect(self.browser_input_area.update_ai_state)
             self.worker.ai_state_signal.connect(self.api_input_area.update_ai_state)
             self.worker.ai_state_signal.connect(self._on_browser_ai_state)
+        if hasattr(self.worker, "pending_message_consumed_signal"):
+            self.worker.pending_message_consumed_signal.connect(self.browser_input_area.on_pending_consumed)
 
-        if hasattr(self.worker, "daemon_suggestion_signal"):
-            self.worker.daemon_suggestion_signal.connect(self._on_daemon_suggestion)
+        if hasattr(self.worker, "subagent_suggestion_signal"):
+            self.worker.subagent_suggestion_signal.connect(self._on_subagent_suggestion)
 
         self.browser_input_area.request_send_text.connect(lambda t: self._send_text_in_mode("browser", t))
         self.api_input_area.request_send_text.connect(lambda t: self._send_text_in_mode("api", t))
         self.browser_input_area.request_send_compound.connect(lambda text, files: self._send_compound_in_mode("browser", text, files))
         self.api_input_area.request_send_compound.connect(lambda text, files: self._send_compound_in_mode("api", text, files))
+        self.api_input_area.input_box.textChanged.connect(self.api_skill_references.update_suggestions_for_input)
         self.browser_input_area.log_message.connect(self.header.set_status)
         self.api_input_area.log_message.connect(self.header.set_status)
 
@@ -316,6 +390,8 @@ class ChatPage(QWidget):
         self.api_cancel_selection_btn.clicked.connect(self._cancel_api_multi_select_mode)
         self.browser_msg_area.request_load_more.connect(lambda: self._load_more_for_mode('browser'))
         self.api_msg_area.request_load_more.connect(lambda: self._load_more_for_mode('api'))
+        if hasattr(self.browser_msg_area, 'request_resync'):
+            self.browser_msg_area.request_resync.connect(self._request_browser_resync)
         if hasattr(self.worker, 'api_messages_deleted_signal'):
             self.worker.api_messages_deleted_signal.connect(self._on_api_messages_deleted)
         if hasattr(self.worker, 'api_round_state_signal'):
@@ -326,6 +402,33 @@ class ChatPage(QWidget):
             self.worker.tool_status_signal.connect(self._on_tool_status_event)
         elif hasattr(self.worker, 'api_stream_status_signal'):
             self.worker.api_stream_status_signal.connect(self._on_tool_status_event)
+
+        # 切换时把日志转发到 header 状态栏（提前连接，不依赖 docker_manager 就绪）
+        self.browser_project_bar.log_message.connect(self.header.set_status)
+        self.api_model_usage_bar.log_message.connect(self.header.set_status)
+        # 环境切换走 RPC：env_changed(mode, path) -> worker.set_exec_mode(mode, path)
+        self.browser_project_bar.env_changed.connect(self.worker.set_exec_mode)
+        self.api_model_usage_bar.env_changed.connect(self.worker.set_exec_mode)
+        if hasattr(self.worker, "switch_project"):
+            self.browser_project_bar.project_changed.connect(self.worker.switch_project)
+            self.api_model_usage_bar.project_changed.connect(self.worker.switch_project)
+        # 绑定沙盒环境栏的 docker_manager，并同步初始状态
+        QTimer.singleShot(0, self._bind_sandbox_bars)
+
+    def _bind_sandbox_bars(self):
+        """从 config 读当前执行环境配置，同步到两个状态栏的环境按钮。
+        切换走 RPC（env_changed -> worker.set_exec_mode），无需本地 docker_manager 实例。
+        """
+        try:
+            from app.core.config import ConfigManager
+            cfg = ConfigManager.load()
+            mode = cfg.get('sandbox_exec_mode', 'docker')
+            python = cfg.get('sandbox_local_python', '')
+            self.browser_project_bar.sync_exec_state(mode, python)
+            self.api_model_usage_bar.sync_exec_state(mode, python)
+            logger.info(f"[SandboxEnvBar] 初始状态同步完成: mode={mode}, python={python or '系统默认'}")
+        except Exception as e:
+            logger.warning(f"[SandboxEnvBar] 初始状态同步失败: {e}")
 
     def _dispatch_sessions(self, sessions):
         """根据数据内容分发会话列表到对应组件。
@@ -545,9 +648,6 @@ class ChatPage(QWidget):
     def log_status(self, text):
         self.header.set_status(text)
 
-    def get_input_height_state(self): return self.v_splitter.sizes()
-    def set_input_height_state(self, s): self.v_splitter.setSizes(s)
-
     def on_fix_clicked(self):
         self.header.set_fix_btn_state(False, "⏳ 修复中...")
         self.worker.request_fix_all()
@@ -561,10 +661,16 @@ class ChatPage(QWidget):
         text = (text or "").strip()
         if not text:
             return
+        conv_id = str(
+            getattr(self, '_api_active_conv_id', '')
+            or getattr(self.api_session_list, '_active_conv_id', '')
+            or ''
+        )
         local_msg = {
             "role": "User",
-            "id": f"local_0",
+            "id": f"local_api_user_{int(time.time() * 1000)}",
             "source": "api",
+            "conversation_id": conv_id,
             "segments": [{"type": "text", "content": text}],
         }
         self._api_all_messages = list(self._api_all_messages or [])
@@ -638,6 +744,13 @@ class ChatPage(QWidget):
         self.is_switching = True
         self.header.set_sync_visible(False)
 
+    def _request_browser_resync(self):
+        logger.warning("[page] 浏览器消息投影请求 resync")
+        if hasattr(self.worker, "trigger_resync"):
+            self.worker.trigger_resync()
+        else:
+            self.resume_sync()
+
     def on_messages_received(self, messages):
         # 兼容保留：旧的视图冻结/同步入口，当前主流程已改为 _on_mode_messages。
         print(f"📬 [ChatPage] 收到消息: {len(messages)} 条")
@@ -693,6 +806,7 @@ class ChatPage(QWidget):
                     probe("chatpage_stream_completed_takeover", level="info", side="ui",
                           state=round_state, cached_count=msg_count, active_stream=False)
                 else:
+                    self._api_messages_pending_render = True
                     probe("chatpage_hold_render", level="debug", side="ui",
                           state=round_state, cached_count=msg_count)
                     return
@@ -755,6 +869,10 @@ class ChatPage(QWidget):
     def _on_api_round_state_changed(self, payload):
         if not isinstance(payload, dict):
             return
+        # 分发：tool_call 类型的事件转发给 _on_tool_status_event
+        if str(payload.get('type', '') or '').strip() == 'tool_call':
+            self._on_tool_status_event(payload)
+            return
         self._api_round_payload = dict(payload)
         state = str(payload.get('state', '') or 'idle').strip() or 'idle'
         self._api_round_state = state
@@ -774,7 +892,7 @@ class ChatPage(QWidget):
                 self.header.set_status(runtime_text)
                 self.api_msg_area.show_runtime_status(runtime_text)
             elif state == 'browser_stateless':
-                runtime_text = message or '正在操作 WebAI 网页...'
+                runtime_text = message or '正在操作 GoAmzAI 网页...'
                 self.header.set_status(runtime_text)
                 self.api_msg_area.show_runtime_status(runtime_text)
             elif state == 'running_tools':
@@ -791,8 +909,14 @@ class ChatPage(QWidget):
                 probe("chatpage_render_finalized", level="info", side="ui",
                       trace_id=trace_id, round_id=round_id,
                       cached_count=cached_count,
-                      loop_count=payload.get('loop_count', 0))
-                self._render_api_messages_with_tool_status()
+                      loop_count=payload.get('loop_count', 0),
+                      pending=getattr(self, '_api_messages_pending_render', False))
+                # 只在 hold 期间确实收到过新消息时才立即渲染
+                # 否则等 messages_signal 到达后再渲染（避免用过时数据清掉流式气泡）
+                if getattr(self, '_api_messages_pending_render', False):
+                    self._api_messages_pending_render = False
+                    self._sync_tool_results_into_runtime_status()
+                    self._render_api_messages_with_tool_status()
             elif state == 'idle':
                 self.api_msg_area.clear_runtime_status()
 
@@ -830,6 +954,8 @@ class ChatPage(QWidget):
             if not isinstance(msg, dict):
                 enriched_visible.append(msg)
                 continue
+            if self._is_ephemeral_api_tool_feedback(msg):
+                continue
             cloned = dict(msg)
             segments = []
             for seg in (msg.get('segments', []) or []):
@@ -837,7 +963,10 @@ class ChatPage(QWidget):
                     segments.append(seg)
                     continue
                 cloned_seg = dict(seg)
-                if cloned_seg.get('type') == 'tool_call':
+                _seg_type = cloned_seg.get('type', '')
+                _seg_lang = str(cloned_seg.get('language', '') or '').strip().lower()
+                _is_tool_call_seg = (_seg_type == 'tool_call') or (_seg_type == 'code' and _seg_lang == 'tool_call')
+                if _is_tool_call_seg:
                     tool_call_id = str(cloned_seg.get('tool_call_id') or '').strip()
                     if tool_call_id and tool_call_id in status_snapshot:
                         runtime_payload = dict(status_snapshot[tool_call_id])
@@ -856,6 +985,16 @@ class ChatPage(QWidget):
         incoming_id = enriched_visible[0].get('id', '') if enriched_visible else ''
         self.api_msg_area.render_messages(enriched_visible, incoming_id)
         self.api_msg_area.set_load_more_visible(has_more)
+
+    def _is_ephemeral_api_tool_feedback(self, msg):
+        if not isinstance(msg, dict):
+            return False
+        meta = msg.get('meta', {}) if isinstance(msg.get('meta', {}), dict) else {}
+        if not bool(meta.get('ephemeral')):
+            return False
+        kind = str(msg.get('kind', '') or '').strip().lower()
+        tool_kind = str(meta.get('tool_kind', '') or '').strip().lower()
+        return kind == 'tool_feedback' or tool_kind == 'tool_feedback'
 
     def _on_tool_status_event(self, payload):
         if not isinstance(payload, dict):
@@ -912,7 +1051,7 @@ class ChatPage(QWidget):
                 if not message:
                     existing['message'] = '执行完成' if seg.get('success', True) else '执行失败'
                 self._api_tool_status_by_id[tool_call_id] = existing
-    def _on_daemon_suggestion(self, suggestions):
+    def _on_subagent_suggestion(self, suggestions):
         if not isinstance(suggestions, list) or not suggestions:
             return
         target = self.browser_input_area if self.current_mode == "browser" else self.api_input_area
@@ -923,6 +1062,10 @@ class ChatPage(QWidget):
             if mode == "browser":
                 self.worker.send_text("div.aa-chat-input textarea", text)
             else:
+                handled, resolved_text = self.api_skill_references.handle(text)
+                if handled:
+                    return
+                text = resolved_text or text
                 self._api_round_state = 'streaming_initial_reply'
                 self._append_local_api_user_message(text)
                 probe("chatpage_send_text", level="info", side="ui", mode="api", text_len=len(text))
@@ -938,6 +1081,10 @@ class ChatPage(QWidget):
             else:
                 self.worker.send_text("div.aa-chat-input textarea", text)
         else:
+            handled, resolved_text = self.api_skill_references.handle(text)
+            if handled:
+                return
+            text = resolved_text or text
             if files and hasattr(self.worker, "status_signal"):
                 try:
                     self.worker.status_signal.emit("⚠️ API 模式暂不支持附件上传，已仅发送文本")
@@ -947,3 +1094,4 @@ class ChatPage(QWidget):
             self._append_local_api_user_message(text)  # 先在界面渲染用户发出的消息
             if hasattr(self.worker, "api_send"):
                 self.worker.api_send(text, stream=True)  # 启用流式输出
+

@@ -124,11 +124,13 @@ class AgentManager:
         if not self.file_service.is_safe_path(path):
              return f"❌ Error: Access denied to '{path}'. Security Violation."
 
-        if not os.path.exists(path): 
+        abs_path = self.file_service.resolve_path(path)
+
+        if not os.path.exists(abs_path): 
             return f"❌ Error: File '{path}' not found."
             
         try:
-            with open(path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(abs_path, 'r', encoding='utf-8', errors='replace') as f:
                 content = f.read()
             
             lines = content.splitlines()
@@ -177,10 +179,12 @@ class AgentManager:
             if not self.file_service.is_safe_path(directory):
                 return f"❌ Error: Access denied to '{directory}'."
                 
-            if not os.path.exists(directory):
+            abs_directory = self.file_service.resolve_path(directory)
+
+            if not os.path.exists(abs_directory):
                 return f"❌ Error: Directory '{directory}' not found."
 
-            items = os.listdir(directory)
+            items = os.listdir(abs_directory)
             files = []
             dirs = []
             
@@ -189,7 +193,7 @@ class AgentManager:
             for item in items:
                 if item in IGNORE_MARKERS: continue
                 
-                full_path = os.path.join(directory, item)
+                full_path = os.path.join(abs_directory, item)
                 if os.path.isdir(full_path):
                     dirs.append(f"📂 {item}/")
                 else:
@@ -272,7 +276,7 @@ class AgentManager:
             if not self.file_service.is_safe_path(f):
                  return False, [], f"❌ Security Error: Cannot write to '{f}' outside project root."
                  
-            abs_p = os.path.abspath(f)
+            abs_p = self.file_service.resolve_path(f)
             if os.path.exists(abs_p):
                 bak = abs_p + ".bak"
                 shutil.copy2(abs_p, bak)
@@ -305,7 +309,7 @@ class AgentManager:
                 if os.path.exists(bak_path):
                     for i in range(3):
                         try:
-                            shutil.move(bak_path, os.path.abspath(file_path))
+                            shutil.move(bak_path, self.file_service.resolve_path(file_path))
                             restored.append(file_path)
                             break
                         except PermissionError:

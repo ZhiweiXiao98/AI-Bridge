@@ -6,7 +6,6 @@ from app.core.api.api_stream_models import StreamStatus
 from app.core.logging import get_logger, get_trace_extra, new_trace, new_round
 from app.core.logging.trace_context import get_current_trace
 from app.core.debug import probe
-from app.core.project_context import ProjectContext
 
 logger = get_logger("app.core.worker_modules.worker_api_mode", side="worker")
 
@@ -40,7 +39,29 @@ class WorkerApiModeBridge:
         切换消息源模式。
         由 UI 层（Tab切换）调用，同一时刻只有一个模式活跃。
         """
+        mode = str(mode or "browser").strip().lower()
+        if mode not in {"browser", "api"}:
+            self.safe_emit_status(f"⚠️ 未知模式: {mode}")
+            return
         if mode == self.mode:
+            self.mode_changed_signal.emit(mode)
+            if mode == "api":
+                self._init_api_source()
+                if self.api_source:
+                    convs = self.api_source.get_conversations()
+                    self.sessions_signal.emit(convs if convs else [])
+                    if hasattr(self.api_source, "has_active_conversation") and self.api_source.has_active_conversation():
+                        msgs = self.api_source.get_history_as_messages()
+                        self.messages_signal.emit(msgs if msgs else [])
+                        self.context_status_signal.emit(self.api_source.get_context_status())
+                    else:
+                        self.messages_signal.emit([])
+                        self.context_status_signal.emit({})
+            else:
+                try:
+                    self.trigger_resync()
+                except Exception as e:
+                    logger.warning("Browser 模式重复切换同步失败: %s", e)
             return
         old_mode = self.mode
         self.mode = mode
@@ -85,8 +106,6 @@ class WorkerApiModeBridge:
             from app.core.api_source import APISource
             self.api_source = APISource()
             self.api_source.initialize()
-            if hasattr(self.api_source, 'conv_store') and self.api_source.conv_store:
-                ProjectContext.get().project_switched.connect(self.api_source.conv_store.on_project_switched)
             # 绑定工具状态回调
             if hasattr(self, 'api_stream_status_signal'):
                 def _forward_tool_status_event(event):
@@ -138,6 +157,64 @@ class WorkerApiModeBridge:
         except Exception as e:
             self.safe_emit_status(f"❌ API 初始化失败: {e}")
             self.mode = "browser"
+
+    def api_probe_tool_support(self, **kwargs):
+        """Probe native API tool-call support for the active API profile."""
+        self._init_api_source()
+        if not self.api_source:
+            result = {
+                "status": "unsupported",
+                "reason": "api_source_unavailable",
+                "protocol": "markdown_fallback",
+            }
+            self.safe_emit_status("⚠️ API 工具能力探测失败：API 源不可用")
+            return result
+        try:
+            if hasattr(self.api_source, "reload_runtime_config"):
+                self.api_source.reload_runtime_config()
+            result = self.api_source.probe_tool_support()
+            status = str((result or {}).get("status", "") or "")
+            protocol = str((result or {}).get("protocol", "") or "")
+            self.safe_emit_status(f"🔎 API 工具能力探测完成：{status or 'unknown'} / {protocol or 'unknown'}")
+            return result
+        except Exception as e:
+            logger.warning("API tool support probe failed: %s", e)
+            self.safe_emit_status(f"⚠️ API 工具能力探测失败：{e}")
+            return {
+                "status": "partial",
+                "reason": str(e),
+                "protocol": "markdown_fallback",
+            }
+
+    def api_probe_models(self, **kwargs):
+        """Probe available model ids for the active API profile."""
+        self._init_api_source()
+        if not self.api_source:
+            self.safe_emit_status("⚠️ API 模型探测失败：API 源不可用")
+            return {
+                "ok": False,
+                "models": [],
+                "reason": "api_source_unavailable",
+            }
+        try:
+            if hasattr(self.api_source, "reload_runtime_config"):
+                self.api_source.reload_runtime_config()
+            result = self.api_source.probe_available_models()
+            count = len((result or {}).get("models") or [])
+            if result.get("ok"):
+                self.safe_emit_status(f"🔎 API 模型探测完成：{count} 个模型")
+            else:
+                self.safe_emit_status(f"⚠️ API 模型探测失败：{result.get('reason', 'unknown')}")
+            return result
+        except Exception as e:
+            logger.warning("API model probe failed: %s", e)
+            self.safe_emit_status(f"⚠️ API 模型探测失败：{e}")
+            return {
+                "ok": False,
+                "models": [],
+                "reason": str(e),
+            }
+
     def api_send(self, text: str, **kwargs):
         """API模式发送消息（由UI层调用）"""
         conv_id = ""
@@ -388,7 +465,7 @@ class WorkerApiModeBridge:
 
             self._api_streaming = False
             self._update_ai_state("idle")
-            self._notify_daemon_reply_completed("api", chat_id=active_conv_id)
+            self._notify_subagent_reply_completed("api", chat_id=active_conv_id)
 
     def _handle_api_send_stream(self, text: str):
         """异步流式发送入口"""
@@ -453,7 +530,7 @@ class WorkerApiModeBridge:
         self._api_streaming = True
         try:
             self.stream_bridge.stream_status_signal.connect(on_status, type=0)  # AutoConnection
-            self.stream_bridge.start_stream(text)
+            self.stream_bridge.start_stream(text, tool_router=self.tool_router)
 
             # 轻微延迟后回显：由 api_source.send_message_stream 负责写入 user，避免重复入库
             try:
@@ -486,14 +563,16 @@ class WorkerApiModeBridge:
                 self.browser_stateless_bridge.handle_send(text, profile)
                 return
 
-            reply = self.api_source.send_message_sync(text)
+            reply = self.api_source.send_message_sync(text, tool_router=self.tool_router)
 
             # 如果本次发生了 fallback 自动切换，给用户一个直觉提示
             fallback_event = getattr(self.api_source, "last_fallback_event", None)
             if fallback_event:
                 from_name = self._get_api_profile_display_name(fallback_event.get("from", ""))
                 to_name = self._get_api_profile_display_name(fallback_event.get("to", ""))
-                self.safe_emit_status(f"⚠️ 当前模型调用失败，已自动切换备用模型：{from_name} → {to_name}")
+                reason = str(fallback_event.get("user_message") or fallback_event.get("reason") or "").strip()
+                suffix = f"（{reason[:120]}）" if reason else ""
+                self.safe_emit_status(f"⚠️ 当前模型调用失败，已自动切换备用模型：{from_name} → {to_name}{suffix}")
 
             # 构建消息列表并发送给UI渲染
             msgs = self.api_source.get_history_as_messages()
@@ -553,7 +632,7 @@ class WorkerApiModeBridge:
                 if self.api_source and self.api_source.conv_store and self.api_source.conv_store.active_id
                 else ""
             )
-            self._notify_daemon_reply_completed("api", chat_id=active_conv_id)
+            self._notify_subagent_reply_completed("api", chat_id=active_conv_id)
 
     def api_switch_conversation(self, conv_id: str, **kwargs):
         """API模式切换对话"""
@@ -683,4 +762,5 @@ class WorkerApiModeBridge:
     def api_set_conversation_model_usage(self, conv_id: str, usage=None, **kwargs):
         """设置单个 API 对话使用的 Profile/Chain；usage=None 表示使用全局默认。"""
         return self.api_conversation_bridge.set_model_usage(conv_id, usage)
+
 

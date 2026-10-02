@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 def _filter_top_level_nodes(nodes):
     """只保留顶层节点，去除被其他节点包含的子节点。
 
-    场景：WebAI 的 DOM 中 blockquote 的 aa-html-content 嵌套在 markdown-renderer 内，
+    场景：GoAmzAI 的 DOM 中 blockquote 的 aa-html-content 嵌套在 markdown-renderer 内，
     两者都会被 content_blocks 选择器匹配，导致 parse_node 对同一文本递归两次。
     只保留外层节点即可——parse_node 会递归处理子元素。
     """

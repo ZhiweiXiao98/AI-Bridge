@@ -85,31 +85,73 @@ class APISessionList(QWidget):
             self.list_widget.setCurrentRow(-1)
             self.list_widget.viewport().update()
         else:
-            self.status_label.setText(f"{len(conversations)} 个对话")
+            project_count = len({
+                str(c.get("project_root") or c.get("project_name") or "default")
+                for c in conversations
+                if isinstance(c, dict)
+            })
+            self.status_label.setText(f"{len(conversations)} 个对话 · {project_count} 个项目")
 
+        grouped = {}
         for conv in conversations:
-            title = conv.get("title", "未命名")
-            date_str = conv.get("date", "")
-            is_active = conv.get("active", False)
-            conv_id = conv.get("id", "")
-            turns = conv.get("turns", 0)
-            icon = conv.get("icon", "🤖")
+            if not isinstance(conv, dict):
+                continue
+            project_name = str(conv.get("project_name") or "未命名项目")
+            project_root = str(conv.get("project_root") or "")
+            key = project_root or project_name
+            if key not in grouped:
+                grouped[key] = {"name": project_name, "root": project_root, "items": []}
+            grouped[key]["items"].append(conv)
 
-            item = QListWidgetItem(self.list_widget)
-            item.setSizeHint(QSize(200, 60))
-            item.setData(Qt.ItemDataRole.UserRole, conv_id)
+        for group in grouped.values():
+            self._add_project_header(group["name"], group["root"], len(group["items"]))
+            for conv in group["items"]:
+                self._add_conversation_item(conv)
 
-            pinned = conv.get("pinned", False)
-            display_title = f"📍 {title}" if pinned else f"{title}"
-            if turns > 0:
-                display_title += f" ({turns}轮)"
+    def _add_project_header(self, project_name: str, project_root: str, count: int):
+        item = QListWidgetItem(self.list_widget)
+        item.setSizeHint(QSize(200, 28))
+        item.setFlags(Qt.ItemFlag.NoItemFlags)
+        item.setData(Qt.ItemDataRole.UserRole, "")
 
-            widget = SessionItemWidget(display_title, date_str, icon, is_active, source="api")
-            self.list_widget.setItemWidget(item, widget)
+        label = QLabel(f"  {project_name}  ·  {count}")
+        label.setToolTip(project_root or project_name)
+        p = theme_manager.get_palette()
+        label.setStyleSheet(f"""
+            QLabel {{
+                color: {p.TEXT_SECONDARY};
+                background-color: {p.BG_PRIMARY};
+                border-bottom: 1px solid {p.BORDER};
+                font-size: 11px;
+                font-weight: bold;
+                padding: 5px 8px;
+            }}
+        """)
+        self.list_widget.setItemWidget(item, label)
 
-            if is_active:
-                item.setSelected(True)
-                self.list_widget.setCurrentItem(item)
+    def _add_conversation_item(self, conv: dict):
+        title = conv.get("title", "未命名")
+        date_str = conv.get("date", "")
+        is_active = conv.get("active", False)
+        conv_id = conv.get("id", "")
+        turns = conv.get("turns", 0)
+        icon = conv.get("icon", "🤖")
+
+        item = QListWidgetItem(self.list_widget)
+        item.setSizeHint(QSize(200, 60))
+        item.setData(Qt.ItemDataRole.UserRole, conv_id)
+
+        pinned = conv.get("pinned", False)
+        display_title = f"📍 {title}" if pinned else f"{title}"
+        if turns > 0:
+            display_title += f" ({turns}轮)"
+
+        widget = SessionItemWidget(display_title, date_str, icon, is_active, source="api")
+        self.list_widget.setItemWidget(item, widget)
+
+        if is_active:
+            item.setSelected(True)
+            self.list_widget.setCurrentItem(item)
 
     def _on_item_clicked(self, item):
         conv_id = item.data(Qt.ItemDataRole.UserRole)

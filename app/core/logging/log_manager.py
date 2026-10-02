@@ -145,10 +145,24 @@ def _ensure_log_dir(log_dir=None):
     return _log_dir
 
 
+class _SafeRotatingFileHandler(RotatingFileHandler):
+    """Windows 安全的 RotatingFileHandler。
+    多进程场景下 os.rename 可能因文件锁失败，
+    此子类捕获 PermissionError 并跳过本次轮转，继续写当前文件。
+    """
+
+    def doRollover(self):
+        try:
+            super().doRollover()
+        except (PermissionError, OSError):
+            # 另一个进程持有文件句柄，本次轮转跳过，下次再试
+            pass
+
+
 def _create_file_handler(filename, level=logging.DEBUG, fmt=None, app_only=True):
     log_dir = _ensure_log_dir()
     filepath = os.path.join(log_dir, filename)
-    handler = RotatingFileHandler(
+    handler = _SafeRotatingFileHandler(
         filepath,
         maxBytes=DEFAULT_MAX_BYTES,
         backupCount=DEFAULT_BACKUP_COUNT,

@@ -108,7 +108,7 @@ class CodeValidator:
         """
         try:
             # 解析代码为 AST
-            tree = ast.parse(code)
+            tree = ast.parse(code, filename="<sandbox-code-validator>")
             
             # 运行检测器
             detector = DangerousOperationDetector()

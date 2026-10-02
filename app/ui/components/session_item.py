@@ -12,24 +12,24 @@ class SessionItemWidget(QWidget):
         self.title_text = title
         
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(10)
+        layout.setContentsMargins(6, 5, 6, 5)
+        layout.setSpacing(7)
         
         # 1. 头像
         self.avatar = QLabel(icon_char[0] if icon_char else title[0].upper())
-        self.avatar.setFixedSize(36, 36)
+        self.avatar.setFixedSize(28, 28)
         self.avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.avatar)
         
         # 2. 文本区域
         text_layout = QVBoxLayout()
-        text_layout.setSpacing(4)
+        text_layout.setSpacing(2)
         
         self.lbl_title = QLabel(title)
         text_layout.addWidget(self.lbl_title)
         
         meta_row = QHBoxLayout()
-        meta_row.setSpacing(8)
+        meta_row.setSpacing(5)
         
         self.lbl_date = QLabel(date)
         meta_row.addWidget(self.lbl_date)
@@ -64,17 +64,17 @@ class SessionItemWidget(QWidget):
             QLabel {{
                 background-color: {bg_color};
                 color: {fg_color};
-                border-radius: 18px;
+                border-radius: 14px;
                 font-weight: bold;
-                font-size: 16px;
+                font-size: 13px;
             }}
         """)
         
         title_weight = "bold" if self.is_active else "normal"
         title_color = p.TEXT_PRIMARY if self.is_active else p.TEXT_SECONDARY
-        self.lbl_title.setStyleSheet(f"font-weight: {title_weight}; font-size: 13px; color: {title_color}; background: transparent;")
+        self.lbl_title.setStyleSheet(f"font-weight: {title_weight}; font-size: 12px; color: {title_color}; background: transparent;")
         
-        self.lbl_date.setStyleSheet(f"color: {p.TEXT_SECONDARY}; font-size: 11px; background: transparent;")
+        self.lbl_date.setStyleSheet(f"color: {p.TEXT_SECONDARY}; font-size: 10px; background: transparent;")
         
         if hasattr(self, 'lbl_source') and self.source == "api":
             self.lbl_source.setStyleSheet(f"color: {p.ACCENT_PRIMARY}; font-size: 9px; font-weight: bold; background: transparent;")

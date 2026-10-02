@@ -44,6 +44,7 @@ class ChatPageStreamManager(QObject):
             return {
                 "stream_id": chunk.get("stream_id", "") or "",
                 "content": chunk.get("content", "") or "",
+                "thinking_content": chunk.get("thinking_content", "") or "",
                 "status": status,
                 "error_message": chunk.get("error_message", "") or "",
                 "conversation_id": chunk.get("conversation_id", "") or "",
@@ -57,6 +58,7 @@ class ChatPageStreamManager(QObject):
         return {
             "stream_id": getattr(chunk, "stream_id", "") or "",
             "content": getattr(chunk, "content", "") or "",
+            "thinking_content": getattr(chunk, "thinking_content", "") or "",
             "status": status,
             "error_message": getattr(chunk, "error_message", "") or "",
             "conversation_id": getattr(chunk, "conversation_id", "") or "",
@@ -78,8 +80,16 @@ class ChatPageStreamManager(QObject):
             logger.info(f"[ChatPageStream] 流式开始 | stream_id={data['stream_id']}")
             self._stream_manager.begin_stream(data["stream_id"], data["conversation_id"])
         elif data["status"] in (StreamStatus.STREAMING.value, "streaming"):
-            logger.debug(f"[ChatPageStream] 接收流式数据 | stream_id={data['stream_id']} | len={len(data['content'])}")
-            self._stream_manager.append_text(data["stream_id"], data["content"])
+            logger.debug(
+                "[ChatPageStream] 接收流式数据 | stream_id=%s | text_len=%d | thinking_len=%d",
+                data["stream_id"],
+                len(data["content"]),
+                len(data["thinking_content"]),
+            )
+            if data["thinking_content"]:
+                self._stream_manager.append_thinking(data["stream_id"], data["thinking_content"])
+            if data["content"]:
+                self._stream_manager.append_text(data["stream_id"], data["content"])
         elif data["status"] in (StreamStatus.CANCELLED.value, "cancelled"):
             logger.info(f"[ChatPageStream] 流式被取消 | stream_id={data['stream_id']}")
             self._stream_manager.end_stream(data["stream_id"], cancelled=True)

@@ -2,6 +2,9 @@
 import pytest
 from app.core.docker_manager import DockerManager
 
+pytestmark = [pytest.mark.docker, pytest.mark.slow]
+
+
 class TestDockerSandbox:
     
     @pytest.fixture

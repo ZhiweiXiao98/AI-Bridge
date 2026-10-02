@@ -61,6 +61,7 @@ class ToolRouterService:
             messages,
             conversation_id=chat_id,
             source='tool_router',
+            write_back_tool_call_id=True,
         )
         logger.info("[工具路由] 段解析器完成 | 耗时=%.1fs | 意图数=%s",
                      time.time() - _t0, len(intents) if intents else 0)

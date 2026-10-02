@@ -7,7 +7,7 @@
 - 轻量探测：只返回 id + ai（角色），用于结构变化判定（~2KB）
 - 定向提取：只返回指定索引的元素 HTML
 
-所有脚本兼容 WebAI 平台的 DOM 结构，选择器由 config.py SELECTORS["chat_items"] 统一管理。
+所有脚本兼容 GoAmzAI 平台的 DOM 结构，选择器由 config.py SELECTORS["chat_items"] 统一管理。
 """
 
 from .config import SELECTORS

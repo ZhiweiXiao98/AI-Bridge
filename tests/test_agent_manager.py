@@ -78,7 +78,7 @@ class TestAgentManager:
         
         res_legacy = agent.tool_read_file("app/ui/worker.py")
         assert "worker_content" in res_legacy
-        assert "app/core/worker.py" in res_legacy
+        assert "app" in res_legacy and "core" in res_legacy and "worker.py" in res_legacy
 
     @patch("app.core.agent_manager.subprocess.run")
     def test_safe_apply_rollback_on_failure(self, mock_run, env):

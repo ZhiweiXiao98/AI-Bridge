@@ -1,7 +1,7 @@
 # filename: app/core/skills/core/file_operations/skill.py
 from typing import Any
 from app.core.skills.base import BaseSkill, SkillMetadata, SkillParameter
-from .path_utils import sanitize_path, resolve_legacy_path, is_path_allowed, path_exists
+from .path_utils import sanitize_path, resolve_legacy_path, is_path_allowed, path_exists, resolve_project_path
 from .read_ops import read_file as read_file_op, read_lines as read_lines_op, read_file_tail as read_file_tail_op, list_files as list_files_op, file_exists as file_exists_op, stat_file as stat_file_op
 from .symbol_search import search_symbols as search_symbols_op
 from .write_ops import write_file as write_file_op, append_file as append_file_op
@@ -159,6 +159,7 @@ class FileOperationsSkill(BaseSkill):
         path = sanitize_path(path) if path is not None else path
         if path:
             path = resolve_legacy_path(path, self.path_redirects)
+            path = resolve_project_path(path, self.file_service)
 
         if operation == "read_file":
             if not path:

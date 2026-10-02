@@ -1,0 +1,965 @@
+🔍 诊断开始（心跳+超时）
+
+====================================================================================================
+[CMD] /usr/local/bin/python -m pytest tests/test_ui_logic.py -vv
+[TIMEOUT] 180s
+----------------------------------------------------------------------------------------------------
+[HEARTBEAT] running... 0s
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items
+
+[HEARTBEAT] running... 10s
+tests/test_ui_logic.py::TestUILogic::test_send_message_flow \n[EXIT] -9 | elapsed=179.58s\n\n====================================================================================================\n[CMD] /usr/local/bin/python -m pytest tests/ -vv --maxfail=20\n====================================================================================================\n============================= test session starts ==============================
+\nplatform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+\ncachedir: .pytest_cache
+\nrootdir: /workspace
+\nconfigfile: pytest.ini
+\nplugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+\nasyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+\n[HEARTBEAT] running... 20s
+collecting ... collected 114 items
+\n
+\ntests/test_agent_manager.py::TestAgentManager::test_parse_tool_read PASSED [  0%]
+\ntests/test_agent_manager.py::TestAgentManager::test_parse_code_block PASSED [  1%]
+\ntests/test_agent_manager.py::TestAgentManager::test_path_redirection_logic PASSED [  2%]
+\ntests/test_agent_manager.py::TestAgentManager::test_tool_read_file_safety PASSED [  3%]
+\ntests/test_agent_manager.py::TestAgentManager::test_safe_apply_rollback_on_failure 
+\n-------------------------------- live log call ---------------------------------
+\nERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+\nERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+\nPASSED                                                                   [  4%]
+\ntests/test_agent_manager.py::TestAgentManager::test_safe_apply_commit_on_success PASSED [  5%]
+\ntests/test_agent_tools.py::TestAgentFileTools::test_read_file_not_found PASSED [  6%]
+\ntests/test_agent_tools.py::TestAgentFileTools::test_read_file_security_check PASSED [  7%]
+\ntests/test_agent_tools.py::TestToolExecution::test_code_execution_failure_feedback PASSED [  7%]
+\ntests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_add_and_persist_blacklist PASSED [  8%]
+\ntests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_save_code_interception PASSED [  9%]
+\ntests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_remove_ignore_logic PASSED [ 10%]
+\ntests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_auto_cleanup_staging PASSED [ 11%]
+\ntests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_content_mismatch_safety PASSED [ 12%]
+\ntests/test_blacklist_logic.py::TestBlacklistLogic::test_discard_only_affects_fingerprint PASSED [ 13%]
+\ntests/test_blacklist_logic.py::TestBlacklistLogic::test_manual_permanent_ignore PASSED [ 14%]
+\ntests/test_config.py::TestConfigManagerBasic::test_default_config_structure PASSED [ 14%]
+\ntests/test_config.py::TestConfigManagerBasic::test_chrome_port_default_value PASSED [ 15%]
+\ntests/test_config.py::TestConfigManagerBasic::test_auto_export_default_enabled PASSED [ 16%]
+\ntests/test_config.py::TestConfigManagerBasic::test_export_paths_are_strings PASSED [ 17%]
+\ntests/test_config.py::TestConfigManagerSaveLoad::test_save_and_load_custom_config PASSED [ 18%]
+\ntests/test_config.py::TestConfigManagerSaveLoad::test_load_creates_default_if_missing PASSED [ 19%]
+\ntests/test_config.py::TestConfigManagerSaveLoad::test_config_persistence_across_instances PASSED [ 20%]
+\ntests/test_config.py::TestConfigManagerValidation::test_port_is_integer PASSED [ 21%]
+\ntests/test_config.py::TestConfigManagerValidation::test_auto_export_is_boolean PASSED [ 21%]
+\ntests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[9527] PASSED [ 22%]
+\ntests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[8765] PASSED [ 23%]
+\ntests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[3000] PASSED [ 24%]
+\ntests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[5000] PASSED [ 25%]
+\ntests/test_config.py::TestConfigManagerEdgeCases::test_empty_path_strings PASSED [ 26%]
+\ntests/test_config.py::TestConfigManagerEdgeCases::test_config_not_modified_by_load PASSED [ 27%]
+\ntests/test_context_packing.py::TestContextPacking::test_pack_context_logic PASSED [ 28%]
+\ntests/test_docker_sandbox.py::TestDockerSandbox::test_code_execution_via_base64 
+\n-------------------------------- live log setup --------------------------------
+\nWARNING  DockerSandbox:docker_manager.py:46 ❌ Docker not available: Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))
+\nSKIPPED (Container not running)                                          [ 28%]
+\ntests/test_driver_interaction.py::TestInteractionManager::test_find_elements_wrapper PASSED [ 29%]
+\ntests/test_driver_interaction.py::TestInteractionManager::test_send_message_short PASSED [ 30%]
+\ntests/test_driver_interaction.py::TestInteractionManager::test_send_message_long PASSED [ 31%]
+\ntests/test_driver_interaction.py::TestInteractionManager::test_is_busy_logic PASSED [ 32%]
+\ntests/test_driver_interaction.py::TestInteractionManager::test_fingerprint_speed_optimization PASSED [ 33%]
+\ntests/test_driver_interaction.py::TestInteractionManager::test_smart_height_polling PASSED [ 34%]
+\ntests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_id_standard PASSED [ 35%]
+\ntests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_id_new_chat PASSED [ 35%]
+\ntests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_resilience PASSED [ 36%]
+\ntests/test_driver_perception.py::TestDriverPerception::test_role_recognition_logic PASSED [ 37%]
+\ntests/test_file_service.py::TestFileService::test_http_image_download PASSED [ 38%]
+\ntests/test_interaction_core.py::TestInteractionCore::test_fast_expand_logic PASSED [ 39%]
+\ntests/test_interaction_core.py::TestInteractionCore::test_scroll_traverse_variable_speed PASSED [ 40%]
+\ntests/test_interaction_core.py::TestInteractionCore::test_scan_and_fix_last_message PASSED [ 41%]
+\ntests/test_interaction_core.py::TestInteractionCore::test_scroll_traverse_interrupt PASSED [ 42%]
+\ntests/test_local_worker.py::TestLocalWorker::test_fix_all_batch_logic FAILED [ 42%]
+\ntests/test_local_worker.py::TestLocalWorker::test_process_batch_resilience ERROR [ 43%]
+\ntests/test_local_worker_strategy_e.py::TestWorkerStrategyE::test_binary_star_hash ERROR [ 44%]
+\ntests/test_local_worker_strategy_e.py::TestWorkerStrategyE::test_deduce_state_logic ERROR [ 45%]
+\ntests/test_parser_core.py::TestParserCore::test_clean_monaco_structure PASSED [ 46%]
+\ntests/test_parser_core.py::TestParserCore::test_anchor_alignment_logic PASSED [ 47%]
+\ntests/test_parser_core.py::TestParserCore::test_fallback_mode PASSED     [ 48%]
+\ntests/test_parser_core.py::TestParserCore::test_n_image_structure PASSED [ 49%]
+\ntests/test_parser_merge.py::TestParserMerge::test_merge_adjacent_text PASSED [ 50%]
+\ntests/test_parser_merge.py::TestParserMerge::test_merge_adjacent_code_forbidden PASSED [ 50%]
+\ntests/test_parser_merge.py::TestParserMerge::test_mixed_interleave PASSED [ 51%]
+\ntests/test_remote_protocol.py::TestRemoteProtocol::test_handle_status_signal FAILED [ 52%]
+\ntests/test_remote_protocol.py::TestRemoteProtocol::test_notify_pull_mechanism FAILED [ 53%]
+\ntests/test_remote_protocol.py::TestRemoteProtocol::test_pong_latency_calculation ERROR [ 54%]
+\ntests/test_saas_features.py::TestSessionIsolation::test_auto_lock_first_session PASSED [ 55%]
+\ntests/test_saas_features.py::TestSessionIsolation::test_block_alien_session PASSED [ 56%]
+\ntests/test_saas_features.py::TestSessionIsolation::test_active_switch_acceptance PASSED [ 57%]
+\ntests/test_self_update.py::TestSelfUpdateRealWorld::test_detect_new_file PASSED [ 57%]
+\ntests/test_self_update.py::TestSelfUpdateRealWorld::test_detect_overwrite_file PASSED [ 58%]
+\ntests/test_self_update.py::TestSelfUpdateRealWorld::test_ignore_same_content_crlf PASSED [ 59%]
+\ntests/test_self_update.py::TestSelfUpdateRealWorld::test_apply_update_action PASSED [ 60%]
+\ntests/test_self_update.py::TestSelfUpdateRealWorld::test_trigger_csharp_build PASSED [ 61%]
+\ntests/test_self_update.py::TestSelfUpdateRealWorld::test_ignore_system_files PASSED [ 62%]
+\ntests/test_server_dual_channel.py::TestServerDualChannel::test_sync_messages_endpoint 
+\n-------------------------------- live log call ---------------------------------
+\nINFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/messages "HTTP/1.1 200 OK"
+\nPASSED                                                                   [ 63%]
+\ntests/test_server_dual_channel.py::TestServerDualChannel::test_sync_code_endpoint 
+\n-------------------------------- live log call ---------------------------------
+\nINFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/code "HTTP/1.1 200 OK"
+\nPASSED                                                                   [ 64%]
+\ntests/test_server_dual_channel.py::TestServerDualChannel::test_upload_endpoint 
+\n-------------------------------- live log call ---------------------------------
+\nINFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/upload "HTTP/1.1 200 OK"
+\nPASSED                                                                   [ 64%]
+\ntests/test_state_service.py::TestStateService::test_initial_state PASSED [ 65%]
+\ntests/test_state_service.py::TestStateService::test_update_user_turn PASSED [ 66%]
+\ntests/test_state_service.py::TestStateService::test_manual_correction PASSED [ 67%]
+\ntests/test_state_service.py::TestStateService::test_snapshot_logic PASSED [ 68%]
+\ntests/test_state_service.py::TestStateService::test_should_emit_sync PASSED [ 69%]
+\ntests/test_state_service.py::TestStateService::test_persistence PASSED   [ 70%]
+\ntests/test_tool_router.py::TestToolRouter::test_extract_code_block_standard PASSED [ 71%]
+\ntests/test_tool_router.py::TestToolRouter::test_extract_code_block_robustness PASSED [ 71%]
+\ntests/test_tool_router.py::TestToolRouter::test_gatekeeper_blocks_invalid_syntax PASSED [ 72%]
+\ntests/test_tool_router.py::TestToolRouter::test_idempotency PASSED       [ 73%]
+\n[HEARTBEAT] running... 30s
+[HEARTBEAT] running... 40s
+[HEARTBEAT] running... 50s
+[HEARTBEAT] running... 60s
+[HEARTBEAT] running... 70s
+tests/test_ui_logic.py::TestUILogic::test_send_message_flow \n[EXIT] -9 | elapsed=57.05s\n\n====================================================================================================\n[CMD] /usr/local/bin/python -m pytest tests/test_ui_logic.py -vv\n====================================================================================================\n============================= test session starts ==============================
+\nplatform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+\ncachedir: .pytest_cache
+\nrootdir: /workspace
+\nconfigfile: pytest.ini
+\nplugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+\nasyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+\ncollecting ... collected 2 items
+\n
+\n[HEARTBEAT] running... 80s
+[HEARTBEAT] running... 90s
+[HEARTBEAT] running... 100s
+[HEARTBEAT] running... 110s
+[HEARTBEAT] running... 120s
+[HEARTBEAT] running... 130s
+[HEARTBEAT] running... 140s
+[HEARTBEAT] running... 150s
+[HEARTBEAT] running... 160s
+[HEARTBEAT] running... 170s
+[HEARTBEAT] running... 180s
+[HEARTBEAT] running... 190s
+[HEARTBEAT] running... 200s
+[HEARTBEAT] running... 210s
+[HEARTBEAT] running... 220s
+[HEARTBEAT] running... 230s
+[HEARTBEAT] running... 240s
+[HEARTBEAT] running... 250s
+[HEARTBEAT] running... 260s
+[HEARTBEAT] running... 270s
+[HEARTBEAT] running... 280s
+[HEARTBEAT] running... 290s
+[HEARTBEAT] running... 300s
+[HEARTBEAT] running... 310s
+[HEARTBEAT] running... 320s
+[HEARTBEAT] running... 330s
+[HEARTBEAT] running... 340s
+tests/test_ui_logic.py::TestUILogic::test_send_message_flow 
+⏱️ TIMEOUT: process killed
+[EXIT] -9 | elapsed=346.66s
+
+====================================================================================================
+[CMD] /usr/local/bin/python -m pytest tests/test_remote_protocol.py -vv
+[TIMEOUT] 180s
+----------------------------------------------------------------------------------------------------
+[HEARTBEAT] running... 0s
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 3 items
+
+tests/test_remote_protocol.py::TestRemoteProtocol::test_handle_status_signal FAILED [ 33%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_notify_pull_mechanism FAILED [ 66%]
+[HEARTBEAT] running... 10s
+tests/test_remote_protocol.py::TestRemoteProtocol::test_pong_latency_calculation ERROR [100%]
+
+==================================== ERRORS ====================================
+______ ERROR at setup of TestRemoteProtocol.test_pong_latency_calculation ______
+
+self = <test_remote_protocol.TestRemoteProtocol object at 0x7c7fe3619a50>
+
+    @pytest.fixture
+    def worker(self):
+>       worker = RemoteWorker(token="test_token")
+
+tests/test_remote_protocol.py:14: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.10/unittest/mock.py:1114: in __call__
+    return self._mock_call(*args, **kwargs)
+/usr/local/lib/python3.10/unittest/mock.py:1118: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <MagicMock spec='str' id='136888717510496'>, args = ()
+kwargs = {'token': 'test_token'}
+effect = <tuple_iterator object at 0x7c7fe361ac20>
+
+    def _execute_mock_call(self, /, *args, **kwargs):
+        # separate from _increment_mock_call so that awaited functions are
+        # executed separately from their call, also AsyncMock overrides this method
+    
+        effect = self.side_effect
+        if effect is not None:
+            if _is_exception(effect):
+                raise effect
+            elif not _callable(effect):
+>               result = next(effect)
+E               StopIteration
+
+/usr/local/lib/python3.10/unittest/mock.py:1175: StopIteration
+=================================== FAILURES ===================================
+_________________ TestRemoteProtocol.test_handle_status_signal _________________
+
+self = <MagicMock id='136888717671440'>, args = ('✅ 已连接',), kwargs = {}
+expected = "mock('✅ 已连接')", actual = 'not called.'
+error_message = "expected call not found.\nExpected: mock('✅ 已连接')\nActual: not called."
+
+    def assert_called_with(self, /, *args, **kwargs):
+        """assert that the last call was made with the specified arguments.
+    
+        Raises an AssertionError if the args and keyword args passed in are
+        different to the last call to the mock."""
+        if self.call_args is None:
+            expected = self._format_mock_call_signature(args, kwargs)
+            actual = 'not called.'
+            error_message = ('expected call not found.\nExpected: %s\nActual: %s'
+                    % (expected, actual))
+>           raise AssertionError(error_message)
+E           AssertionError: expected call not found.
+E           Expected: mock('✅ 已连接')
+E           Actual: not called.
+
+/usr/local/lib/python3.10/unittest/mock.py:920: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+self = <test_remote_protocol.TestRemoteProtocol object at 0x7c7fe361a2f0>
+mock_ws_cls = <MagicMock name='QWebSocket' id='136888717514912'>
+
+    @patch("app.core.remote_worker.QWebSocket")
+    def test_handle_status_signal(self, mock_ws_cls):
+        """测试 SocketAgent 接收 status 消息"""
+        agent = SocketAgent("ws://test")
+        agent.setup()
+    
+        # 模拟信号槽
+        mock_slot = MagicMock()
+        agent.status_changed.connect(mock_slot)
+    
+        # 触发连接成功
+        agent.on_connected()
+>       mock_slot.assert_called_with("✅ 已连接")
+E       AssertionError: expected call not found.
+E       Expected: mock('✅ 已连接')
+E       Actual: not called.
+
+tests/test_remote_protocol.py:33: AssertionError
+________________ TestRemoteProtocol.test_notify_pull_mechanism _________________
+
+self = <MagicMock name='get' id='136888715772352'>
+args = ('http://mock_api/sync/messages',)
+kwargs = {'headers': {'Authorization': 'Bearer test_token'}, 'proxies': {'http': None, 'https': None}, 'timeout': 30}
+expected = "get('http://mock_api/sync/messages', headers={'Authorization': 'Bearer test_token'}, timeout=30, proxies={'http': None, 'https': None})"
+actual = 'not called.'
+error_message = "expected call not found.\nExpected: get('http://mock_api/sync/messages', headers={'Authorization': 'Bearer test_token'}, timeout=30, proxies={'http': None, 'https': None})\nActual: not called."
+
+    def assert_called_with(self, /, *args, **kwargs):
+        """assert that the last call was made with the specified arguments.
+    
+        Raises an AssertionError if the args and keyword args passed in are
+        different to the last call to the mock."""
+        if self.call_args is None:
+            expected = self._format_mock_call_signature(args, kwargs)
+            actual = 'not called.'
+            error_message = ('expected call not found.\nExpected: %s\nActual: %s'
+                    % (expected, actual))
+>           raise AssertionError(error_message)
+E           AssertionError: expected call not found.
+E           Expected: get('http://mock_api/sync/messages', headers={'Authorization': 'Bearer test_token'}, timeout=30, proxies={'http': None, 'https': None})
+E           Actual: not called.
+
+/usr/local/lib/python3.10/unittest/mock.py:920: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+self = <test_remote_protocol.TestRemoteProtocol object at 0x7c7fe3619ea0>
+mock_get = <MagicMock name='get' id='136888715772352'>
+worker = <MagicMock name='mock.QThread' id='136888719677840'>
+
+    @patch("app.core.remote_worker.requests.get")
+    def test_notify_pull_mechanism(self, mock_get, worker):
+        """[New] 测试双通道核心：收到 Notify -> 发起 HTTP Get"""
+        # 1. 模拟收到 notify_messages
+        payload = {"type": "notify_messages", "payload": {"count": 10}}
+    
+        # 2. 模拟 HTTP 响应
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        expected_data = [{"role": "User", "content": "Hi"}]
+        mock_response.json.return_value = expected_data
+        mock_get.return_value = mock_response
+    
+        # 4. 触发 (需 Mock Threading 防止异步执行导致测试无法捕获)
+        with patch("threading.Thread") as mock_thread:
+            def side_effect(target, args=(), daemon=True):
+                target(*args)
+            mock_thread.side_effect = side_effect
+    
+            worker.on_agent_msg(json.dumps(payload))
+    
+            # 5. 验证
+>           mock_get.assert_called_with(
+                "http://mock_api/sync/messages",
+                headers={"Authorization": "Bearer test_token"},
+                timeout=30,
+                proxies={'http': None, 'https': None}
+            )
+E           AssertionError: expected call not found.
+E           Expected: get('http://mock_api/sync/messages', headers={'Authorization': 'Bearer test_token'}, timeout=30, proxies={'http': None, 'https': None})
+E           Actual: not called.
+
+tests/test_remote_protocol.py:62: AssertionError
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.10.19-final-0 _______________
+
+Name                                        Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------
+app/__init__.py                                 0      0   100%
+app/core/__init__.py                            0      0   100%
+app/core/agent_manager.py                     174    174     0%   2-248
+app/core/auth_service.py                      112    112     0%   2-159
+app/core/config.py                             25      8    68%   20-21, 28-29, 33-37
+app/core/connection_manager.py                 41     41     0%   2-75
+app/core/docker_manager.py                     74     74     0%   2-140
+app/core/driver/__init__.py                   144    144     0%   2-196
+app/core/driver/config.py                       4      4     0%   2-50
+app/core/driver/connection.py                  63     63     0%   2-125
+app/core/driver/interaction.py                297    297     0%   2-469
+app/core/driver/parser.py                     137    137     0%   2-191
+app/core/git_manager.py                        48     48     0%   2-82
+app/core/remote_worker.py                     281    213    24%   20-23, 26-33, 36-37, 40-43, 46-48, 51-53, 57-58, 61, 89-112, 115-129, 134-135, 138, 141-142, 146-152, 157-162, 165-170, 173-185, 190-227, 231-242, 245-286, 289-290, 294-297, 300-308, 312-316, 319-336, 340, 345, 348-349, 357-362
+app/core/self_update.py                        98     98     0%   2-196
+app/core/services/__init__.py                   0      0   100%
+app/core/services/context_pack_service.py     141    141     0%   2-337
+app/core/services/context_scanner.py           96     96     0%   2-197
+app/core/services/file_service.py             156    156     0%   2-204
+app/core/services/knowledge_service.py         72     72     0%   2-121
+app/core/services/scheduler_service.py         89     89     0%   2-150
+app/core/services/state_service.py             68     68     0%   2-98
+app/core/services/tool_router_service.py       86     86     0%   2-142
+app/core/services/update_service.py           133    133     0%   2-181
+app/core/utils/__init__.py                      0      0   100%
+app/core/utils/error_reporter.py               31     31     0%   2-33
+app/core/worker.py                            620    620     0%   2-897
+app/ui/__init__.py                              0      0   100%
+app/ui/login_window.py                        100    100     0%   2-153
+app/ui/main_window.py                         340    340     0%   2-412
+app/ui/modeling_page.py                       210    210     0%   2-305
+app/ui/settings_page.py                       302    302     0%   2-411
+app/ui/theme.py                               152    152     0%   2-422
+app/ui/widgets.py                               5      5     0%   3-7
+-------------------------------------------------------------------------
+TOTAL                                        4099   4014     2%
+Coverage HTML written to dir htmlcov
+Coverage JSON written to file coverage.json
+=========================== short test summary info ============================
+FAILED tests/test_remote_protocol.py::TestRemoteProtocol::test_handle_status_signal - AssertionError: expected call not found.
+Expected: mock('✅ 已连接')
+Actual: not called.
+FAILED tests/test_remote_protocol.py::TestRemoteProtocol::test_notify_pull_mechanism - AssertionError: expected call not found.
+Expected: get('http://mock_api/sync/messages', headers={'Authorization': 'Bearer test_token'}, timeout=30, proxies={'http': None, 'https': None})
+Actual: not called.
+ERROR tests/test_remote_protocol.py::TestRemoteProtocol::test_pong_latency_calculation - StopIteration
+========================== 2 failed, 1 error in 9.84s ==========================
+[EXIT] 1 | elapsed=13.96s
+
+====================================================================================================
+[CMD] /usr/local/bin/python -m pytest tests/test_ui_startup_lock.py -vv
+[TIMEOUT] 180s
+----------------------------------------------------------------------------------------------------
+[HEARTBEAT] running... 0s
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items
+
+[HEARTBEAT] running... 10s
+[HEARTBEAT] running... 20s
+[HEARTBEAT] running... 30s
+[HEARTBEAT] running... 40s
+tests/test_ui_logic.py::TestUILogic::test_send_message_flow \n[EXIT] -9 | elapsed=328.92s\n\n====================================================================================================\n[CMD] /usr/local/bin/python -m pytest tests/test_remote_protocol.py -vv\n====================================================================================================\n============================= test session starts ==============================
+\nplatform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+\ncachedir: .pytest_cache
+\nrootdir: /workspace
+\nconfigfile: pytest.ini
+\nplugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+\nasyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+\ncollecting ... collected 3 items
+\n
+\ntests/test_remote_protocol.py::TestRemoteProtocol::test_handle_status_signal FAILED [ 33%]
+\ntests/test_remote_protocol.py::TestRemoteProtocol::test_notify_pull_mechanism FAILED [ 66%]
+\ntests/test_remote_protocol.py::TestRemoteProtocol::test_pong_latency_calculation ERROR [100%]
+\n
+\n==================================== ERRORS ====================================
+\n______ ERROR at setup of TestRemoteProtocol.test_pong_latency_calculation ______
+\n
+\nself = <test_remote_protocol.TestRemoteProtocol object at 0x75868aa45db0>
+\n
+\n[HEARTBEAT] running... 50s
+    @pytest.fixture
+\n    def worker(self):
+\n>       worker = RemoteWorker(token="test_token")
+\n
+\ntests/test_remote_protocol.py:14: 
+\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+\n/usr/local/lib/python3.10/unittest/mock.py:1114: in __call__
+\n    return self._mock_call(*args, **kwargs)
+\n/usr/local/lib/python3.10/unittest/mock.py:1118: in _mock_call
+\n    return self._execute_mock_call(*args, **kwargs)
+\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+\n
+\nself = <MagicMock spec='str' id='129220712089056'>, args = ()
+\nkwargs = {'token': 'test_token'}
+\neffect = <tuple_iterator object at 0x75868aa46e60>
+\n
+\n    def _execute_mock_call(self, /, *args, **kwargs):
+\n        # separate from _increment_mock_call so that awaited functions are
+\n        # executed separately from their call, also AsyncMock overrides this method
+\n    
+\n        effect = self.side_effect
+\n        if effect is not None:
+\n            if _is_exception(effect):
+\n                raise effect
+\n            elif not _callable(effect):
+\n>               result = next(effect)
+\nE               StopIteration
+\n
+\n/usr/local/lib/python3.10/unittest/mock.py:1175: StopIteration
+\n=================================== FAILURES ===================================
+\n_________________ TestRemoteProtocol.test_handle_status_signal _________________
+\n
+\nself = <MagicMock id='129220712251008'>, args = ('✅ 已连接',), kwargs = {}
+\nexpected = "mock('✅ 已连接')", actual = 'not called.'
+\nerror_message = "expected call not found.\nExpected: mock('✅ 已连接')\nActual: not called."
+\n
+\n    def assert_called_with(self, /, *args, **kwargs):
+\n        """assert that the last call was made with the specified arguments.
+\n    
+\n        Raises an AssertionError if the args and keyword args passed in are
+\n        different to the last call to the mock."""
+\n        if self.call_args is None:
+\n            expected = self._format_mock_call_signature(args, kwargs)
+\n            actual = 'not called.'
+\n            error_message = ('expected call not found.\nExpected: %s\nActual: %s'
+\n                    % (expected, actual))
+\n>           raise AssertionError(error_message)
+\nE           AssertionError: expected call not found.
+\nE           Expected: mock('✅ 已连接')
+\nE           Actual: not called.
+\n
+\n/usr/local/lib/python3.10/unittest/mock.py:920: AssertionError
+\n
+\nDuring handling of the above exception, another exception occurred:
+\n
+\nself = <test_remote_protocol.TestRemoteProtocol object at 0x75868aa46530>
+\nmock_ws_cls = <MagicMock name='QWebSocket' id='129220712094480'>
+\n
+\n    @patch("app.core.remote_worker.QWebSocket")
+\n    def test_handle_status_signal(self, mock_ws_cls):
+\n        """测试 SocketAgent 接收 status 消息"""
+\n        agent = SocketAgent("ws://test")
+\n        agent.setup()
+\n    
+\n        # 模拟信号槽
+\n        mock_slot = MagicMock()
+\n        agent.status_changed.connect(mock_slot)
+\n    
+\n        # 触发连接成功
+\n        agent.on_connected()
+\n>       mock_slot.assert_called_with("✅ 已连接")
+\nE       AssertionError: expected call not found.
+\nE       Expected: mock('✅ 已连接')
+\nE       Actual: not called.
+\n
+\ntests/test_remote_protocol.py:33: AssertionError
+\n________________ TestRemoteProtocol.test_notify_pull_mechanism _________________
+\n
+\nself = <MagicMock name='get' id='129220710360464'>
+\nargs = ('http://mock_api/sync/messages',)
+\nkwargs = {'headers': {'Authorization': 'Bearer test_token'}, 'proxies': {'http': None, 'https': None}, 'timeout': 30}
+\nexpected = "get('http://mock_api/sync/messages', headers={'Authorization': 'Bearer test_token'}, timeout=30, proxies={'http': None, 'https': None})"
+\nactual = 'not called.'
+\nerror_message = "expected call not found.\nExpected: get('http://mock_api/sync/messages', headers={'Authorization': 'Bearer test_token'}, timeout=30, proxies={'http': None, 'https': None})\nActual: not called."
+\n
+\n    def assert_called_with(self, /, *args, **kwargs):
+\n        """assert that the last call was made with the specified arguments.
+\n    
+\n        Raises an AssertionError if the args and keyword args passed in are
+\n        different to the last call to the mock."""
+\n        if self.call_args is None:
+\n            expected = self._format_mock_call_signature(args, kwargs)
+\n            actual = 'not called.'
+\n            error_message = ('expected call not found.\nExpected: %s\nActual: %s'
+\n                    % (expected, actual))
+\n>           raise AssertionError(error_message)
+\nE           AssertionError: expected call not found.
+\nE           Expected: get('http://mock_api/sync/messages', headers={'Authorization': 'Bearer test_token'}, timeout=30, proxies={'http': None, 'https': None})
+\nE           Actual: not called.
+\n
+\n/usr/local/lib/python3.10/unittest/mock.py:920: AssertionError
+\n
+\nDuring handling of the above exception, another exception occurred:
+\n
+\nself = <test_remote_protocol.TestRemoteProtocol object at 0x75868aa460e0>
+\nmock_get = <MagicMock name='get' id='129220710360464'>
+\nworker = <MagicMock name='mock.QThread' id='129220714290128'>
+\n
+\n    @patch("app.core.remote_worker.requests.get")
+\n    def test_notify_pull_mechanism(self, mock_get, worker):
+\n        """[New] 测试双通道核心：收到 Notify -> 发起 HTTP Get"""
+\n        # 1. 模拟收到 notify_messages
+\n        payload = {"type": "notify_messages", "payload": {"count": 10}}
+\n    
+\n        # 2. 模拟 HTTP 响应
+\n        mock_response = MagicMock()
+\n        mock_response.status_code = 200
+\n        expected_data = [{"role": "User", "content": "Hi"}]
+\n        mock_response.json.return_value = expected_data
+\n        mock_get.return_value = mock_response
+\n    
+\n        # 4. 触发 (需 Mock Threading 防止异步执行导致测试无法捕获)
+\n        with patch("threading.Thread") as mock_thread:
+\n            def side_effect(target, args=(), daemon=True):
+\n                target(*args)
+\n            mock_thread.side_effect = side_effect
+\n    
+\n            worker.on_agent_msg(json.dumps(payload))
+\n    
+\n            # 5. 验证
+\n>           mock_get.assert_called_with(
+\n                "http://mock_api/sync/messages",
+\n                headers={"Authorization": "Bearer test_token"},
+\n                timeout=30,
+\n                proxies={'http': None, 'https': None}
+\n            )
+\nE           AssertionError: expected call not found.
+\nE           Expected: get('http://mock_api/sync/messages', headers={'Authorization': 'Bearer test_token'}, timeout=30, proxies={'http': None, 'https': None})
+\nE           Actual: not called.
+\n
+\ntests/test_remote_protocol.py:62: AssertionError
+\n================================ tests coverage ================================
+\n_______________ coverage: platform linux, python 3.10.19-final-0 _______________
+\n
+\nName                                        Stmts   Miss  Cover   Missing
+\n-------------------------------------------------------------------------
+\napp/__init__.py                                 0      0   100%
+\napp/core/__init__.py                            0      0   100%
+\napp/core/agent_manager.py                     174    174     0%   2-248
+\napp/core/auth_service.py                      112    112     0%   2-159
+\napp/core/config.py                             25      8    68%   20-21, 28-29, 33-37
+\napp/core/connection_manager.py                 41     41     0%   2-75
+\napp/core/docker_manager.py                     74     74     0%   2-140
+\napp/core/driver/__init__.py                   144    144     0%   2-196
+\napp/core/driver/config.py                       4      4     0%   2-50
+\napp/core/driver/connection.py                  63     63     0%   2-125
+\napp/core/driver/interaction.py                297    297     0%   2-469
+\napp/core/driver/parser.py                     137    137     0%   2-191
+\napp/core/git_manager.py                        48     48     0%   2-82
+\napp/core/remote_worker.py                     281    213    24%   20-23, 26-33, 36-37, 40-43, 46-48, 51-53, 57-58, 61, 89-112, 115-129, 134-135, 138, 141-142, 146-152, 157-162, 165-170, 173-185, 190-227, 231-242, 245-286, 289-290, 294-297, 300-308, 312-316, 319-336, 340, 345, 348-349, 357-362
+\napp/core/self_update.py                        98     98     0%   2-196
+\napp/core/services/__init__.py                   0      0   100%
+\napp/core/services/context_pack_service.py     141    141     0%   2-337
+\napp/core/services/context_scanner.py           96     96     0%   2-197
+\napp/core/services/file_service.py             156    156     0%   2-204
+\napp/core/services/knowledge_service.py         72     72     0%   2-121
+\napp/core/services/scheduler_service.py         89     89     0%   2-150
+\napp/core/services/state_service.py             68     68     0%   2-98
+\napp/core/services/tool_router_service.py       86     86     0%   2-142
+\napp/core/services/update_service.py           133    133     0%   2-181
+\napp/core/utils/__init__.py                      0      0   100%
+\napp/core/utils/error_reporter.py               31     31     0%   2-33
+\napp/core/worker.py                            620    620     0%   2-897
+\napp/ui/__init__.py                              0      0   100%
+\napp/ui/login_window.py                        100    100     0%   2-153
+\napp/ui/main_window.py                         340    340     0%   2-412
+\napp/ui/modeling_page.py                       210    210     0%   2-305
+\napp/ui/settings_page.py                       302    302     0%   2-411
+\napp/ui/theme.py                               152    152     0%   2-422
+\napp/ui/widgets.py                               5      5     0%   3-7
+\n-------------------------------------------------------------------------
+\nTOTAL                                        4099   4014     2%
+\nCoverage HTML written to dir htmlcov
+\nCoverage JSON written to file coverage.json
+\n=========================== short test summary info ============================
+\nFAILED tests/test_remote_protocol.py::TestRemoteProtocol::test_handle_status_signal - AssertionError: expected call not found.
+\nExpected: mock('✅ 已连接')
+\nActual: not called.
+\nFAILED tests/test_remote_protocol.py::TestRemoteProtocol::test_notify_pull_mechanism - AssertionError: expected call not found.
+\nExpected: get('http://mock_api/sync/messages', headers={'Authorization': 'Bearer test_token'}, timeout=30, proxies={'http': None, 'https': None})
+\nActual: not called.
+\nERROR tests/test_remote_protocol.py::TestRemoteProtocol::test_pong_latency_calculation - StopIteration
+\n========================== 2 failed, 1 error in 7.02s ==========================
+\n[EXIT] 1 | elapsed=11.21s\n\n====================================================================================================\n[CMD] /usr/local/bin/python -m pytest tests/test_ui_startup_lock.py -vv\n====================================================================================================\n============================= test session starts ==============================
+\nplatform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+\ncachedir: .pytest_cache
+\nrootdir: /workspace
+\nconfigfile: pytest.ini
+\nplugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+\nasyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+\ncollecting ... collected 2 items
+\n
+\n[HEARTBEAT] running... 60s
+[HEARTBEAT] running... 70s
+[HEARTBEAT] running... 80s
+[HEARTBEAT] running... 90s
+[HEARTBEAT] running... 100s
+[HEARTBEAT] running... 110s
+[HEARTBEAT] running... 120s
+[HEARTBEAT] running... 130s
+[HEARTBEAT] running... 140s
+[HEARTBEAT] running... 150s
+[HEARTBEAT] running... 160s
+[HEARTBEAT] running... 170s
+tests/test_ui_startup_lock.py::TestUIStartupLock::test_startup_lock_mechanism 
+[EXIT] -9 | elapsed=174.93s
+
+====================================================================================================
+[CMD] /usr/local/bin/python -m pytest tests/test_server_dual_channel.py -vv
+[TIMEOUT] 180s
+----------------------------------------------------------------------------------------------------
+[HEARTBEAT] running... 0s
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 3 items
+
+tests/test_server_dual_channel.py::TestServerDualChannel::test_sync_messages_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/messages "HTTP/1.1 200 OK"
+PASSED                                                                   [ 33%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_sync_code_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/code "HTTP/1.1 200 OK"
+PASSED                                                                   [ 66%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_upload_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/upload "HTTP/1.1 200 OK"
+[HEARTBEAT] running... 10s
+PASSED                                                                   [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.10.19-final-0 _______________
+
+Name                                        Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------
+app/__init__.py                                 0      0   100%
+app/core/__init__.py                            0      0   100%
+app/core/agent_manager.py                     174    151    13%   14-19, 25-30, 33-35, 38-40, 43-52, 55-93, 96-138, 144-145, 148-158, 161-209, 212-226, 229-233, 236-244, 247-248
+app/core/auth_service.py                      112     63    44%   34-47, 76-80, 84-87, 90-100, 103-108, 112-113, 116-130, 133-137, 141-144, 147-149, 153-157
+app/core/config.py                             25      8    68%   20-21, 28-29, 33-37
+app/core/connection_manager.py                 41     26    37%   18-37, 40-49, 52-53, 60-69, 73
+app/core/docker_manager.py                     74     60    19%   14-18, 26, 29-47, 51-74, 77-140
+app/core/driver/__init__.py                   144    117    19%   14-17, 21, 24-28, 31-33, 36, 39, 42-44, 47-48, 51-52, 55-56, 59-82, 85-96, 99-103, 106-112, 121-171, 174-196
+app/core/driver/config.py                       4      0   100%
+app/core/driver/connection.py                  63     50    21%   24-25, 33-42, 52-71, 79-125
+app/core/driver/interaction.py                297    266    10%   19-21, 24, 27, 30-32, 35-45, 48-60, 63-85, 88-95, 98-145, 148-175, 178-244, 250-330, 333-423, 426-436, 439-448, 451-469
+app/core/driver/parser.py                     137    128     7%   8-29, 32-79, 82-92, 95-139, 142-191
+app/core/engine/conversation_engine.py         53     46    13%   11, 15-18, 25-38, 47-84, 88-95
+app/core/git_manager.py                        48     48     0%   2-82
+app/core/remote_worker.py                     281    281     0%   2-365
+app/core/self_update.py                        98     87    11%   16-31, 34-50, 54-138, 142-170, 174-196
+app/core/services/__init__.py                   0      0   100%
+app/core/services/context_pack_service.py     141    115    18%   62, 66, 155-158, 167-193, 196-223, 226-228, 235-246, 249-295, 298-312, 315-329, 332-337
+app/core/services/context_scanner.py           96     96     0%   2-197
+app/core/services/file_service.py             156    133    15%   17-27, 34-41, 44-48, 51-55, 58-62, 65-86, 89-94, 97-98, 101-135, 138-144, 148, 152-204
+app/core/services/knowledge_service.py         72     53    26%   27-49, 53-73, 77-98, 102-118
+app/core/services/scheduler_service.py         89     71    20%   24-37, 40, 54-59, 62-73, 76-82, 86, 98-104, 110-126, 129-132, 135-139, 142-150
+app/core/services/state_service.py             68     53    22%   10-12, 16-20, 23-34, 37-47, 50-52, 55-61, 65-70, 73-75, 82-98
+app/core/services/tool_router_service.py       86     73    15%   17-20, 29-97, 103-135, 138-142
+app/core/services/update_service.py           133    121     9%   11-13, 16-19, 22-54, 57-69, 72-148, 151-181
+app/core/utils/__init__.py                      0      0   100%
+app/core/utils/error_reporter.py               31     28    10%   5-33
+app/core/worker.py                            620    530    15%   50-89, 92-94, 97-102, 105-122, 125-225, 228-291, 294-301, 304, 307-308, 311, 314-326, 329-330, 333-386, 395-404, 407-446, 449-467, 476-494, 502-504, 507, 510, 513, 516, 519-520, 529, 532, 535, 538, 541-550, 561-567, 570-579, 582-589, 592-612, 615-634, 637-639, 642, 645, 648, 651-652, 655-656, 659-660, 663-665, 668-675, 681, 684-687, 690-737, 740-759, 762-764, 767-897
+app/ui/__init__.py                              0      0   100%
+app/ui/login_window.py                        100    100     0%   2-153
+app/ui/main_window.py                         340    340     0%   2-412
+app/ui/modeling_page.py                       210    210     0%   2-305
+app/ui/settings_page.py                       302    302     0%   2-411
+app/ui/theme.py                               152    152     0%   2-422
+app/ui/widgets.py                               5      5     0%   3-7
+-------------------------------------------------------------------------
+TOTAL                                        4152   3713    11%
+Coverage HTML written to dir htmlcov
+Coverage JSON written to file coverage.json
+============================== 3 passed in 9.46s ===============================
+[EXIT] 0 | elapsed=11.61s
+
+====================================================================================================
+[CMD] /usr/local/bin/python -m pytest tests/ -q
+[TIMEOUT] 300s
+----------------------------------------------------------------------------------------------------
+[HEARTBEAT] running... 0s
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 114 items
+
+tests/test_agent_manager.py::TestAgentManager::test_parse_tool_read PASSED [  0%]
+tests/test_agent_manager.py::TestAgentManager::test_parse_code_block PASSED [  1%]
+tests/test_agent_manager.py::TestAgentManager::test_path_redirection_logic PASSED [  2%]
+tests/test_agent_manager.py::TestAgentManager::test_tool_read_file_safety PASSED [  3%]
+tests/test_agent_manager.py::TestAgentManager::test_safe_apply_rollback_on_failure 
+-------------------------------- live log call ---------------------------------
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+PASSED                                                                   [  4%]
+tests/test_agent_manager.py::TestAgentManager::test_safe_apply_commit_on_success PASSED [  5%]
+tests/test_agent_tools.py::TestAgentFileTools::test_read_file_not_found PASSED [  6%]
+tests/test_agent_tools.py::TestAgentFileTools::test_read_file_security_check PASSED [  7%]
+tests/test_agent_tools.py::TestToolExecution::test_code_execution_failure_feedback PASSED [  7%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_add_and_persist_blacklist PASSED [  8%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_save_code_interception PASSED [  9%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_remove_ignore_logic PASSED [ 10%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_auto_cleanup_staging PASSED [ 11%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_content_mismatch_safety PASSED [ 12%]
+tests/test_blacklist_logic.py::TestBlacklistLogic::test_discard_only_affects_fingerprint PASSED [ 13%]
+tests/test_blacklist_logic.py::TestBlacklistLogic::test_manual_permanent_ignore PASSED [ 14%]
+tests/test_config.py::TestConfigManagerBasic::test_default_config_structure PASSED [ 14%]
+tests/test_config.py::TestConfigManagerBasic::test_chrome_port_default_value PASSED [ 15%]
+tests/test_config.py::TestConfigManagerBasic::test_auto_export_default_enabled PASSED [ 16%]
+tests/test_config.py::TestConfigManagerBasic::test_export_paths_are_strings PASSED [ 17%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_save_and_load_custom_config PASSED [ 18%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_load_creates_default_if_missing PASSED [ 19%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_config_persistence_across_instances PASSED [ 20%]
+tests/test_config.py::TestConfigManagerValidation::test_port_is_integer PASSED [ 21%]
+tests/test_config.py::TestConfigManagerValidation::test_auto_export_is_boolean PASSED [ 21%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[9527] PASSED [ 22%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[8765] PASSED [ 23%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[3000] PASSED [ 24%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[5000] PASSED [ 25%]
+tests/test_config.py::TestConfigManagerEdgeCases::test_empty_path_strings PASSED [ 26%]
+tests/test_config.py::TestConfigManagerEdgeCases::test_config_not_modified_by_load PASSED [ 27%]
+tests/test_context_packing.py::TestContextPacking::test_pack_context_logic PASSED [ 28%]
+tests/test_docker_sandbox.py::TestDockerSandbox::test_code_execution_via_base64 
+-------------------------------- live log setup --------------------------------
+WARNING  DockerSandbox:docker_manager.py:46 ❌ Docker not available: Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))
+SKIPPED (Container not running)                                          [ 28%]
+tests/test_driver_interaction.py::TestInteractionManager::test_find_elements_wrapper PASSED [ 29%]
+tests/test_driver_interaction.py::TestInteractionManager::test_send_message_short PASSED [ 30%]
+tests/test_driver_interaction.py::TestInteractionManager::test_send_message_long PASSED [ 31%]
+tests/test_driver_interaction.py::TestInteractionManager::test_is_busy_logic PASSED [ 32%]
+tests/test_driver_interaction.py::TestInteractionManager::test_fingerprint_speed_optimization PASSED [ 33%]
+[HEARTBEAT] running... 10s
+tests/test_driver_interaction.py::TestInteractionManager::test_smart_height_polling PASSED [ 34%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_id_standard PASSED [ 35%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_id_new_chat PASSED [ 35%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_resilience PASSED [ 36%]
+tests/test_driver_perception.py::TestDriverPerception::test_role_recognition_logic PASSED [ 37%]
+tests/test_file_service.py::TestFileService::test_http_image_download PASSED [ 38%]
+tests/test_interaction_core.py::TestInteractionCore::test_fast_expand_logic PASSED [ 39%]
+tests/test_interaction_core.py::TestInteractionCore::test_scroll_traverse_variable_speed PASSED [ 40%]
+tests/test_interaction_core.py::TestInteractionCore::test_scan_and_fix_last_message PASSED [ 41%]
+tests/test_interaction_core.py::TestInteractionCore::test_scroll_traverse_interrupt PASSED [ 42%]
+tests/test_local_worker.py::TestLocalWorker::test_fix_all_batch_logic FAILED [ 42%]
+tests/test_local_worker.py::TestLocalWorker::test_process_batch_resilience ERROR [ 43%]
+tests/test_local_worker_strategy_e.py::TestWorkerStrategyE::test_binary_star_hash ERROR [ 44%]
+tests/test_local_worker_strategy_e.py::TestWorkerStrategyE::test_deduce_state_logic ERROR [ 45%]
+tests/test_parser_core.py::TestParserCore::test_clean_monaco_structure PASSED [ 46%]
+tests/test_parser_core.py::TestParserCore::test_anchor_alignment_logic PASSED [ 47%]
+tests/test_parser_core.py::TestParserCore::test_fallback_mode PASSED     [ 48%]
+tests/test_parser_core.py::TestParserCore::test_n_image_structure PASSED [ 49%]
+tests/test_parser_merge.py::TestParserMerge::test_merge_adjacent_text PASSED [ 50%]
+tests/test_parser_merge.py::TestParserMerge::test_merge_adjacent_code_forbidden PASSED [ 50%]
+tests/test_parser_merge.py::TestParserMerge::test_mixed_interleave PASSED [ 51%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_handle_status_signal FAILED [ 52%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_notify_pull_mechanism FAILED [ 53%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_pong_latency_calculation ERROR [ 54%]
+tests/test_saas_features.py::TestSessionIsolation::test_auto_lock_first_session PASSED [ 55%]
+tests/test_saas_features.py::TestSessionIsolation::test_block_alien_session PASSED [ 56%]
+tests/test_saas_features.py::TestSessionIsolation::test_active_switch_acceptance PASSED [ 57%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_detect_new_file PASSED [ 57%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_detect_overwrite_file PASSED [ 58%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_ignore_same_content_crlf PASSED [ 59%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_apply_update_action PASSED [ 60%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_trigger_csharp_build PASSED [ 61%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_ignore_system_files PASSED [ 62%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_sync_messages_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/messages "HTTP/1.1 200 OK"
+PASSED                                                                   [ 63%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_sync_code_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/code "HTTP/1.1 200 OK"
+PASSED                                                                   [ 64%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_upload_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/upload "HTTP/1.1 200 OK"
+PASSED                                                                   [ 64%]
+tests/test_state_service.py::TestStateService::test_initial_state PASSED [ 65%]
+tests/test_state_service.py::TestStateService::test_update_user_turn PASSED [ 66%]
+tests/test_state_service.py::TestStateService::test_manual_correction PASSED [ 67%]
+tests/test_state_service.py::TestStateService::test_snapshot_logic PASSED [ 68%]
+tests/test_state_service.py::TestStateService::test_should_emit_sync PASSED [ 69%]
+tests/test_state_service.py::TestStateService::test_persistence PASSED   [ 70%]
+tests/test_tool_router.py::TestToolRouter::test_extract_code_block_standard PASSED [ 71%]
+tests/test_tool_router.py::TestToolRouter::test_extract_code_block_robustness PASSED [ 71%]
+tests/test_tool_router.py::TestToolRouter::test_gatekeeper_blocks_invalid_syntax PASSED [ 72%]
+tests/test_tool_router.py::TestToolRouter::test_idempotency PASSED       [ 73%]
+[HEARTBEAT] running... 20s
+[HEARTBEAT] running... 30s
+tests/test_ui_startup_lock.py::TestUIStartupLock::test_startup_lock_mechanism \n[EXIT] -9 | elapsed=170.74s\n\n====================================================================================================\n[CMD] /usr/local/bin/python -m pytest tests/test_server_dual_channel.py -vv\n====================================================================================================\n============================= test session starts ==============================
+\nplatform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+\ncachedir: .pytest_cache
+\nrootdir: /workspace
+\nconfigfile: pytest.ini
+\nplugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+\nasyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+\n[HEARTBEAT] running... 40s
+collecting ... collected 3 items
+\n
+\ntests/test_server_dual_channel.py::TestServerDualChannel::test_sync_messages_endpoint 
+\n-------------------------------- live log call ---------------------------------
+\nINFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/messages "HTTP/1.1 200 OK"
+\nPASSED                                                                   [ 33%]
+\ntests/test_server_dual_channel.py::TestServerDualChannel::test_sync_code_endpoint 
+\n-------------------------------- live log call ---------------------------------
+\nINFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/code "HTTP/1.1 200 OK"
+\nPASSED                                                                   [ 66%]
+\ntests/test_server_dual_channel.py::TestServerDualChannel::test_upload_endpoint 
+\n-------------------------------- live log call ---------------------------------
+\nINFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/upload "HTTP/1.1 200 OK"
+\nPASSED                                                                   [100%]
+\n
+\n================================ tests coverage ================================
+\n_______________ coverage: platform linux, python 3.10.19-final-0 _______________
+\n
+\nName                                        Stmts   Miss  Cover   Missing
+\n-------------------------------------------------------------------------
+\napp/__init__.py                                 0      0   100%
+\napp/core/__init__.py                            0      0   100%
+\napp/core/agent_manager.py                     174    151    13%   14-19, 25-30, 33-35, 38-40, 43-52, 55-93, 96-138, 144-145, 148-158, 161-209, 212-226, 229-233, 236-244, 247-248
+\napp/core/auth_service.py                      112     63    44%   34-47, 76-80, 84-87, 90-100, 103-108, 112-113, 116-130, 133-137, 141-144, 147-149, 153-157
+\napp/core/config.py                             25      8    68%   20-21, 28-29, 33-37
+\napp/core/connection_manager.py                 41     26    37%   18-37, 40-49, 52-53, 60-69, 73
+\napp/core/docker_manager.py                     74     60    19%   14-18, 26, 29-47, 51-74, 77-140
+\napp/core/driver/__init__.py                   144    117    19%   14-17, 21, 24-28, 31-33, 36, 39, 42-44, 47-48, 51-52, 55-56, 59-82, 85-96, 99-103, 106-112, 121-171, 174-196
+\napp/core/driver/config.py                       4      0   100%
+\napp/core/driver/connection.py                  63     50    21%   24-25, 33-42, 52-71, 79-125
+\napp/core/driver/interaction.py                297    266    10%   19-21, 24, 27, 30-32, 35-45, 48-60, 63-85, 88-95, 98-145, 148-175, 178-244, 250-330, 333-423, 426-436, 439-448, 451-469
+\napp/core/driver/parser.py                     137    128     7%   8-29, 32-79, 82-92, 95-139, 142-191
+\napp/core/engine/conversation_engine.py         53     46    13%   11, 15-18, 25-38, 47-84, 88-95
+\napp/core/git_manager.py                        48     48     0%   2-82
+\napp/core/remote_worker.py                     281    281     0%   2-365
+\napp/core/self_update.py                        98     87    11%   16-31, 34-50, 54-138, 142-170, 174-196
+\napp/core/services/__init__.py                   0      0   100%
+\napp/core/services/context_pack_service.py     141    115    18%   62, 66, 155-158, 167-193, 196-223, 226-228, 235-246, 249-295, 298-312, 315-329, 332-337
+\napp/core/services/context_scanner.py           96     96     0%   2-197
+\napp/core/services/file_service.py             156    133    15%   17-27, 34-41, 44-48, 51-55, 58-62, 65-86, 89-94, 97-98, 101-135, 138-144, 148, 152-204
+\napp/core/services/knowledge_service.py         72     53    26%   27-49, 53-73, 77-98, 102-118
+\napp/core/services/scheduler_service.py         89     71    20%   24-37, 40, 54-59, 62-73, 76-82, 86, 98-104, 110-126, 129-132, 135-139, 142-150
+\napp/core/services/state_service.py             68     53    22%   10-12, 16-20, 23-34, 37-47, 50-52, 55-61, 65-70, 73-75, 82-98
+\napp/core/services/tool_router_service.py       86     73    15%   17-20, 29-97, 103-135, 138-142
+\napp/core/services/update_service.py           133    121     9%   11-13, 16-19, 22-54, 57-69, 72-148, 151-181
+\napp/core/utils/__init__.py                      0      0   100%
+\napp/core/utils/error_reporter.py               31     28    10%   5-33
+\napp/core/worker.py                            620    530    15%   50-89, 92-94, 97-102, 105-122, 125-225, 228-291, 294-301, 304, 307-308, 311, 314-326, 329-330, 333-386, 395-404, 407-446, 449-467, 476-494, 502-504, 507, 510, 513, 516, 519-520, 529, 532, 535, 538, 541-550, 561-567, 570-579, 582-589, 592-612, 615-634, 637-639, 642, 645, 648, 651-652, 655-656, 659-660, 663-665, 668-675, 681, 684-687, 690-737, 740-759, 762-764, 767-897
+\napp/ui/__init__.py                              0      0   100%
+\napp/ui/login_window.py                        100    100     0%   2-153
+\napp/ui/main_window.py                         340    340     0%   2-412
+\napp/ui/modeling_page.py                       210    210     0%   2-305
+\napp/ui/settings_page.py                       302    302     0%   2-411
+\napp/ui/theme.py                               152    152     0%   2-422
+\napp/ui/widgets.py                               5      5     0%   3-7
+\n-------------------------------------------------------------------------
+\nTOTAL                                        4152   3713    11%
+\nCoverage HTML written to dir htmlcov
+\nCoverage JSON written to file coverage.json
+\n============================== 3 passed in 8.38s ===============================
+\n[EXIT] 0 | elapsed=10.11s\n\n====================================================================================================\n✅ 诊断完成\n====================================================================================================\n日志文件: /workspace/tools/_diagnose_test_framework.log\n[HEARTBEAT] running... 50s
+[HEARTBEAT] running... 60s
+[HEARTBEAT] running... 70s
+[HEARTBEAT] running... 80s
+[HEARTBEAT] running... 90s
+[HEARTBEAT] running... 100s
+[HEARTBEAT] running... 110s
+[HEARTBEAT] running... 120s
+[HEARTBEAT] running... 130s
+[HEARTBEAT] running... 140s
+[HEARTBEAT] running... 150s
+[HEARTBEAT] running... 160s
+[HEARTBEAT] running... 170s
+[HEARTBEAT] running... 180s
+[HEARTBEAT] running... 190s
+[HEARTBEAT] running... 200s
+[HEARTBEAT] running... 210s
+[HEARTBEAT] running... 220s
+[HEARTBEAT] running... 230s
+[HEARTBEAT] running... 240s
+[HEARTBEAT] running... 250s
+[HEARTBEAT] running... 260s
+[HEARTBEAT] running... 270s
+[HEARTBEAT] running... 280s
+[HEARTBEAT] running... 290s
+[HEARTBEAT] running... 300s
+[HEARTBEAT] running... 310s
+[HEARTBEAT] running... 320s
+[HEARTBEAT] running... 330s
+[HEARTBEAT] running... 340s
+[HEARTBEAT] running... 350s
+[HEARTBEAT] running... 360s
+[HEARTBEAT] running... 370s
+[HEARTBEAT] running... 380s
+[HEARTBEAT] running... 390s
+[HEARTBEAT] running... 400s
+[HEARTBEAT] running... 410s
+[HEARTBEAT] running... 420s
+[HEARTBEAT] running... 430s
+[HEARTBEAT] running... 440s
+[HEARTBEAT] running... 450s
+[HEARTBEAT] running... 460s
+[HEARTBEAT] running... 470s
+[HEARTBEAT] running... 481s
+[HEARTBEAT] running... 491s
+[HEARTBEAT] running... 502s
+[HEARTBEAT] running... 512s
+[HEARTBEAT] running... 523s
+[HEARTBEAT] running... 534s
+[HEARTBEAT] running... 545s
+[HEARTBEAT] running... 556s
+[HEARTBEAT] running... 567s
+[HEARTBEAT] running... 578s
+[HEARTBEAT] running... 589s
+[HEARTBEAT] running... 600s
+[HEARTBEAT] running... 612s
+[HEARTBEAT] running... 623s
+tests/test_ui_logic.py::TestUILogic::test_send_message_flow 
+⏱️ TIMEOUT: process killed
+[EXIT] -9 | elapsed=624.37s
+✅ 诊断结束，日志: tools/_diagnose_test_framework.log

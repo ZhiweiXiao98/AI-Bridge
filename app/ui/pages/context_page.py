@@ -295,7 +295,7 @@ class ContextPage(QWidget):
         self.detail_tabs.addTab(self.txt_map, "🗺️ 导航图")
         
         # 尝试读取文档
-        doc_path = os.path.join(self.project_root, "docs", "PROJECT_STRUCTURE.md")
+        doc_path = os.path.join(self.project_root, "docs", "项目结构导航.md")
         if os.path.exists(doc_path):
             try:
                 with open(doc_path, "r", encoding="utf-8") as f:

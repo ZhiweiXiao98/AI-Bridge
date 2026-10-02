@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101318" />
+    <title>Data Bridge Mobile</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css?v=2" />
+  </head>
+  <body>
+    <main class="shell">
+      <section id="login-panel" class="login">
+        <div class="brand">
+          <img src="./icon.svg" alt="" />
+          <h1>Data Bridge</h1>
+          <p>手机伴随端</p>
+        </div>
+        <label>电脑 IP<input id="host" autocomplete="url" placeholder="192.168.1.100" /></label>
+        <div class="row">
+          <label>端口<input id="port" inputmode="numeric" value="8765" /></label>
+          <label>用户<input id="username" autocomplete="username" value="admin" /></label>
+        </div>
+        <label>密码<input id="password" type="password" autocomplete="current-password" /></label>
+        <button id="login" class="primary" type="button">连接电脑</button>
+        <p id="status" class="status" data-tone="muted">未连接</p>
+      </section>
+
+      <section id="app-panel" class="app" hidden>
+        <header class="topbar">
+          <div>
+            <strong id="connection-title">Data Bridge</strong>
+            <span id="app-status" class="status" data-tone="ok">已连接</span>
+          </div>
+          <button id="logout" type="button">断开</button>
+        </header>
+
+        <nav class="toolbar">
+          <select id="mode" aria-label="发送模式">
+            <option value="browser">浏览器</option>
+            <option value="api">API</option>
+          </select>
+          <button id="refresh" type="button">刷新</button>
+          <button id="open-logs" type="button">日志</button>
+        </nav>
+
+        <aside id="sessions" class="sessions" aria-label="会话列表"></aside>
+        <section id="messages" class="messages" aria-label="消息列表"></section>
+
+        <footer class="composer">
+          <textarea id="composer" rows="2" placeholder="输入消息，Ctrl+Enter 发送"></textarea>
+          <button id="send" class="primary" type="button">发送</button>
+        </footer>
+      </section>
+    </main>
+
+    <dialog id="logs">
+      <header>
+        <strong>服务端日志</strong>
+        <button id="close-logs" type="button">关闭</button>
+      </header>
+      <pre id="log-text">暂无日志</pre>
+    </dialog>
+
+    <script type="module" src="./app.js?v=2"></script>
+  </body>
+</html>

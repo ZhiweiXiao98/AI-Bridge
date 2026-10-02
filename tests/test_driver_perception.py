@@ -15,6 +15,7 @@ class TestDriverPerception:
         # 此时不需要真的连接 Chrome，只需 Mock driver 属性
         c = ChromeConnector()
         c.conn.driver = MagicMock()
+        c._ensure_live_window = MagicMock(return_value=True)
         return c
 
     def test_get_chat_title_id_standard(self, connector):

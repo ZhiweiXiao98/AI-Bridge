@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>无上下文浏览器 Profile 计划书</title>
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --paper: #ffffff;
+      --ink: #1a2332;
+      --muted: #5d667a;
+      --line: #dfe5ef;
+      --soft: #f9fbff;
+      --blue: #2f5f8f;
+      --teal: #0f766e;
+      --amber: #b45309;
+      --red: #9a3412;
+      --green: #15803d;
+      --purple: #6d28d9;
+      --code-bg: #1e293b;
+      --code-ink: #e2e8f0;
+      --shadow-sm: 0 2px 8px rgba(24,32,51,0.06);
+      --shadow: 0 8px 24px rgba(24,32,51,0.08);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page { width: min(1200px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 80px; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    @keyframes flowPulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+    @keyframes barGrow { from { width:0; } }
+    @keyframes dotPulse { 0%,100% { box-shadow:0 0 0 0 rgba(180,83,9,0.4); } 50% { box-shadow:0 0 0 6px rgba(180,83,9,0); } }
+
+    .reveal { opacity:0; transform:translateY(20px); transition: opacity 0.55s cubic-bezier(0.22,1,0.36,1), transform 0.55s cubic-bezier(0.22,1,0.36,1); }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity:1; transform:none; transition:none; } * { animation-duration:0.01ms !important; } }
+
+    header { background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:40px 44px; animation:fadeUp 0.7s cubic-bezier(0.22,1,0.36,1); }
+    h1 { font-size:36px; line-height:1.2; letter-spacing:-0.5px; margin-bottom:12px; background:linear-gradient(135deg,var(--ink) 0%,var(--blue) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .subtitle { max-width:940px; color:var(--muted); font-size:15px; line-height:1.7; }
+    .meta { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:24px; }
+    .meta div { padding:14px 16px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--soft); transition:transform 0.2s,box-shadow 0.2s; }
+    .meta div:hover { transform:translateY(-2px); box-shadow:var(--shadow-sm); }
+    .meta strong { display:block; color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+    .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+    .pill { display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:4px 12px; border:1px solid var(--line); border-radius:999px; background:var(--soft); color:var(--muted); font-size:12px; font-weight:600; transition:transform 0.15s,box-shadow 0.15s; }
+    .pill:hover { transform:scale(1.05); box-shadow:var(--shadow-sm); }
+    .dot { width:10px; height:10px; border-radius:50%; background:var(--blue); }
+    .dot.teal { background:var(--teal); } .dot.amber { background:var(--amber); } .dot.green { background:var(--green); } .dot.purple { background:var(--purple); }
+
+    nav { position:sticky; top:12px; z-index:50; display:flex; flex-wrap:wrap; gap:6px; margin:20px 0; padding:10px 14px; background:rgba(255,255,255,0.88); backdrop-filter:blur(16px) saturate(1.8); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); animation:fadeIn 0.5s 0.3s both; }
+    nav a { display:inline-flex; align-items:center; min-height:34px; padding:5px 14px; border:1px solid transparent; border-radius:6px; background:transparent; color:var(--muted); text-decoration:none; font-size:13px; font-weight:600; transition:all 0.2s; }
+    nav a:hover { background:var(--soft); color:var(--blue); border-color:var(--line); }
+    nav a.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+
+    section { background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); margin-top:20px; padding:32px 40px; }
+    h2 { font-size:24px; line-height:1.3; letter-spacing:-0.3px; margin-bottom:20px; padding-bottom:14px; border-bottom:2px solid var(--line); position:relative; }
+    h2::after { content:''; position:absolute; bottom:-2px; left:0; width:60px; height:2px; background:linear-gradient(90deg,var(--blue),var(--teal)); border-radius:1px; }
+    h3 { font-size:18px; margin-bottom:10px; color:var(--ink); }
+    h4 { font-size:15px; margin-bottom:8px; color:var(--ink); }
+    p { margin-bottom:12px; }
+    ul, ol { padding-left:20px; margin-bottom:12px; }
+    li { margin-bottom:6px; }
+
+    table { width:100%; border-collapse:separate; border-spacing:0; margin:16px 0; font-size:14px; border:1px solid var(--line); border-radius:var(--radius-sm); overflow:hidden; }
+    th, td { padding:12px 14px; vertical-align:top; border-bottom:1px solid var(--line); }
+    th { background:#eef3fa; text-align:left; font-weight:700; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:0.3px; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:rgba(47,95,143,0.03); }
+
+    code { padding:2px 7px; border-radius:4px; background:#edf1f7; font-family:"JetBrains Mono",Consolas,"SFMono-Regular",monospace; font-size:0.88em; color:var(--purple); }
+    pre { overflow-x:auto; margin:14px 0; padding:18px 20px; border-radius:var(--radius-sm); background:var(--code-bg); color:var(--code-ink); line-height:1.6; border:1px solid #334155; }
+    pre code { padding:0; background:transparent; color:inherit; font-size:13px; }
+
+    .callout { margin:18px 0; padding:16px 20px; border:1px solid var(--line); border-left:4px solid var(--teal); border-radius:var(--radius-sm); background:linear-gradient(135deg,#f0fdfa 0%,#f6fcfa 100%); }
+    .callout strong { color:var(--teal); }
+    .warning { border-left-color:var(--amber); background:linear-gradient(135deg,#fffbeb 0%,#fffaf1 100%); }
+    .warning strong { color:var(--amber); }
+
+    .grid-2,.grid-3,.grid-4 { display:grid; gap:14px; }
+    .grid-2 { grid-template-columns:repeat(2,1fr); } .grid-3 { grid-template-columns:repeat(3,1fr); } .grid-4 { grid-template-columns:repeat(4,1fr); }
+
+    .card { padding:20px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--soft); transition:transform 0.25s cubic-bezier(0.22,1,0.36,1),box-shadow 0.25s; }
+    .card:hover { transform:translateY(-3px); box-shadow:var(--shadow); }
+    .card p { margin-bottom:0; color:var(--muted); font-size:14px; }
+    .card h3 { font-size:16px; margin-bottom:8px; }
+    .card.api { border-top:4px solid var(--blue); } .card.web { border-top:4px solid var(--teal); } .card.browser { border-top:4px solid var(--purple); } .card.warn { border-top:4px solid var(--amber); }
+
+    .pipeline { display:flex; align-items:center; gap:0; margin:20px 0; overflow-x:auto; padding:8px 0; }
+    .pipeline-node { flex-shrink:0; padding:12px 18px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--soft); text-align:center; font-size:13px; font-weight:600; min-width:120px; transition:transform 0.2s,box-shadow 0.2s; }
+    .pipeline-node:hover { transform:scale(1.05); box-shadow:var(--shadow-sm); }
+    .pipeline-node.highlight { border-color:var(--teal); background:linear-gradient(135deg,#f0fdfa,#ecfdf5); color:var(--teal); }
+    .pipeline-arrow { flex-shrink:0; width:32px; height:2px; background:linear-gradient(90deg,var(--line),var(--blue),var(--line)); position:relative; margin:0 2px; }
+    .pipeline-arrow::after { content:'▶'; position:absolute; right:-6px; top:-9px; color:var(--blue); font-size:11px; animation:flowPulse 2s ease-in-out infinite; }
+
+    .principle-list { display:grid; gap:12px; margin-top:14px; }
+    .principle-item { padding:18px 20px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--soft); border-left:4px solid var(--blue); transition:transform 0.2s,box-shadow 0.2s; }
+    .principle-item:hover { transform:translateX(4px); box-shadow:var(--shadow-sm); }
+    .principle-item strong { display:block; margin-bottom:6px; font-size:15px; }
+    .principle-item p { margin:0; color:var(--muted); font-size:14px; line-height:1.6; }
+
+    .sub-arch { margin:16px 0; padding:20px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--soft); transition:box-shadow 0.2s; }
+    .sub-arch:hover { box-shadow:var(--shadow-sm); }
+    .sub-arch h4 { margin:0 0 10px; color:var(--ink); font-size:16px; display:flex; align-items:center; gap:8px; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; }
+    .badge.core { background:#dbeafe; color:var(--blue); } .badge.flow { background:#ccfbf1; color:var(--teal); } .badge.data { background:#fef3c7; color:var(--amber); } .badge.next { background:#ede9fe; color:var(--purple); }
+
+    .review-section { margin:18px 0; padding:20px; border:1px solid var(--line); border-left:4px solid var(--teal); border-radius:var(--radius-sm); background:linear-gradient(135deg,#f0fdfa 0%,#f6fcfa 100%); }
+    .review-section.warning { border-left-color:var(--amber); background:linear-gradient(135deg,#fffbeb 0%,#fffaf1 100%); }
+    .review-section h3 { margin-bottom:10px; }
+
+    .progress-bar-container { margin:20px 0; }
+    .progress-bar-row { display:flex; align-items:center; gap:12px; margin:8px 0; }
+    .progress-bar-label { min-width:140px; font-size:13px; font-weight:600; color:var(--ink); }
+    .progress-bar-track { flex:1; height:24px; background:#e5e7eb; border-radius:12px; overflow:hidden; }
+    .progress-bar-fill { height:100%; border-radius:12px; animation:barGrow 1s cubic-bezier(0.22,1,0.36,1) both; display:flex; align-items:center; justify-content:flex-end; padding-right:8px; font-size:11px; font-weight:700; color:#fff; }
+    .progress-bar-fill.done { background:linear-gradient(90deg,#22c55e,#16a34a); }
+    .progress-bar-fill.partial { background:linear-gradient(90deg,#f59e0b,#d97706); }
+    .progress-bar-fill.pending { background:linear-gradient(90deg,#9ca3af,#6b7280); }
+
+    .radar-container { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:20px 0; align-items:start; }
+    .radar-chart { position:relative; width:100%; max-width:360px; margin:0 auto; }
+    .radar-chart svg { width:100%; height:auto; }
+    .radar-legend { display:flex; flex-direction:column; gap:8px; justify-content:center; }
+    .radar-legend-item { display:flex; align-items:center; gap:8px; font-size:14px; }
+    .radar-legend-dot { width:12px; height:12px; border-radius:3px; }
+
+    .flow-steps { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:14px 0; }
+    .flow-step { padding:8px 14px; border:1px solid var(--line); border-radius:6px; background:var(--soft); text-align:center; font-size:12px; font-weight:600; transition:transform 0.2s; }
+    .flow-step:hover { transform:scale(1.06); }
+    .flow-connector { color:var(--blue); font-size:16px; animation:flowPulse 2s ease-in-out infinite; }
+
+    .check-list { list-style:none; padding:0; margin:14px 0; }
+    .check-list li { padding:10px 14px; margin:5px 0; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--soft); font-size:14px; line-height:1.5; transition:transform 0.15s,box-shadow 0.15s; }
+    .check-list li:hover { transform:translateX(4px); box-shadow:var(--shadow-sm); }
+    .check-list li.done { border-left:4px solid var(--green); }
+    .check-list li.partial { border-left:4px solid var(--amber); }
+    .check-list li.pending { border-left:4px solid var(--muted); }
+    .tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:700; margin-right:8px; }
+    .tag.done-tag { background:#d1fae5; color:var(--green); } .tag.partial-tag { background:#fef3c7; color:var(--amber); } .tag.pending-tag { background:#e5e7eb; color:var(--muted); }
+
+    .roadmap { position:relative; margin:20px 0; padding-left:32px; }
+    .roadmap::before { content:''; position:absolute; left:14px; top:0; bottom:0; width:3px; background:linear-gradient(180deg,var(--green),var(--amber),var(--muted)); border-radius:2px; }
+    .roadmap-item { position:relative; margin-bottom:14px; padding:14px 18px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--soft); transition:transform 0.2s,box-shadow 0.2s; }
+    .roadmap-item:hover { transform:translateX(4px); box-shadow:var(--shadow-sm); }
+    .roadmap-item::before { content:''; position:absolute; left:-25px; top:18px; width:12px; height:12px; border-radius:50%; border:3px solid var(--paper); }
+    .roadmap-item.done::before { background:var(--green); }
+    .roadmap-item.partial::before { background:var(--amber); }
+    .roadmap-item.pending::before { background:var(--muted); }
+    .roadmap-item.current::before { background:var(--amber); animation:dotPulse 2s ease-in-out infinite; }
+    .roadmap-item.current { border-color:var(--amber); background:linear-gradient(135deg,#fffbeb,#fef3c7); }
+    .roadmap-item p { margin:0; font-size:14px; color:var(--muted); }
+    .roadmap-item strong { color:var(--ink); }
+
+    .collapsible-toggle { display:flex; align-items:center; gap:8px; width:100%; padding:12px 16px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--soft); cursor:pointer; font-size:15px; font-weight:700; color:var(--ink); text-align:left; transition:background 0.2s; font-family:inherit; }
+    .collapsible-toggle:hover { background:#eef3fa; }
+    .collapsible-toggle .chevron { transition:transform 0.3s; font-size:12px; color:var(--muted); }
+    .collapsible-toggle.open .chevron { transform:rotate(90deg); }
+    .collapsible-body { max-height:0; overflow:hidden; transition:max-height 0.4s cubic-bezier(0.22,1,0.36,1); }
+    .collapsible-body.open { max-height:6000px; }
+
+    .risk-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:16px 0; }
+    .risk-card { padding:16px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--soft); border-top:3px solid var(--amber); transition:transform 0.2s,box-shadow 0.2s; }
+    .risk-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-sm); }
+    .risk-card .risk-name { font-weight:700; font-size:14px; margin-bottom:6px; color:var(--ink); }
+    .risk-card .risk-impact { font-size:13px; color:var(--red); margin-bottom:6px; }
+    .risk-card .risk-counter { font-size:13px; color:var(--teal); }
+
+    .phase-grid { display:grid; gap:12px; padding-top:12px; }
+    .phase-row { display:grid; grid-template-columns:130px 1fr 1fr; gap:12px; align-items:stretch; }
+    .phase-label { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14px; border-radius:var(--radius-sm); font-weight:700; text-align:center; font-size:13px; }
+    .phase-label .pct { display:block; font-size:20px; margin-top:4px; letter-spacing:-1px; }
+    .phase-label.done { background:#f0fdf4; color:var(--green); }
+    .phase-label.partial { background:#fffbeb; color:var(--amber); }
+    .phase-label.pending { background:#f9fafb; color:var(--muted); }
+    .phase-box { padding:14px 16px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--soft); }
+    .phase-box p { margin:0; color:var(--muted); font-size:14px; }
+
+    @media (max-width:980px) {
+      .meta,.grid-2,.grid-3,.grid-4,.radar-container,.phase-row { grid-template-columns:1fr; }
+      .pipeline { flex-direction:column; }
+      .pipeline-arrow { width:2px; height:24px; margin:2px 0; }
+      .pipeline-arrow::after { right:-5px; top:auto; bottom:-6px; }
+      .risk-grid { grid-template-columns:1fr; }
+    }
+    @media (max-width:640px) {
+      .page { width:calc(100% - 16px); padding-top:12px; }
+      header,section { padding:20px 18px; }
+      h1 { font-size:26px; }
+      nav { position:static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>无上下文浏览器 Profile 计划书</h1>
+      <p class="subtitle">将某个 AI 网页对话作为"近似 stateless"的模型后端使用。每一轮请求前由项目侧编译完整上下文包并发送；每一轮完成后采集本轮网页回复，并尽量不依赖网页历史上下文继续推理。浏览器模式负责主力推理，API 模式负责工程副驾。</p>
+      <div class="meta">
+        <div><strong>文档状态</strong>执行中（2026-05-11 复盘修订）</div>
+        <div><strong>最后编辑</strong>2026-05-11</div>
+        <div><strong>适用范围</strong>API / 浏览器 / Profile / 上下文编译 / GoAmzAI</div>
+        <div><strong>核心边界</strong>网页容器 ≠ 业务会话</div>
+      </div>
+      <div class="legend">
+        <span class="pill"><span class="dot"></span>API 统一消费层</span>
+        <span class="pill"><span class="dot teal"></span>无上下文浏览器 Profile</span>
+        <span class="pill"><span class="dot purple"></span>原浏览器模式</span>
+        <span class="pill"><span class="dot amber"></span>风险与兜底</span>
+        <span class="pill"><span class="dot green"></span>已完成</span>
+      </div>
+    </header>
+
+    <nav aria-label="目录">
+      <a href="#background">背景与目标</a>
+      <a href="#principles">核心原则</a>
+      <a href="#architecture">目标架构</a>
+      <a href="#phases">落地阶段</a>
+      <a href="#tasks">主力与辅助</a>
+      <a href="#risks">风险与对策</a>
+      <a href="#config">配置建议</a>
+      <a href="#acceptance">验收清单</a>
+      <a href="#priority">优先实现</a>
+    </nav>
+
+    <!-- ===== 1 ===== -->
+    <section id="background" class="reveal">
+      <h2>1. 背景与目标</h2>
+      <div class="grid-2">
+        <div class="card api">
+          <h3>🔑 API 模式</h3>
+          <p><strong>优点：</strong>完全自主可控、可并发、上下文精确、结构化协议稳定。</p>
+          <p><strong>缺点：</strong>成本高，频繁调用时产生较大账单压力。</p>
+        </div>
+        <div class="card web">
+          <h3>🌐 浏览器模式</h3>
+          <p><strong>优点：</strong>可调用网页端顶级模型，推理质量上限高，近似不限量使用。</p>
+          <p><strong>缺点：</strong>上下文托管在网页端，项目无法完全控制；网页 UI 变化影响稳定性；天然不适合并发。</p>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>核心目标：</strong>引入<strong>无上下文浏览器 Profile</strong>——将 AI 网页对话作为"近似 stateless"的模型后端。Data-Bridge 不把网页历史当作可信上下文来源，真正的上下文事实保存在本地，由项目侧在每轮请求前重新组织。
+      </div>
+      <h3>最终效果</h3>
+      <ul>
+        <li>浏览器模式负责主要智能推理、复杂分析、开发主流程与高质量生成。</li>
+        <li>API 模式负责可并发的辅助任务、严格结构化处理、工具调度胶水、校验修复和浏览器异常时的工程兜底。</li>
+        <li>上层业务只关心统一的 Profile 调用结果，不关心底层来自 API 还是浏览器网页。</li>
+        <li>设置页只负责 Profile 配置和 fallback 配置的增删改；每个本地对话可以选择自己的 Profile 或 Chain。</li>
+      </ul>
+
+      <div class="review-section">
+        <h3>📋 2026-05-11 当前边界与路线复盘</h3>
+        <p><strong>结论：</strong>当前实现仍在原定路径上，但有一个必须收口的结构性问题。</p>
+        <p><strong>已经走对的部分：</strong></p>
+        <ul>
+          <li><code>browser_stateless</code> 已作为 API 模式可选 Profile 类型接入。</li>
+          <li>本地 API 对话已支持 <code>model_usage</code>，可以按对话选择 Profile 或 Chain。</li>
+          <li>设置页已回到"管理配置"的角色，不再承担每个对话的运行时选择。</li>
+          <li>浏览器 Profile 的目标已从 URL 改为 GoAmzAI 左侧会话列表中的"目标对话名称"。</li>
+          <li>浏览器交互已复用现有浏览器模式发送逻辑，不再另建纯文本发送路径。</li>
+          <li>回复读取已复用浏览器模式结构化解析链路：DOM parser、segments、代码块标记与 transient 解析。</li>
+          <li>GoAmzAI 生成期间已支持 transient 临时刷新，最终稳定后再正式写入本地上下文。</li>
+          <li>守护进程配置仍独立，不随对话级 Profile 选择变化。</li>
+          <li>新增 worker 逻辑主要放在 <code>app/core/worker_modules</code>。</li>
+        </ul>
+        <p><strong>需要收口的偏差：</strong></p>
+        <ul>
+          <li>API Profile 与浏览器 Profile 都能作为"上游来源"工作，但还没有统一的上游事件接口。</li>
+          <li>当前浏览器 Profile 临时复用了 <code>api_stream_chunk_signal</code>、<code>api_stream_status_signal</code>、<code>api_round_state_signal</code>。</li>
+          <li>语义上仍像"浏览器源借用 API 流式状态"，不是最终的统一上游抽象。</li>
+        </ul>
+      </div>
+
+      <div class="review-section warning">
+        <h3>🎯 下一步收口方向</h3>
+        <div class="pipeline">
+          <div class="pipeline-node">API Profile</div>
+          <div class="pipeline-arrow"></div>
+          <div class="pipeline-node">Browser Stateless Profile</div>
+          <div class="pipeline-arrow"></div>
+          <div class="pipeline-node">Fallback Chain</div>
+          <div class="pipeline-arrow"></div>
+          <div class="pipeline-node highlight">Unified Upstream Events</div>
+          <div class="pipeline-arrow"></div>
+          <div class="pipeline-node">API 对话 UI / 本地上下文 / 守护进程 / 工具闭环</div>
+        </div>
+        <p>建议新增薄层 <code>app/core/worker_modules/upstream_events.py</code>，只定义统一事件：</p>
+        <table>
+          <thead><tr><th>事件</th><th>含义</th></tr></thead>
+          <tbody>
+            <tr><td><code>started</code></td><td>上游开始</td></tr>
+            <tr><td><code>delta</code></td><td>文本增量</td></tr>
+            <tr><td><code>structured</code></td><td>结构化片段增量</td></tr>
+            <tr><td><code>completed</code></td><td>上游完成</td></tr>
+            <tr><td><code>failed</code></td><td>上游失败</td></tr>
+            <tr><td><code>diagnostic</code></td><td>诊断信息</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="review-section">
+        <h3>📝 2026-05-10 边界修订记录</h3>
+        <ul>
+          <li><strong>设置页职责：</strong>管理 Profile、Fallback Chain 等配置本身，不再把"当前正在编辑哪个 Profile"等同于"所有对话运行时使用哪个 Profile"。</li>
+          <li><strong>对话级选择：</strong>本地 API 对话可通过 <code>model_usage</code> 选择 <code>profile</code> 或 <code>chain</code>。没有对话级选择时，才回退到全局 <code>api_mode_usage</code>。</li>
+          <li><strong>守护进程独立：</strong>守护进程和具体对话不是强绑定关系，本计划不修改守护进程配置逻辑。</li>
+          <li><strong>浏览器启动顺序：</strong>当前可继续采用"先浏览器、再服务器、再客户端"。后续可让服务器和客户端在未打开浏览器时也能启动，但这不是本阶段硬目标。</li>
+          <li><strong>浏览器能力复用：</strong>browser_stateless 不应另起一套简化的文本解析链路，应复用现有浏览器模式中已成熟的 DOM 解析、消息同步、代码块绑定、工具调用展示、代码执行入口等能力。</li>
+          <li><strong>JSON 不是默认输出：</strong>网页 AI 默认输出富文本、Markdown、代码块和分段 DOM。只有当任务确实需要结构化结果时，才要求在 Markdown fenced code block 中输出 JSON。解析不到 JSON 时，含义只是"结构化提取失败"，原始回复仍要保留。</li>
+        </ul>
+      </div>
+
+      <div class="callout"><strong>目标架构链路：</strong></div>
+      <div class="pipeline">
+        <div class="pipeline-node">业务任务</div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node">ContextCompiler</div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node">BrowserPromptEnvelope</div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node">model_usage / ProfileRouter</div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node highlight">Unified Upstream Events</div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node">API Profile 或 StatelessBrowserProfile</div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node">segments / raw_text / StructuredExtractor</div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node">上层会话 / 代码块 / 工具循环 / UI</div>
+      </div>
+    </section>
+
+    <!-- ===== 2 ===== -->
+    <section id="principles" class="reveal">
+      <h2>2. 核心原则</h2>
+      <div class="principle-list">
+        <div class="principle-item" style="border-left-color:var(--blue);"><strong>1. 项目侧持有上下文事实</strong><p>浏览器网页只作为推理执行器，不作为可信上下文数据库。历史消息、工具结果、任务状态、知识库摘要都由 Data-Bridge 侧维护。</p></div>
+        <div class="principle-item" style="border-left-color:var(--teal);"><strong>2. 每轮请求全量自描述</strong><p>每次发给浏览器网页的 prompt 必须包含完成本轮任务所需的系统规则、任务目标、必要历史、输入数据和输出要求。不依赖网页端上一轮对话记忆。</p></div>
+        <div class="principle-item" style="border-left-color:var(--purple);"><strong>3. 浏览器 Profile 纳入统一配置与调用</strong><p>浏览器源不应成为独立分支逻辑，而应实现与 API Profile 相同的运行时调用入口。成本、延迟、可靠性、并发能力由 Profile 元数据描述。</p></div>
+        <div class="principle-item" style="border-left-color:var(--amber);"><strong>4. 对话选择和配置管理分离</strong><p>设置页负责管理 Profile 与 Chain。对话负责选择"本对话使用哪个 Profile/Chain"。全局 <code>api_mode_usage</code> 只作为未选择时的默认兜底。</p></div>
+        <div class="principle-item" style="border-left-color:var(--red);"><strong>5. 串行能力显式建模</strong><p>浏览器 Profile 默认 <code>supports_parallel = false</code>。通过任务队列管理吞吐，不在上层假装它具备 API 一样的并发能力。</p></div>
+        <div class="principle-item" style="border-left-color:var(--green);"><strong>6. API 是工程副驾，不是默认主脑</strong><p>网页自动化、输出解析、超时、风控、页面结构变化都必须被视为正常故障类型。API 的价值在于补浏览器短板：并发、结构化、小模型快速处理、工具调用编排、结果校验。</p></div>
+        <div class="principle-item" style="border-left-color:var(--teal);"><strong>7. 浏览器源只能通过网页消息结构通信</strong><p>浏览器源不是可自由收发 JSON RPC 的后端，它只能通过网页聊天输入框发送一段文本或 Markdown。网页返回也不是原始协议包，而是渲染后的 DOM 消息树。真实协议是"发送可渲染 prompt，读取 DOM 渲染结果，再恢复成标准消息"。</p></div>
+        <div class="principle-item" style="border-left-color:var(--amber);"><strong>8. 不猜 DOM</strong><p>浏览器交互必须优先依据 <code>docs/dom</code>、<code>docs/page_outer.html</code> 和 <code>docs/GoamzAI平台智能化方案.md</code> 中的 DOM 契约。截图只能辅助理解，不作为选择器依据。新建对话、命名对话、选择模型等隐藏栏能力，后续必须基于真实 DOM 证据实现。</p></div>
+      </div>
+    </section>
+
+    <!-- ===== 3 ===== -->
+    <section id="architecture" class="reveal">
+      <h2>3. 目标架构</h2>
+
+      <div class="sub-arch">
+        <h4>3.1 Profile 抽象 <span class="badge core">核心</span></h4>
+        <p>在现有 Profile 配置体系中扩展统一模型后端抽象：</p>
+        <pre><code>class ModelProfile:
+    id: str
+    name: str
+    kind: str  # api | browser_stateless
+    provider: str
+    model: str | None
+    supports_parallel: bool
+    cost_level: str  # high | medium | low
+    reliability_level: str  # high | medium | low
+    max_input_tokens: int | None
+    max_output_tokens: int | None
+    timeout_seconds: int</code></pre>
+        <pre><code>class ModelRequest:
+    request_id: str
+    task_type: str
+    messages: list
+    context_bundle: dict
+    output_schema: dict | None
+    priority: int
+
+class ModelResponse:
+    request_id: str
+    profile_id: str
+    raw_text: str
+    structured_message: dict | None
+    segments: list
+    parsed: dict | None
+    usage: dict | None
+    finish_reason: str
+    diagnostics: dict</code></pre>
+        <p><code>raw_text</code> 是从网页消息恢复出来的文本投影；<code>segments</code> 更接近浏览器模式的真实内容；<code>parsed</code> 只是可选的结构化提取结果，不应替代原始消息。</p>
+      </div>
+
+      <div class="sub-arch">
+        <h4>3.2 StatelessBrowserProfile <span class="badge flow">流程</span></h4>
+        <p>无上下文浏览器 Profile 的职责：</p>
+        <ol>
+          <li>接收统一的 <code>ModelRequest</code>。</li>
+          <li>调用 <code>ContextCompiler</code> 生成完整 prompt。</li>
+          <li>调用 <code>BrowserPromptEnvelope</code> 将请求包装成网页聊天框可发送的文本或 Markdown。</li>
+          <li>驱动浏览器进入指定 AI 网页对话；当前主要通过 GoAmzAI 左侧会话标题定位目标对话。</li>
+          <li>清理或隔离当前网页对话状态。</li>
+          <li>输入完整 prompt。</li>
+          <li>在 GoAmzAI 生成期间，通过浏览器模式 transient 解析链路采集中间态 segments，只刷新 UI，不提前落库。</li>
+          <li>生成稳定后，通过现有浏览器消息同步链路采集本轮回复，而不是另写简化版 DOM 解析器。</li>
+          <li>在需要时交给 <code>Optional StructuredExtractor</code> 做 JSON/XML 等结构化提取。</li>
+        </ol>
+        <div class="flow-steps">
+          <div class="flow-step">ModelRequest</div><span class="flow-connector">→</span>
+          <div class="flow-step">compile_prompt()</div><span class="flow-connector">→</span>
+          <div class="flow-step">build_envelope()</div><span class="flow-connector">→</span>
+          <div class="flow-step">acquire_lock()</div><span class="flow-connector">→</span>
+          <div class="flow-step">clean_conversation()</div><span class="flow-connector">→</span>
+          <div class="flow-step">send_prompt()</div><span class="flow-connector">→</span>
+          <div class="flow-step">observe_transient</div><span class="flow-connector">→</span>
+          <div class="flow-step">wait_complete()</div><span class="flow-connector">→</span>
+          <div class="flow-step">read_stable</div><span class="flow-connector">→</span>
+          <div class="flow-step">normalize()</div><span class="flow-connector">→</span>
+          <div class="flow-step">extract()</div><span class="flow-connector">→</span>
+          <div class="flow-step">release_lock()</div>
+        </div>
+        <p>新 worker 相关逻辑应放在 <code>app/core/worker_modules</code>，主 <code>worker.py</code> 只保留薄调度入口，避免继续膨胀。</p>
+      </div>
+
+      <div class="sub-arch">
+        <h4>3.3 ContextCompiler <span class="badge data">数据</span></h4>
+        <p>把项目侧状态编译成浏览器网页可理解的完整请求包。推荐 prompt 结构：</p>
+        <pre><code>你是 Data-Bridge 的一个近似无上下文推理后端。
+本次请求必须只依据下方输入完成任务，不要依赖任何网页历史对话。
+
+&lt;system_rules&gt;...&lt;/system_rules&gt;
+&lt;task&gt;...&lt;/task&gt;
+&lt;context_summary&gt;...&lt;/context_summary&gt;
+&lt;necessary_history&gt;...&lt;/necessary_history&gt;
+&lt;input_payload&gt;...&lt;/input_payload&gt;
+&lt;output_contract&gt;
+普通任务：请直接输出自然语言、Markdown、代码块或表格。
+结构化任务：请额外把 JSON 放入 ```json fenced block。
+&lt;/output_contract&gt;</code></pre>
+        <p>关键要求：历史不直接全量塞入，优先使用项目侧摘要与必要片段；普通任务不要强迫网页 AI 只输出 JSON；prompt 需要携带 <code>request_id</code>；prompt 最终必须能降级为一段网页输入框可粘贴的纯文本或 Markdown。</p>
+      </div>
+
+      <div class="sub-arch">
+        <h4>3.4 BrowserPromptEnvelope <span class="badge flow">流程</span></h4>
+        <p>负责把标准请求包转换成网页聊天框可发送的单段消息。设计要求：</p>
+        <ul>
+          <li>使用明显的边界标签包裹各区域，例如 <code>&lt;system_rules&gt;</code>、<code>&lt;task&gt;</code>、<code>&lt;input_payload&gt;</code>、<code>&lt;output_contract&gt;</code>。</li>
+          <li>首尾携带 <code>request_id</code>，并要求模型在输出中尽量回显同一个 <code>request_id</code>。</li>
+          <li>避免依赖网页端隐藏 metadata，因为浏览器源只能发送可见文本。</li>
+          <li>对大上下文做摘要和片段裁剪，保证一次粘贴可被网页输入框接受。</li>
+          <li>对代码、JSON、日志等内容使用 Markdown fenced code block，降低网页富文本编辑器误解析概率。</li>
+        </ul>
+      </div>
+
+      <div class="sub-arch">
+        <h4>3.5 BrowserConversationReset <span class="badge core">核心</span></h4>
+        <p>负责在每轮发送前把网页对话恢复到近似无上下文状态。必须真实操作网页 UI。</p>
+        <div class="warning callout">
+          <strong>⚠️ 重要约束：</strong>"清空"按钮只有在消息窗口置底后才会出现。reset 流程必须先滚动消息容器到底部，再查找按钮。不能直接在页面顶部或中间状态查找"清空"，否则会误判按钮缺失。
+        </div>
+        <p>建议定位策略：</p>
+        <ol>
+          <li>定位消息滚动容器，例如 <code>.n-scrollbar-container</code> / <code>.n-scrollbar-content</code>。</li>
+          <li>将消息窗口滚动到底部，并等待底部工具区渲染完成。</li>
+          <li>首选语义定位：查找可点击 <code>button</code>，其 <code>.n-button__content</code> 文本精确等于 <code>清空</code>。</li>
+          <li>辅助特征：按钮包含 <code>n-button--tiny-type</code>、<code>n-button--ghost</code>、<code>clickable</code>。</li>
+          <li>避免只依赖 <code>data-v-*</code> 属性，因为 Vue scoped attribute 可能随构建变化。</li>
+          <li>点击前记录当前最后一个 <code>chat-item[data-message-id]</code>，点击后等待旧消息消失。</li>
+          <li>若网页弹出确认框，适配器必须显式确认。</li>
+          <li>清空失败时不得发送本轮 prompt，应返回 <code>reset_failed</code>，由调度器决定重试、换浏览器 Profile 或 API takeover。</li>
+        </ol>
+      </div>
+
+      <div class="sub-arch">
+        <h4>3.6 复用现有浏览器消息同步链路 <span class="badge core">核心</span></h4>
+        <p>当前浏览器模式已具备较完整的消息解析和 UI 绑定能力。browser_stateless 应复用这些能力，它新增的是"每轮请求前清空/隔离网页上下文、发送完整 prompt、排队串行调用、按对话选择 Profile"的外层调度能力。</p>
+        <p>当前实现已复用的链路：</p>
+        <ul>
+          <li><strong>最终稳定回复：</strong><code>scan_and_fix_last_message()</code> 后调用 <code>get_chat_content_incremental(transient_last_ai=False)</code>，保留结构化 <code>segments</code>。</li>
+          <li><strong>生成中回复：</strong><code>wait_until_idle(progress_callback=...)</code> 期间调用 <code>extract_latest_ai_response(transient=True)</code>，使用浏览器 transient parser 形成临时 segments。</li>
+          <li><strong>API 对话落库：</strong>最终回复通过 <code>append_assistant_message(..., segments=..., raw_content=...)</code> 写入本地上下文。</li>
+          <li><strong>临时刷新：</strong>transient 消息只通过 <code>messages_signal</code> 推给 UI，不提前写入本地上下文。</li>
+        </ul>
+        <p>GoAmzAI 可观察 DOM 形态：</p>
+        <pre><code>.chat-item[data-message-id][data-message-ai]
+  .content / .chat-text / .aa-html
+    .node-slot[data-node-index][data-node-type]</code></pre>
+        <p>提取规则：以 <code>data-message-id</code> 作为浏览器侧消息 ID；以 <code>data-message-ai="true"</code> 识别 AI 回复；按 <code>data-node-index</code> 升序恢复块顺序；根据 <code>data-node-type</code> 恢复块语义（paragraph / heading / list / code_block / blockquote / thematic_break）。</p>
+      </div>
+
+      <div class="sub-arch">
+        <h4>3.7 对话级 Profile 选择与 ProfileRouter <span class="badge core">核心</span></h4>
+        <p>运行时选择顺序：① 当前本地对话的 <code>model_usage</code> → ② 全局 <code>api_mode_usage</code> → ③ 默认 API Profile。</p>
+        <p><code>model_usage</code> 支持两种形式：<code>{"type": "profile", "ref": "browser_web_primary"}</code> 或 <code>{"type": "chain", "ref": "primary_browser_then_api"}</code>。</p>
+        <div class="radar-container">
+          <div class="radar-chart">
+            <svg viewBox="0 0 400 380" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="200,40 340,120 340,260 200,340 60,260 60,120" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+              <polygon points="200,80 310,140 310,240 200,300 90,240 90,140" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+              <polygon points="200,120 280,160 280,220 200,260 120,220 120,160" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+              <polygon points="200,160 250,180 250,200 200,220 150,200 150,180" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+              <line x1="200" y1="40" x2="200" y2="340" stroke="#e2e8f0" stroke-width="1"/>
+              <line x1="60" y1="120" x2="340" y2="260" stroke="#e2e8f0" stroke-width="1"/>
+              <line x1="60" y1="260" x2="340" y2="120" stroke="#e2e8f0" stroke-width="1"/>
+              <polygon points="200,100 310,140 280,220 200,180 120,160 90,140" fill="rgba(47,95,143,0.15)" stroke="#2f5f8f" stroke-width="2.5" stroke-linejoin="round"/>
+              <polygon points="200,60 260,130 310,240 200,300 150,220 120,160" fill="rgba(15,118,110,0.12)" stroke="#0f766e" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="6,3"/>
+              <text x="200" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#1a2332">并发能力</text>
+              <text x="356" y="118" text-anchor="start" font-size="12" font-weight="700" fill="#1a2332">结构化</text>
+              <text x="356" y="268" text-anchor="start" font-size="12" font-weight="700" fill="#1a2332">可控性</text>
+              <text x="200" y="362" text-anchor="middle" font-size="12" font-weight="700" fill="#1a2332">成本优势</text>
+              <text x="40" y="268" text-anchor="end" font-size="12" font-weight="700" fill="#1a2332">模型上限</text>
+              <text x="40" y="118" text-anchor="end" font-size="12" font-weight="700" fill="#1a2332">推理质量</text>
+              <circle cx="200" cy="100" r="4" fill="#2f5f8f"/><circle cx="310" cy="140" r="4" fill="#2f5f8f"/><circle cx="280" cy="220" r="4" fill="#2f5f8f"/><circle cx="200" cy="180" r="4" fill="#2f5f8f"/><circle cx="120" cy="160" r="4" fill="#2f5f8f"/><circle cx="90" cy="140" r="4" fill="#2f5f8f"/>
+              <circle cx="200" cy="60" r="4" fill="#0f766e"/><circle cx="260" cy="130" r="4" fill="#0f766e"/><circle cx="310" cy="240" r="4" fill="#0f766e"/><circle cx="200" cy="300" r="4" fill="#0f766e"/><circle cx="150" cy="220" r="4" fill="#0f766e"/><circle cx="120" cy="160" r="4" fill="#0f766e"/>
+            </svg>
+          </div>
+          <div class="radar-legend">
+            <div class="radar-legend-item"><div class="radar-legend-dot" style="background:var(--blue);"></div><span><strong>API Profile</strong> — 并发强、结构化高、可控性高，但成本高、模型上限受配额限制</span></div>
+            <div class="radar-legend-item"><div class="radar-legend-dot" style="background:var(--teal);"></div><span><strong>浏览器 Profile</strong> — 推理质量高、模型上限高、成本极低，但并发弱、可控性中低</span></div>
+            <table style="margin-top:8px;">
+              <thead><tr><th>因素</th><th>API Profile</th><th>浏览器 Profile</th></tr></thead>
+              <tbody>
+                <tr><td>角色定位</td><td>工程辅助、副驾、兜底</td><td>主力推理、开发主流程</td></tr>
+                <tr><td>成本</td><td>高</td><td>极低或近似不限量</td></tr>
+                <tr><td>并发</td><td>强</td><td>弱</td></tr>
+                <tr><td>延迟</td><td>低</td><td>中到高</td></tr>
+                <tr><td>结构化可靠性</td><td>高</td><td>中</td></tr>
+                <tr><td>适合任务</td><td>并发小任务、严格 JSON、校验修复</td><td>主开发任务、复杂分析、方案设计、代码生成</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-arch">
+        <h4>3.8 统一上游事件层 <span class="badge next">下一步</span></h4>
+        <p>API Profile 和浏览器 Profile 不应长期在 API 模式内部走两套语义。</p>
+        <p><strong>当前临时状态：</strong>API Profile 通过 <code>WorkerStreamBridge</code> 输出 API stream chunk/status；浏览器 Profile 通过 <code>WorkerBrowserStatelessBridge</code> 模拟 started/completed，并额外推送 transient messages。UI 可以工作，但 worker 层仍需要知道"这是 API 流"还是"浏览器 DOM 观察"。</p>
+        <p><strong>目标状态：</strong></p>
+        <pre><code>class UpstreamEvent:
+    event: str  # started | delta | structured | completed | failed | diagnostic
+    conversation_id: str
+    request_id: str
+    profile_key: str
+    text_delta: str
+    accumulated_text: str
+    segments: list
+    raw_message: dict | None
+    diagnostics: dict</code></pre>
+        <p>统一后：API token 流转换成 <code>delta</code> / <code>completed</code>；浏览器 transient DOM 观察转换成 <code>structured</code>；浏览器稳定回复转换成 <code>completed</code>，携带最终 <code>segments</code>；fallback chain 只关心事件和错误，不关心底层是 HTTP API 还是网页；UI、上下文、守护进程、工具闭环共用同一个上游事件消费口。</p>
+      </div>
+    </section>
+
+    <!-- ===== 4 ===== -->
+    <section id="phases" class="reveal">
+      <h2>4. 推荐落地阶段</h2>
+      <h3>当前阶段状态（2026-05-11）</h3>
+      <div class="progress-bar-container">
+        <div class="progress-bar-row"><span class="progress-bar-label">Phase 1 最小适配器</span><div class="progress-bar-track"><div class="progress-bar-fill done" style="width:85%;">85%</div></div></div>
+        <div class="progress-bar-row"><span class="progress-bar-label">Phase 2 上下文编译</span><div class="progress-bar-track"><div class="progress-bar-fill done" style="width:80%;">80%</div></div></div>
+        <div class="progress-bar-row"><span class="progress-bar-label">Phase 3 队列锁调度</span><div class="progress-bar-track"><div class="progress-bar-fill partial" style="width:40%;">40%</div></div></div>
+        <div class="progress-bar-row"><span class="progress-bar-label">Phase 4 对话控制</span><div class="progress-bar-track"><div class="progress-bar-fill partial" style="width:15%;">15%</div></div></div>
+        <div class="progress-bar-row"><span class="progress-bar-label">Phase 5 稳定性与观测</span><div class="progress-bar-track"><div class="progress-bar-fill partial" style="width:35%;">35%</div></div></div>
+        <div class="progress-bar-row"><span class="progress-bar-label">Phase 6 多 Profile</span><div class="progress-bar-track"><div class="progress-bar-fill pending" style="width:0%;">0%</div></div></div>
+      </div>
+
+      <table>
+        <thead><tr><th>阶段</th><th>原目标</th><th>当前状态</th><th>结论</th></tr></thead>
+        <tbody>
+          <tr><td>Phase 1</td><td>最小可用适配器</td><td>大部分完成</td><td>已能按对话选择浏览器 Profile，切目标对话、清空、发送、提取与落库</td></tr>
+          <tr><td>Phase 2</td><td>上下文编译器与输出规范化</td><td>大部分完成</td><td>已接入本地 API 上下文、segments、transient；结构化提取仍是可选弱能力</td></tr>
+          <tr><td>Phase 3</td><td>队列、锁与调度</td><td>部分完成</td><td>单 adapter 有互斥锁；还缺统一队列、取消、健康状态、fallback 事件收口</td></tr>
+          <tr><td>Phase 4</td><td>GoAmzAI 对话控制能力</td><td>未系统展开</td><td>目前支持按目标对话名称切换；新建、命名、模型选择、上下文携带数仍需 DOM 证据</td></tr>
+          <tr><td>Phase 5</td><td>稳定性与观测</td><td>部分完成</td><td>已加关键诊断日志；仍需统一错误类型、HTML 片段诊断、成功率统计</td></tr>
+          <tr><td>Phase 6</td><td>多浏览器 Profile 扩展</td><td>未开始</td><td>等单浏览器 Profile 收口稳定后再做</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout"><strong>路线判断：</strong>没有偏离原定目标；下一步应先做统一上游事件层，把 API 源和浏览器源收成同一种事件语义；暂缓多浏览器 Profile、新建网页对话、网页隐藏栏配置，等 DOM 契约补齐后再动。</div>
+
+      <button class="collapsible-toggle" onclick="toggleCollapse(this)">
+        <span class="chevron">▶</span> 展开 Phase 1–6 详细内容
+      </button>
+      <div class="collapsible-body">
+        <div class="phase-grid">
+          <div class="phase-row">
+            <div class="phase-label done">Phase 1<span class="pct">85%</span></div>
+            <div class="phase-box"><strong>最小可用适配器</strong><p>新增 <code>browser_stateless</code> Profile 类型；设置页支持创建/编辑/删除浏览器 Profile 配置；本地 API 对话支持 <code>model_usage</code>；实现单请求串行调用；支持按 GoAmzAI 左侧会话标题切换目标对话；实现每轮发送前点击网页"清空"按钮；复用现有浏览器消息同步链路抓取回复；返回统一 <code>ModelResponse</code>。</p></div>
+            <div class="phase-box"><strong>验收</strong><p>配置中心可创建/编辑/删除浏览器 Profile 和 fallback Chain；每个本地 API 对话可选择自己的 Profile/Chain；守护进程配置不受对话级选择影响；浏览器 Profile 连续执行 5 轮互不相关任务，回复不依赖前轮网页上下文；单轮失败不会污染后续任务；清空按钮不可用或清空校验失败时，不会继续发送本轮 prompt。</p></div>
+          </div>
+          <div class="phase-row">
+            <div class="phase-label done">Phase 2<span class="pct">80%</span></div>
+            <div class="phase-box"><strong>上下文编译器与输出规范化</strong><p>实现 <code>ContextCompiler</code>；支持任务类型模板；引入 <code>request_id</code>、<code>task_type</code>、<code>output_contract</code>；复用现有浏览器模式的 Markdown/Segment 恢复链路；对结构化任务实现 JSON/XML 输出提取；对结构化提取实现轻量修复；生成中 transient 回复只用于 UI 预览；稳定回复写回时带 <code>segments</code> 与 <code>raw_content</code>。</p></div>
+            <div class="phase-box"><strong>验收</strong><p>普通任务可保留富文本、Markdown、代码块、工具结果等浏览器模式能力；结构化任务尽量返回可解析对象；结构化提取失败时，原始回复和标准消息块仍可被上层使用；prompt 中不需要依赖网页历史消息。</p></div>
+          </div>
+          <div class="phase-row">
+            <div class="phase-label partial">Phase 3<span class="pct">40%</span></div>
+            <div class="phase-box"><strong>队列、锁与调度</strong><p>为每个浏览器 Profile 增加互斥锁；增加任务队列 <code>pending/running/succeeded/failed/cancelled</code>；支持优先级、超时、取消；增加统一上游事件层，让 API Profile 与浏览器 Profile 都输出 <code>started/delta/structured/completed/failed</code>；API assist 属于守护进程或上游辅助策略；API takeover 属于 fallback chain 或统一上游路由策略；暴露队列状态给 UI 或日志系统。</p></div>
+            <div class="phase-box"><strong>验收</strong><p>多个任务提交到同一浏览器 Profile 时按序执行；超时任务可以释放锁，不阻塞后续任务；失败任务有明确错误类型与诊断日志；主任务默认进入浏览器队列，API 接管必须记录原因。</p></div>
+          </div>
+          <div class="phase-row">
+            <div class="phase-label partial">Phase 4<span class="pct">15%</span></div>
+            <div class="phase-box"><strong>GoAmzAI 对话控制能力</strong><p>基于 <code>docs/dom</code>、<code>docs/page_outer.html</code> 或新的 DOM 样本确认隐藏栏结构；支持新建网页对话；支持设置网页对话名称；支持选择网页模型；支持配置上下文携带数；支持打开高级设置并写入必要字段；明确哪些能力只属于浏览器模式，哪些在 API 模式下不需要保留。</p></div>
+            <div class="phase-box"><strong>验收</strong><p>不靠截图猜选择器；新建对话、命名、选择模型、配置上下文携带数均有 DOM 契约或测试证据；API 模式把网页作为上游源时，不暴露无意义的网页消息操作。</p></div>
+          </div>
+          <div class="phase-row">
+            <div class="phase-label partial">Phase 5<span class="pct">35%</span></div>
+            <div class="phase-box"><strong>稳定性与观测</strong><p>增加页面状态探测：未登录、页面加载中、输入框不可用、生成中、生成失败；增加清空按钮状态探测；增加 DOM 选择器版本化与备用选择器；增加截图或 HTML 片段诊断开关；记录每轮 prompt 摘要、响应摘要、耗时、重试次数、API assist/takeover 原因；记录统一上游事件；建立小型回归用例集。</p></div>
+            <div class="phase-box"><strong>验收</strong><p>页面结构轻微变化时有备用路径或明确报错；出现卡死时能通过日志定位在哪个阶段失败；能统计浏览器 Profile 的成功率、平均耗时、主力任务占比和 API 辅助次数。</p></div>
+          </div>
+          <div class="phase-row">
+            <div class="phase-label pending">Phase 6<span class="pct">0%</span></div>
+            <div class="phase-box"><strong>多浏览器 Profile 扩展</strong><p>支持多个浏览器账号或多个隔离浏览器数据目录；每个浏览器 Profile 独立锁、独立队列、独立健康状态；调度器按健康状态和队列长度选择浏览器 Profile；对高风险网页源设置冷却时间和请求频率上限。</p></div>
+            <div class="phase-box"><strong>验收</strong><p>两个浏览器 Profile 可以并行处理两个队列；单个浏览器 Profile 异常不会影响其他 Profile；调度器能避开不健康 Profile。</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 5 ===== -->
+    <section id="tasks" class="reveal">
+      <h2>5. 主力任务与 API 辅助任务</h2>
+      <div class="grid-3">
+        <div class="card web">
+          <h3>🌐 浏览器模式主力任务</h3>
+          <ul>
+            <li>开发主流程中的复杂分析、架构判断、代码生成与方案设计</li>
+            <li>需要顶级模型能力的长上下文推理</li>
+            <li>高质量文档、计划书、审查意见、产品方案、调试判断</li>
+            <li>需要反复推敲的主对话协作</li>
+            <li>可排队但质量优先的任务</li>
+            <li>需要保留 Markdown、代码块、富文本结构的回复</li>
+          </ul>
+        </div>
+        <div class="card api">
+          <h3>🔑 API 模式辅助任务</h3>
+          <ul>
+            <li>小而快的结构化转换，例如 JSON 修复、字段抽取、格式校验</li>
+            <li>多路并发的轻量任务，例如批量分类、批量摘要、候选项初筛</li>
+            <li>工具调用参数生成、工具结果压缩、协议桥接</li>
+            <li>浏览器网页不可用、队列过长或用户明确要求立即响应时的接管</li>
+            <li>不适合进入网页端的敏感任务</li>
+          </ul>
+        </div>
+        <div class="card warn">
+          <h3>⚠️ 谨慎进入浏览器模式的任务</h3>
+          <ul>
+            <li>涉及私钥、账号、付款、内部敏感数据的任务</li>
+            <li>必须毫秒级响应或强并发的任务</li>
+            <li>输出协议不可失败且无法二次修复的任务</li>
+            <li>需要完全自主控制推理上下文和审计链路的任务</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 6 ===== -->
+    <section id="risks" class="reveal">
+      <h2>6. 风险与对策</h2>
+      <div class="risk-grid">
+        <div class="risk-card"><div class="risk-name">网页 UI 变化</div><div class="risk-impact">影响：自动化失效</div><div class="risk-counter">对策：选择器版本化、页面状态探测、失败诊断截图</div></div>
+        <div class="risk-card"><div class="risk-name">输出格式不稳定</div><div class="risk-impact">影响：结构化提取失败</div><div class="risk-counter">对策：fenced code block、解析修复、API assist；保留原始回复</div></div>
+        <div class="risk-card"><div class="risk-name">浏览器无法并发</div><div class="risk-impact">影响：队列积压</div><div class="risk-counter">对策：显式队列、优先级、API 分担轻量任务、多 Profile 扩展</div></div>
+        <div class="risk-card"><div class="risk-name">清空按钮定位失败</div><div class="risk-impact">影响：无法进入无上下文状态</div><div class="risk-counter">对策：按文本定位为主、class/图标特征为辅、失败时停止发送并记录诊断</div></div>
+        <div class="risk-card"><div class="risk-name">网页端上下文残留</div><div class="risk-impact">影响：结果受污染</div><div class="risk-counter">对策：每轮真实点击清空或新建对话、清空后校验、完整 prompt、request_id 校验</div></div>
+        <div class="risk-card"><div class="risk-name">账号级记忆或网页策略影响</div><div class="risk-impact">影响：不完全 stateless</div><div class="risk-counter">对策：在文档和配置中标记为"近似 stateless"，敏感任务转 API 或本地模型</div></div>
+        <div class="risk-card"><div class="risk-name">风控或限流</div><div class="risk-impact">影响：任务失败</div><div class="risk-counter">对策：请求频率限制、冷却时间、退避重试、健康状态降级</div></div>
+        <div class="risk-card"><div class="risk-name">隐私与合规</div><div class="risk-impact">影响：数据泄露风险</div><div class="risk-counter">对策：敏感任务强制 API 或本地模型，不进入浏览器 Profile</div></div>
+        <div class="risk-card"><div class="risk-name">重写浏览器解析链路</div><div class="risk-impact">影响：代码块、工具卡片、执行入口

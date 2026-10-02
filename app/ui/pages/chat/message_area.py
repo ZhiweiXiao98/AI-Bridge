@@ -3,8 +3,9 @@ import os
 import time
 import requests
 import hashlib
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QScrollArea, QPushButton, QGridLayout, QLabel, QApplication)
-from PySide6.QtCore import Qt, QThread, Signal, QTimer
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QScrollArea, QPushButton, QGridLayout, QLabel, QApplication, QSizePolicy, QToolTip)
+from PySide6.QtCore import Qt, QThread, Signal, QTimer, QRectF
+from PySide6.QtGui import QPainter, QColor, QPen, QBrush
 from app.ui.components.chat import ChatBubble, CodeBox, ToolCallCard
 from app.core.config import ConfigManager
 from app.core.project_context import ProjectContext
@@ -14,12 +15,132 @@ from app.core.logging import get_logger
 
 logger = get_logger("app.ui.message_area", side="ui")
 
+
+class UserQuestionTimeline(QWidget):
+    """右侧问题时间线，只展示用户提问节点。"""
+
+    def __init__(self, message_area, parent=None):
+        super().__init__(parent)
+        self.message_area = message_area
+        self.markers = []
+        self.setFixedWidth(28)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        self.setMouseTracking(True)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
+        self.setToolTipDuration(8000)
+
+    def refresh(self):
+        self.markers = self._collect_markers()
+        self.setVisible(bool(self.markers))
+        self.update()
+
+    def _collect_markers(self):
+        area = self.message_area
+        scrollbar = area.v_scrollbar
+        content_height = max(1, area.chat_container.height())
+        viewport_height = max(1, area.scroll_area.viewport().height())
+        max_scroll = max(1, scrollbar.maximum())
+        track_height = max(1, self.height() - 18)
+        markers = []
+
+        for bubble in getattr(area, 'bubbles_cache', []) or []:
+            if not isinstance(bubble, ChatBubble):
+                continue
+            if not getattr(bubble, 'is_user', False) or bubble.isHidden():
+                continue
+            data = getattr(bubble, 'current_data', {}) or {}
+            if data.get('_hidden') or str(data.get('kind', '')).lower() == 'tool_feedback':
+                continue
+
+            center_y = bubble.geometry().center().y()
+            normalized = center_y / max(content_height, viewport_height)
+            marker_y = 9 + int(normalized * track_height)
+            target_scroll = int(max_scroll * normalized)
+            markers.append({
+                'y': marker_y,
+                'scroll': target_scroll,
+                'summary': self._summarize_question(data),
+            })
+        return markers
+
+    def _summarize_question(self, data):
+        text = ''
+        if isinstance(data, dict):
+            raw = data.get('raw_content')
+            if isinstance(raw, str) and raw.strip():
+                text = raw
+            else:
+                parts = []
+                for seg in data.get('segments', []) or []:
+                    if not isinstance(seg, dict):
+                        continue
+                    if seg.get('type') in ('text', 'user_message'):
+                        parts.append(str(seg.get('content', '') or ''))
+                text = '\n'.join(parts)
+        text = ' '.join(str(text or '').split())
+        if len(text) > 80:
+            text = text[:77].rstrip() + '...'
+        return text or '用户提问'
+
+    def paintEvent(self, event):
+        if not self.markers:
+            return
+        p = theme_manager.get_palette()
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+
+        x = self.width() // 2
+        line_pen = QPen(QColor(p.ACCENT_PRIMARY), 1.5, Qt.PenStyle.DotLine)
+        line_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        painter.setPen(line_pen)
+        painter.drawLine(x, 9, x, self.height() - 9)
+
+        glow = QColor(p.ACCENT_PRIMARY)
+        glow.setAlpha(70)
+        dot = QColor(p.ACCENT_PRIMARY)
+        inner = QColor(p.BG_PRIMARY)
+        for marker in self.markers:
+            y = marker['y']
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QBrush(glow))
+            painter.drawEllipse(QRectF(x - 5.5, y - 5.5, 11, 11))
+            painter.setBrush(QBrush(dot))
+            painter.drawEllipse(QRectF(x - 3.5, y - 3.5, 7, 7))
+            painter.setBrush(QBrush(inner))
+            painter.drawEllipse(QRectF(x - 1.4, y - 1.4, 2.8, 2.8))
+
+    def mouseMoveEvent(self, event):
+        marker = self._nearest_marker(event.position().y())
+        if marker:
+            QToolTip.showText(event.globalPosition().toPoint(), marker['summary'], self)
+        else:
+            QToolTip.hideText()
+        super().mouseMoveEvent(event)
+
+    def mousePressEvent(self, event):
+        marker = self._nearest_marker(event.position().y(), radius=9)
+        if marker:
+            self.message_area.v_scrollbar.setValue(marker['scroll'])
+        super().mousePressEvent(event)
+
+    def leaveEvent(self, event):
+        QToolTip.hideText()
+        super().leaveEvent(event)
+
+    def _nearest_marker(self, y, radius=11):
+        if not self.markers:
+            return None
+        nearest = min(self.markers, key=lambda marker: abs(marker['y'] - y))
+        if abs(nearest['y'] - y) <= radius:
+            return nearest
+        return None
+
 class MessageArea(QWidget):
     request_scroll_bottom = Signal()
     request_manual_toggle = Signal(int, int, int)
     request_quick_apply = Signal(str, str)
-    request_set_snapshot = Signal(int)
-    request_correct_turn = Signal(object, int)
+    request_resync = Signal()
+
     request_ignore_file = Signal(str)
     request_save_file = Signal(str, str)
     request_discard_file = Signal(str, str)
@@ -30,6 +151,8 @@ class MessageArea(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.is_paused = False
         self.is_sticking_to_bottom = False
         
@@ -43,6 +166,7 @@ class MessageArea(QWidget):
         self._tool_cards_by_id = {}
         self._pending_tool_events = {}
         self._projection = ChatProjectionReducer()
+        self._projection.set_resync_callback(self.request_resync.emit)
         self.selection_mode = False
         self.selected_indexes = set()
         self.has_more_history = False
@@ -63,6 +187,8 @@ class MessageArea(QWidget):
         layout.setContentsMargins(0,0,0,0)
         
         self.scroll_area = QScrollArea()
+        self.scroll_area.setMinimumWidth(0)
+        self.scroll_area.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
@@ -86,9 +212,12 @@ class MessageArea(QWidget):
         
         self.scroll_area.setWidget(self.chat_container)
         layout.addWidget(self.scroll_area, 0, 0)
+        self.question_timeline = UserQuestionTimeline(self, self)
+        self.question_timeline.hide()
+        layout.addWidget(self.question_timeline, 0, 0, Qt.AlignmentFlag.AlignRight)
         
         self.scroll_btn = QPushButton("▼")
-        self.scroll_btn.setFixedSize(40, 40)
+        self.scroll_btn.setFixedSize(32, 32)
         self.scroll_btn.clicked.connect(self.force_scroll_bottom)
         self.scroll_btn.hide()
         layout.addWidget(self.scroll_btn, 0, 0, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
@@ -102,15 +231,15 @@ class MessageArea(QWidget):
         p = theme_manager.get_palette()
         self.scroll_area.setStyleSheet(f"QScrollArea {{ border: none; background-color: {p.BG_PRIMARY}; }}")
         self.chat_container.setStyleSheet(f"background-color: {p.BG_PRIMARY};")
-        self.status_lbl.setStyleSheet(f"color: {p.TEXT_SECONDARY}; font-size: 14px; margin-top: 50px;")
+        self.status_lbl.setStyleSheet(f"color: {p.TEXT_SECONDARY}; font-size: 12px; margin-top: 36px;")
         if hasattr(self, '_runtime_status_lbl'):
             self._runtime_status_lbl.setStyleSheet(
                 f"background-color: {p.BG_SECONDARY}; color: {p.TEXT_SECONDARY}; "
                 f"border: 1px solid {p.BORDER}; border-radius: 10px; "
-                f"padding: 8px 12px; margin: 6px 15px; font-size: 13px;"
+                f"padding: 5px 10px; margin: 4px 10px; font-size: 12px;"
             )
-        self.scroll_btn.setStyleSheet(f"QPushButton {{ background-color: {p.ACCENT_PRIMARY}; color: white; border-radius: 20px; font-weight: bold; border: 2px solid {p.BG_PRIMARY}; }}")
-        self.load_more_btn.setStyleSheet(f"QPushButton {{ background-color: {p.BG_SECONDARY}; color: {p.TEXT_PRIMARY}; border-radius: 14px; padding: 6px 14px; border: 1px solid {p.BORDER}; }} QPushButton:hover {{ border: 1px solid {p.ACCENT_PRIMARY}; color: {p.ACCENT_PRIMARY}; }}")
+        self.scroll_btn.setStyleSheet(f"QPushButton {{ background-color: {p.ACCENT_PRIMARY}; color: white; border-radius: 16px; font-weight: bold; border: 2px solid {p.BG_PRIMARY}; }}")
+        self.load_more_btn.setStyleSheet(f"QPushButton {{ background-color: {p.BG_SECONDARY}; color: {p.TEXT_PRIMARY}; border-radius: 12px; padding: 4px 10px; border: 1px solid {p.BORDER}; }} QPushButton:hover {{ border: 1px solid {p.ACCENT_PRIMARY}; color: {p.ACCENT_PRIMARY}; }}")
 
     def set_paused(self, paused):
         self.is_paused = paused
@@ -124,6 +253,8 @@ class MessageArea(QWidget):
         self.is_sticking_to_bottom = False
 
     def on_range_changed(self, min_val, max_val):
+        self._position_question_timeline()
+        self._schedule_timeline_refresh()
         if self.is_sticking_to_bottom:
             self.v_scrollbar.setValue(max_val)
 
@@ -141,6 +272,26 @@ class MessageArea(QWidget):
             if not self.v_scrollbar.isSliderDown():
                 self.is_sticking_to_bottom = True
         self.load_more_btn.setVisible(self.has_more_history and value <= self.v_scrollbar.minimum())
+        self._schedule_timeline_refresh()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._position_question_timeline()
+        self._schedule_timeline_refresh()
+
+    def _position_question_timeline(self):
+        if not hasattr(self, 'question_timeline'):
+            return
+        width = self.question_timeline.width()
+        scrollbar_width = self.v_scrollbar.sizeHint().width() if hasattr(self, 'v_scrollbar') else 14
+        x = max(0, self.scroll_area.width() - scrollbar_width - width - 2)
+        self.question_timeline.setGeometry(x, 0, width, self.height())
+        self.question_timeline.raise_()
+
+    def _schedule_timeline_refresh(self):
+        if not hasattr(self, 'question_timeline'):
+            return
+        QTimer.singleShot(0, self.question_timeline.refresh)
 
     def enter_multi_select_mode(self, initial_index=None):
         self.selection_mode = True
@@ -174,6 +325,19 @@ class MessageArea(QWidget):
         self._bubbles_by_id = {}
         self._tool_cards_by_id = {}
         self._pending_tool_events = {}
+
+    def _clear_transient_stream_widgets(self):
+        """移除 API 流式阶段的临时气泡，正式历史渲染完成后再清理。"""
+        widgets_to_remove = []
+        for i in range(self.chat_layout.count()):
+            item = self.chat_layout.itemAt(i)
+            widget = item.widget() if item else None
+            if widget and bool(widget.property("api_stream_transient")):
+                widgets_to_remove.append(widget)
+        for widget in widgets_to_remove:
+            self.chat_layout.removeWidget(widget)
+            widget.setParent(None)
+            widget.deleteLater()
 
     def get_selected_indexes(self):
         return sorted(self.selected_indexes)
@@ -223,7 +387,10 @@ class MessageArea(QWidget):
         change = self._projection.apply_messages(changed_messages)
         change_type = change["type"]
 
-        if change_type in ("stale", "empty"):
+        if change_type in ("stale", "empty", "resync_needed"):
+            # 恢复被 render_timer.stop() 中断的渲染任务
+            if self.current_render_idx < len(self.pending_messages):
+                self.render_timer.start()
             return False
 
         added = change["added"]
@@ -232,6 +399,8 @@ class MessageArea(QWidget):
 
         if not added and not updated and not removed:
             return False
+
+        self.status_lbl.hide()
 
         logger.info("[增量渲染] added=%s | updated=%s | removed=%s | seq=%s",
                     len(added), len(updated), len(removed), change.get("seq"))
@@ -258,8 +427,6 @@ class MessageArea(QWidget):
                 idx = msg_data.get('index', 1)
                 expected_is_user = (msg_data.get('role') == 'User')
                 bubble = ChatBubble(msg_data, expected_is_user, index=idx)
-                bubble.request_set_snapshot.connect(self.request_set_snapshot.emit)
-                bubble.request_correct_turn.connect(self.request_correct_turn.emit)
                 bubble.request_remote_action.connect(self.request_manual_toggle.emit)
                 bubble.request_code_apply.connect(self.request_quick_apply.emit)
                 bubble.request_multi_select_mode.connect(self.request_enter_multi_select_mode.emit)
@@ -283,6 +450,7 @@ class MessageArea(QWidget):
         if self.is_sticking_to_bottom:
             self.v_scrollbar.setValue(self.v_scrollbar.maximum())
 
+        self._schedule_timeline_refresh()
         return True
 
     def _find_insert_position(self, ordinal):
@@ -318,6 +486,7 @@ class MessageArea(QWidget):
         else:
             self.status_lbl.show()
             self.status_lbl.setText("暂无消息")
+            self._clear_transient_stream_widgets()
 
         self.render_timer.stop()
 
@@ -341,17 +510,23 @@ class MessageArea(QWidget):
             self._projection.reset()
             self._clear_all_bubbles()
 
+        # 移除所有临时流式气泡（避免干扰增量渲染索引）
+        self._clear_transient_stream_widgets()
         # === projection reducer 驱动 ===
         change = self._projection.apply_messages(messages)
         change_type = change["type"]
 
-        if change_type in ("stale", "empty"):
+        if change_type in ("stale", "empty", "resync_needed"):
+            # 恢复被 render_timer.stop() 中断的渲染任务
+            if self.current_render_idx < len(self.pending_messages):
+                self.render_timer.start()
             return False
 
         added = change["added"]
         updated = change["updated"]
         removed = change["removed"]
-        has_changes = bool(added or updated or removed)
+        reordered = bool(change.get("reordered"))
+        has_changes = bool(added or updated or removed or reordered)
 
         if conv_switched or self._last_rendered_messages is None:
             logger.info("[渲染] 全量渲染 | conv_switched=%s | msgs=%s | seq=%s",
@@ -362,9 +537,16 @@ class MessageArea(QWidget):
             self.current_render_idx = 0
         elif round_state == 'ai_streaming' and not added:
             return self._streaming_update(messages)
+        elif reordered and not added and not updated and not removed:
+            logger.info("[渲染] 顺序变化，重建气泡 | msgs=%s | seq=%s",
+                        len(messages), change.get("seq"))
+            self._clear_all_bubbles()
+            self.pending_messages = messages
+            self.current_render_idx = 0
+            self._last_rendered_messages = list(messages)
         elif has_changes:
-            logger.info("[渲染] 局部刷新 | added=%s | updated=%s | removed=%s | seq=%s",
-                        len(added), len(updated), len(removed), change.get("seq"))
+            logger.info("[渲染] 局部刷新 | added=%s | updated=%s | removed=%s | reordered=%s | seq=%s",
+                        len(added), len(updated), len(removed), reordered, change.get("seq"))
             if removed:
                 for rid in removed:
                     bubble = self._bubbles_by_id.pop(rid, None)
@@ -395,9 +577,13 @@ class MessageArea(QWidget):
             if updated and not added:
                 if self.is_sticking_to_bottom:
                     self.v_scrollbar.setValue(self.v_scrollbar.maximum())
+                self._schedule_timeline_refresh()
                 return True
         else:
             logger.debug("[渲染] 投影无变化 | seq=%s | round_state='%s'", change.get("seq"), _rs_display)
+            # 恢复被中断的延迟渲染任务（防止 render_timer.stop() 导致新气泡永远不被创建）
+            if self.current_render_idx < len(self.pending_messages):
+                self.render_timer.start()
             return False
 
         # 滚动判断
@@ -546,7 +732,6 @@ class MessageArea(QWidget):
     def _safe_update_bubble(self, bubble, msg_data, idx):
         """安全更新气泡内容：断开信号 → update_content → 重连信号。"""
         try:
-            bubble.request_correct_turn.disconnect()
             bubble.request_remote_action.disconnect()
             bubble.request_code_apply.disconnect()
             bubble.request_multi_select_mode.disconnect()
@@ -556,7 +741,6 @@ class MessageArea(QWidget):
         except Exception:
             pass
         bubble.update_content(msg_data, index=idx)
-        bubble.request_correct_turn.connect(self.request_correct_turn.emit)
         bubble.request_remote_action.connect(self.request_manual_toggle.emit)
         bubble.request_code_apply.connect(self.request_quick_apply.emit)
         bubble.request_multi_select_mode.connect(self.request_enter_multi_select_mode.emit)
@@ -876,11 +1060,13 @@ class MessageArea(QWidget):
             self._rebuild_tool_card_registry()
             self._replay_pending_tool_events()
             self._try_cross_message_tool_binding()
+            self._clear_transient_stream_widgets()
             # 保存渲染快照，供下次增量比对
             self._last_rendered_messages = list(self.pending_messages)
             if self.is_sticking_to_bottom:
                 self.v_scrollbar.setValue(self.v_scrollbar.maximum())
                 QTimer.singleShot(500, self.stop_sticking)
+            self._schedule_timeline_refresh()
             return
 
         try:
@@ -925,8 +1111,6 @@ class MessageArea(QWidget):
                     self.chat_layout.removeWidget(b)
                     b.deleteLater()
                     bubble = ChatBubble(msg_data, expected_is_user, index=idx)
-                    bubble.request_set_snapshot.connect(self.request_set_snapshot.emit)
-                    bubble.request_correct_turn.connect(self.request_correct_turn.emit)
                     bubble.request_remote_action.connect(self.request_manual_toggle.emit)
                     bubble.request_code_apply.connect(self.request_quick_apply.emit)
                     bubble.request_multi_select_mode.connect(self.request_enter_multi_select_mode.emit)
@@ -948,8 +1132,6 @@ class MessageArea(QWidget):
                     b.set_selection_mode(self.selection_mode, b.index in self.selected_indexes)
             else:
                 bubble = ChatBubble(msg_data, expected_is_user, index=idx)
-                bubble.request_set_snapshot.connect(self.request_set_snapshot.emit)
-                bubble.request_correct_turn.connect(self.request_correct_turn.emit)
                 bubble.request_remote_action.connect(self.request_manual_toggle.emit)
                 bubble.request_code_apply.connect(self.request_quick_apply.emit)
                 bubble.request_multi_select_mode.connect(self.request_enter_multi_select_mode.emit)

@@ -33,11 +33,13 @@ class TestBlacklistFingerprint:
         }
         
         service = FileService(mock_config)
+        service.project_root = str(tmp_path.resolve())
         
         yield {
             "service": service,
             "root": tmp_path,
-            "code_dir": export_code
+            "code_dir": export_code,
+            "ignored_blocks_file": tmp_path / IGNORED_BLOCKS_FILE,
         }
         
         os.chdir(old_cwd)
@@ -55,8 +57,8 @@ class TestBlacklistFingerprint:
         assert service.is_content_ignored(content) is True
         
         # 2. 验证文件持久化
-        assert os.path.exists(IGNORED_BLOCKS_FILE)
-        with open(IGNORED_BLOCKS_FILE, 'r', encoding='utf-8') as f:
+        assert env["ignored_blocks_file"].exists()
+        with open(env["ignored_blocks_file"], 'r', encoding='utf-8') as f:
             data = json.load(f)
             assert content_hash in data
             

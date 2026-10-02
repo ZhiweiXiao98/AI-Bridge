@@ -1,19 +1,25 @@
-# === Python ===
+# filename: .gitignore
+# === Python 编译垃圾 ===
 __pycache__/
 *.py[cod]
 *$py.class
 *.manifest
 *.spec
-*.egg-info/
 
 # === 虚拟环境 ===
 venv/
 .venv/
+.venv_*/
 env/
+
+# === Chrome 用户数据 (巨大) ===
+Chrome_143_Clean_Data/
+chrome_user_data/
 
 # === IDE 配置 ===
 .vscode/
 .idea/
+*.sln
 *.suo
 *.user
 *.swp
@@ -27,30 +33,49 @@ env/
 *.dll
 *.exe
 
-# === Python 打包产物 ===
+# === Python 打包产物 (PyInstaller) ===
 build/
 dist/
+*.spec
 *_Dist/
+AI_Bridge_Client_Dist/
+*.egg-info/
+mobile/.gradle-user/
+mobile/offline_cache/
 
-# === 运行时临时文件 ===
+# === 运行时临时文件 (务必忽略) ===
 logs/
 log_noise_config.json
+# 核心数据导出目录（保留目录结构，忽略内容）
 export/code/*
 !export/code/.gitkeep
 export/images/*
 !export/images/.gitkeep
+
 update_cache/
 backup/
 temp_uploads/
+临时上传/
 crash_log.txt
 pip-log.txt
 nohup.out
+FULL_PROJECT_CONTEXT.txt
+docs/PROJECT_STRUCTURE_DUMP.md
+PROJECT_STRUCTURE_DUMP.json
+export/tmp_*
+app_state.json
+ignored_blocks.json
+launcher_settings.json
+projects.json
+experimental/conversations/
 
 # === RAG 知识库（向量数据库，本地生成） ===
 _knowledge_base/
 _knowledge_base_v2/
+_knowledge_base_v2_corrupted/
+_test_chroma_db/
 
-# === 用户数据 & 敏感配置 ===
+# === 用户数据 & 敏感配置 (本地独有) ===
 *.db
 *.sqlite
 user_data.db
@@ -60,15 +85,18 @@ session_states.json
 .secret.key
 *.ini
 layout.ini
+layout copy.ini
 config/api_mode.json
 config/conversations/
 .sandbox_history.json
-
-# === Chrome 用户数据 ===
-chrome_user_data/
-
-# === 环境变量 ===
-.env
+.config/embedded_browser/
+.config/panel_layout.json
+# === 截图与素材 (非代码资源) ===
+对话截图/
+覆盖截图/
+素材/图标/
+ai对话截图/
+custom/
 
 # === 测试报告 ===
 .coverage
@@ -76,5 +104,41 @@ coverage.json
 htmlcov/
 .pytest_cache/
 
-# === Docker ===
+# === 废弃文件 ===
+app/core/browser_driver.py
+launcher.py
+app/ui/pages/chat_page.py
+
+# === Docker & AI Sensor Artifacts ===
 _docker_env/
+test_report.json
+tools/install_*.py
+
+# 实验环境 API Key
+experimental/config.json
+
+
+# 参考项目
+Qt-DragableTabWidget-master
+knowledge_bases/
+knowledge_bases/Data-Bridge_1b011946/chroma.sqlite3
+docs/page_outer.html
+docs/导出HTML/
+.trae/documents/
+
+# SpectrAI worktree isolation
+.spectrai-worktrees/
+.spectrai/
+.worktrees/
+
+.workbuddy/
+
+# 公开仓库排除开发机状态与调试资料
+.claude/
+.codebuddy/
+.config/
+.trae/
+.workbuddy/
+ai对话截图/
+tools/_restore_backups/
+architecture_map.html

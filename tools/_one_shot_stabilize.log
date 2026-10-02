@@ -1,0 +1,214 @@
+
+====================================================================================================
+RUN: /usr/local/bin/python tools/hard_purge_knowledge.py
+exit: 0
+==================================================
+🧨 AI Bridge 知识库物理爆破程序
+==================================================
+🔍 正在寻找锁定 chroma.sqlite3 的进程...
+🧨 正在物理删除损坏的数据库目录: _knowledge_base...
+✅ 物理爆破成功！环境已彻底清空。
+==================================================
+🚀 现在你可以重新启动系统或运行测试脚本了。
+
+
+
+====================================================================================================
+RUN: /usr/local/bin/python tools/fix_rag_db.py
+exit: 0
+==================================================
+🚑 AI Bridge 知识库急救程序
+==================================================
+🔪 [1/4] 正在清理残留的 Python 进程 (防止文件锁定)...
+   => 已清理 0 个冲突进程。
+🧨 [2/4] 正在物理粉碎旧数据库: _knowledge_base...
+   => 目录不存在，无需删除。
+🏗️ [3/4] 正在初始化全新知识库...
+   => ChromaDB 版本: 0.4.24
+   => ✅ 写入测试数据成功。
+🔍 [4/4] 正在验证数据库 Schema 兼容性...
+   => ✅ Schema 验证通过: 发现 'topic' 列。数据库是新版的。
+==================================================
+
+Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+Failed to send telemetry event CollectionAddEvent: capture() takes 1 positional argument but 3 were given
+
+
+====================================================================================================
+RUN: /usr/local/bin/python tools/reindex_project.py
+exit: 0
+Start reindex with update_file_index
+progress 50 | ok=47 fail=0 skip=3
+progress 100 | ok=97 fail=0 skip=3
+DONE | ok=125 fail=0 skip=3
+
+ERROR:chromadb.telemetry.product.posthog:Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+ERROR:chromadb.telemetry.product.posthog:Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+
+
+====================================================================================================
+RUN: /usr/local/bin/python -m pytest tests -q --maxfail=20
+exit: 0
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 99 items
+
+tests/test_agent_manager.py::TestAgentManager::test_parse_tool_read PASSED [  1%]
+tests/test_agent_manager.py::TestAgentManager::test_parse_code_block PASSED [  2%]
+tests/test_agent_manager.py::TestAgentManager::test_path_redirection_logic PASSED [  3%]
+tests/test_agent_manager.py::TestAgentManager::test_tool_read_file_safety PASSED [  4%]
+tests/test_agent_manager.py::TestAgentManager::test_safe_apply_rollback_on_failure 
+-------------------------------- live log call ---------------------------------
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+PASSED                                                                   [  5%]
+tests/test_agent_manager.py::TestAgentManager::test_safe_apply_commit_on_success PASSED [  6%]
+tests/test_agent_tools.py::TestAgentFileTools::test_read_file_not_found PASSED [  7%]
+tests/test_agent_tools.py::TestAgentFileTools::test_read_file_security_check PASSED [  8%]
+tests/test_agent_tools.py::TestToolExecution::test_code_execution_failure_feedback PASSED [  9%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_add_and_persist_blacklist PASSED [ 10%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_save_code_interception PASSED [ 11%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_remove_ignore_logic PASSED [ 12%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_auto_cleanup_staging PASSED [ 13%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_content_mismatch_safety PASSED [ 14%]
+tests/test_blacklist_logic.py::test_temporarily_skipped SKIPPED (ui ...) [ 15%]
+tests/test_config.py::TestConfigManagerBasic::test_default_config_structure PASSED [ 16%]
+tests/test_config.py::TestConfigManagerBasic::test_chrome_port_default_value PASSED [ 17%]
+tests/test_config.py::TestConfigManagerBasic::test_auto_export_default_enabled PASSED [ 18%]
+tests/test_config.py::TestConfigManagerBasic::test_export_paths_are_strings PASSED [ 19%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_save_and_load_custom_config PASSED [ 20%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_load_creates_default_if_missing PASSED [ 21%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_config_persistence_across_instances PASSED [ 22%]
+tests/test_config.py::TestConfigManagerValidation::test_port_is_integer PASSED [ 23%]
+tests/test_config.py::TestConfigManagerValidation::test_auto_export_is_boolean PASSED [ 24%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[9527] PASSED [ 25%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[8765] PASSED [ 26%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[3000] PASSED [ 27%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[5000] PASSED [ 28%]
+tests/test_config.py::TestConfigManagerEdgeCases::test_empty_path_strings PASSED [ 29%]
+tests/test_config.py::TestConfigManagerEdgeCases::test_config_not_modified_by_load PASSED [ 30%]
+tests/test_context_packing.py::TestContextPacking::test_pack_context_logic PASSED [ 31%]
+tests/test_docker_sandbox.py::TestDockerSandbox::test_code_execution_via_base64 
+-------------------------------- live log setup --------------------------------
+WARNING  DockerSandbox:docker_manager.py:46 ❌ Docker not available: Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))
+SKIPPED (Container not running)                                          [ 32%]
+tests/test_driver_interaction.py::TestInteractionManager::test_find_elements_wrapper PASSED [ 33%]
+tests/test_driver_interaction.py::TestInteractionManager::test_send_message_short PASSED [ 34%]
+tests/test_driver_interaction.py::TestInteractionManager::test_send_message_long PASSED [ 35%]
+tests/test_driver_interaction.py::TestInteractionManager::test_is_busy_logic PASSED [ 36%]
+tests/test_driver_interaction.py::TestInteractionManager::test_fingerprint_speed_optimization PASSED [ 37%]
+tests/test_driver_interaction.py::TestInteractionManager::test_smart_height_polling PASSED [ 38%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_id_standard PASSED [ 39%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_id_new_chat PASSED [ 40%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_resilience PASSED [ 41%]
+tests/test_driver_perception.py::TestDriverPerception::test_role_recognition_logic PASSED [ 42%]
+tests/test_file_service.py::TestFileService::test_http_image_download PASSED [ 43%]
+tests/test_interaction_core.py::TestInteractionCore::test_fast_expand_logic PASSED [ 44%]
+tests/test_interaction_core.py::TestInteractionCore::test_scroll_traverse_variable_speed PASSED [ 45%]
+tests/test_interaction_core.py::TestInteractionCore::test_scan_and_fix_last_message PASSED [ 46%]
+tests/test_interaction_core.py::TestInteractionCore::test_scroll_traverse_interrupt PASSED [ 47%]
+tests/test_local_worker.py::test_temporarily_skipped SKIPPED (legacy...) [ 48%]
+tests/test_local_worker_strategy_e.py::test_temporarily_skipped SKIPPED  [ 49%]
+tests/test_parser_core.py::TestParserCore::test_clean_monaco_structure PASSED [ 50%]
+tests/test_parser_core.py::TestParserCore::test_anchor_alignment_logic PASSED [ 51%]
+tests/test_parser_core.py::TestParserCore::test_fallback_mode PASSED     [ 52%]
+tests/test_parser_core.py::TestParserCore::test_n_image_structure PASSED [ 53%]
+tests/test_parser_merge.py::TestParserMerge::test_merge_adjacent_text PASSED [ 54%]
+tests/test_parser_merge.py::TestParserMerge::test_merge_adjacent_code_forbidden PASSED [ 55%]
+tests/test_parser_merge.py::TestParserMerge::test_mixed_interleave PASSED [ 56%]
+tests/test_remote_protocol.py::test_temporarily_skipped SKIPPED (rem...) [ 57%]
+tests/test_saas_features.py::test_temporarily_skipped SKIPPED (ui ch...) [ 58%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_detect_new_file PASSED [ 59%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_detect_overwrite_file PASSED [ 60%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_ignore_same_content_crlf PASSED [ 61%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_apply_update_action PASSED [ 62%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_trigger_csharp_build PASSED [ 63%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_ignore_system_files PASSED [ 64%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_sync_messages_endpoint SKIPPED [ 65%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_sync_code_endpoint SKIPPED [ 66%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_upload_endpoint SKIPPED [ 67%]
+tests/test_state_service.py::TestStateService::test_initial_state PASSED [ 68%]
+tests/test_state_service.py::TestStateService::test_update_user_turn PASSED [ 69%]
+tests/test_state_service.py::TestStateService::test_manual_correction PASSED [ 70%]
+tests/test_state_service.py::TestStateService::test_snapshot_logic PASSED [ 71%]
+tests/test_state_service.py::TestStateService::test_should_emit_sync PASSED [ 72%]
+tests/test_state_service.py::TestStateService::test_persistence PASSED   [ 73%]
+tests/test_tool_router.py::TestToolRouter::test_extract_code_block_standard PASSED [ 74%]
+tests/test_tool_router.py::TestToolRouter::test_extract_code_block_robustness PASSED [ 75%]
+tests/test_tool_router.py::TestToolRouter::test_gatekeeper_blocks_invalid_syntax PASSED [ 76%]
+tests/test_tool_router.py::TestToolRouter::test_idempotency PASSED       [ 77%]
+tests/test_ui_logic.py::test_temporarily_skipped SKIPPED (ui integra...) [ 78%]
+tests/test_ui_persistence.py::test_temporarily_skipped SKIPPED (ui p...) [ 79%]
+tests/test_ui_preview.py::TestCodePreview::test_diff_mode_instantiation PASSED [ 80%]
+tests/test_ui_preview.py::TestCodePreview::test_source_mode_instantiation PASSED [ 81%]
+tests/test_ui_startup_lock.py::test_temporarily_skipped SKIPPED (ui ...) [ 82%]
+tests/test_ui_sticky_scroll.py::test_temporarily_skipped SKIPPED (ui...) [ 83%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[server.py-CRITICAL] PASSED [ 84%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[requirements.txt-CRITICAL] PASSED [ 85%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[app/core/config.py-CRITICAL] PASSED [ 86%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[app/core/worker.py-CRITICAL] PASSED [ 87%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[app/ui/worker.py-CLIENT_ONLY] PASSED [ 88%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[app/ui/pages/chat_page.py-CLIENT_ONLY] PASSED [ 89%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[app/ui/pages/chat/__init__.py-CLIENT_ONLY] PASSED [ 90%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[app/ui/pages/chat/page.py-CLIENT_ONLY] PASSED [ 91%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[app/ui/pages/chat/input_area.py-CLIENT_ONLY] PASSED [ 92%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[app/ui/components/base.py-CLIENT_ONLY] PASSED [ 93%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[boot_remote.py-CLIENT_ONLY] PASSED [ 94%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[tests/test_config.py-SAFE_SCRIPT] PASSED [ 95%]
+tests/test_update_service.py::TestUpdateService::test_file_categorization[README.md-SAFE_STATIC] PASSED [ 96%]
+tests/test_update_service.py::TestUpdateService::test_process_updates_restart_logic PASSED [ 97%]
+tests/test_worker_core.py::test_temporarily_skipped SKIPPED (legacy ...) [ 98%]
+tests/test_worker_update_sync.py::test_temporarily_skipped SKIPPED (...) [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.10.19-final-0 _______________
+
+Name                                        Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------
+app/__init__.py                                 0      0   100%
+app/core/__init__.py                            0      0   100%
+app/core/agent_manager.py                     174     69    60%   25-30, 33-35, 38-40, 74-75, 93, 96-138, 144-145, 156-158, 183, 195, 198-200, 214-224, 232, 244, 247-248
+app/core/auth_service.py                      112    112     0%   2-159
+app/core/config.py                             25      2    92%   28-29
+app/core/connection_manager.py                 41     41     0%   2-75
+app/core/docker_manager.py                     74     49    34%   31-43, 51-74, 77-140
+app/core/driver/__init__.py                   144    101    30%   24-28, 31-33, 36, 39, 42-44, 47-48, 51-52, 55-56, 59-82, 99-103, 106-112, 121-171, 174-196
+app/core/driver/config.py                       4      0   100%
+app/core/driver/connection.py                  63     48    24%   33-42, 52-71, 79-125
+app/core/driver/interaction.py                297    115    61%   24, 43-44, 48-60, 74-76, 78, 85, 88-95, 98-145, 174-175, 243-244, 352, 359-361, 381, 414, 416, 423, 426-436, 439-448, 451-469
+app/core/driver/parser.py                     137     41    70%   8-29, 37, 77, 85-89, 107-109, 112, 128-139, 148, 159-162, 165-172
+app/core/git_manager.py                        48     48     0%   2-82
+app/core/remote_worker.py                     281    281     0%   2-365
+app/core/self_update.py                        98     16    84%   29, 50, 57, 103, 109-110, 118, 148, 151, 163-164, 178-179, 191, 195-196
+app/core/services/__init__.py                   0      0   100%
+app/core/services/context_pack_service.py     141     72    49%   66, 155-158, 169, 235-246, 249-295, 301, 306, 310, 317, 321, 325, 328-329, 332-337
+app/core/services/context_scanner.py           96     96     0%   2-197
+app/core/services/file_service.py             156     44    72%   40-41, 55, 61-62, 67, 84, 94, 105-107, 112-121, 134, 141-144, 148, 153, 162, 171-179, 185-187, 201, 203-204
+app/core/services/knowledge_service.py         72     38    47%   30, 41-49, 53-73, 97-98, 102-118
+app/core/services/scheduler_service.py         89     89     0%   2-150
+app/core/services/state_service.py             68      3    96%   34, 47, 61
+app/core/services/tool_router_service.py       86     11    87%   47-48, 63-64, 80, 91, 94-97, 125
+app/core/services/update_service.py           133     68    49%   16-19, 34, 45, 54, 57-69, 93-95, 117, 119, 123-130, 137-148, 151-181
+app/core/utils/__init__.py                      0      0   100%
+app/core/utils/error_reporter.py               31     31     0%   2-33
+app/core/worker.py                            620    620     0%   2-897
+app/ui/__init__.py                              0      0   100%
+app/ui/components/preview_dialog.py           110     11    90%   25-26, 72-78, 82-84
+app/ui/login_window.py                        100    100     0%   2-153
+app/ui/main_window.py                         340    340     0%   2-412
+app/ui/modeling_page.py                       210    210     0%   2-305
+app/ui/settings_page.py                       302    302     0%   2-411
+app/ui/theme.py                               152     62    59%   74-77, 83-90, 93-105, 108-109, 112-115, 118, 121-124, 225, 228, 232, 241-242, 266-267, 277-278, 282-284, 288-289, 293-294, 311-315, 344-345, 381-382, 395-396, 408-409, 421-422
+app/ui/widgets.py                               5      5     0%   3-7
+-------------------------------------------------------------------------
+TOTAL                                        4209   3025    28%
+Coverage HTML written to dir htmlcov
+Coverage JSON written to file coverage.json
+======================= 84 passed, 15 skipped in 14.07s ========================
+
+

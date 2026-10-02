@@ -65,5 +65,26 @@ class TestFileService:
             assert new_content.endswith(".png")
             print(f"✅ 图片下载与路径替换验证通过: {new_content}")
 
+    def test_relative_export_paths_are_project_rooted(self, tmp_path):
+        service = FileService({
+            "export_code_path": "export/code",
+            "export_image_path": "export/images",
+        })
+        service.project_root = str(tmp_path / "selected-project")
+        os.makedirs(service.project_root, exist_ok=True)
+
+        app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        old_cwd = os.getcwd()
+        os.chdir(app_root)
+        try:
+            rel_path = "nested/demo-project-rooted.txt"
+            success, _ = service.save_code(rel_path, "hello")
+        finally:
+            os.chdir(old_cwd)
+
+        assert success is True
+        assert (tmp_path / "selected-project" / "export" / "code" / "nested" / "demo-project-rooted.txt").exists()
+        assert not os.path.exists(os.path.join(app_root, "export", "code", "nested", "demo-project-rooted.txt"))
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

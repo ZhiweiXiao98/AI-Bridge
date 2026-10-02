@@ -31,6 +31,14 @@ def is_path_allowed(path: str, file_service=None) -> bool:
     return True
 
 
+def resolve_project_path(path: str, file_service=None) -> str:
+    if not path:
+        return path
+    if file_service is not None and hasattr(file_service, "resolve_path"):
+        return file_service.resolve_path(path)
+    return path
+
+
 def ensure_parent_dir(path: str) -> None:
     parent = Path(path).parent
     if str(parent) and str(parent) != ".":

@@ -1,6 +1,6 @@
 # filename: app/ui/components/input.py
 import os, time, tempfile
-from PySide6.QtWidgets import QTextEdit
+from PySide6.QtWidgets import QTextEdit, QSizePolicy
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QImage
 
@@ -11,6 +11,8 @@ class ChatInput(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMinimumHeight(45) 
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setAcceptRichText(False)
         self.setAcceptDrops(True)

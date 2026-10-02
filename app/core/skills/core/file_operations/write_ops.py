@@ -14,7 +14,7 @@ def write_file(path: str, content: str, create_dirs: bool = True, overwrite: boo
         return error_result('write_file', path, 'File exists and overwrite is False', output_format=output_format)
 
     if p.exists():
-        existing = p.read_text(encoding='utf-8', errors='replace')
+        existing = p.read_text(encoding='utf-8-sig', errors='replace')
         ok_guard, reason, risk = guard_delete_risk(existing, content, confirm_large_delete=False, allow_near_empty_result=False)
         if not ok_guard:
             logger.warning(f"[Debug][WriteFile] Blocked by safety guard on {path}: {reason} | risk={risk}")
@@ -29,7 +29,7 @@ def write_file(path: str, content: str, create_dirs: bool = True, overwrite: boo
         return error_result('write_file', path, 'syntax validation failed', output_format=output_format, **details)
 
     try:
-        actual_content = p.read_text(encoding='utf-8')
+        actual_content = p.read_text(encoding='utf-8-sig')
         if actual_content != content:
             logger.error(f"[Debug][WriteFile] Post write content mismatch detected on {path}")
             logger.debug(f"[Debug][WriteFile] Actual content preview:\n{actual_content[:500]}")
@@ -53,7 +53,7 @@ def append_file(path: str, content: str, ensure_newline: bool = True, create_dir
 
     existing = ''
     if p.exists():
-        existing = p.read_text(encoding='utf-8', errors='replace')
+        existing = p.read_text(encoding='utf-8-sig', errors='replace')
         if content and (content in existing) and not allow_duplicate_append:
             return error_result(
                 'append_file',
@@ -77,7 +77,7 @@ def append_file(path: str, content: str, ensure_newline: bool = True, create_dir
         return error_result('append_file', path, 'syntax validation failed', output_format=output_format, **details)
 
     try:
-        actual_content = p.read_text(encoding='utf-8')
+        actual_content = p.read_text(encoding='utf-8-sig')
         if actual_content != final_text:
             logger.error(f"[Debug][AppendFile] Post append content mismatch detected on {path}")
             logger.debug(f"[Debug][AppendFile] Actual content length {len(actual_content)}, expected {len(final_text)}")

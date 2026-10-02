@@ -1,0 +1,118 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace
+configfile: pytest.ini
+plugins: asyncio-1.3.0, cov-7.0.0, mock-3.15.1, anyio-4.12.1
+asyncio: mode=auto, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 110 items
+
+tests/test_agent_manager.py::TestAgentManager::test_parse_tool_read PASSED [  0%]
+tests/test_agent_manager.py::TestAgentManager::test_parse_code_block PASSED [  1%]
+tests/test_agent_manager.py::TestAgentManager::test_path_redirection_logic PASSED [  2%]
+tests/test_agent_manager.py::TestAgentManager::test_tool_read_file_safety PASSED [  3%]
+tests/test_agent_manager.py::TestAgentManager::test_safe_apply_rollback_on_failure 
+-------------------------------- live log call ---------------------------------
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+WARNING  KnowledgeService:knowledge_service.py:45 ⚠️ 数据库损坏或版本不兼容 (no such column: collections.topic)，正在执行自动重置...
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+ERROR    KnowledgeService:knowledge_service.py:73 ❌ 重置失败: no such column: collections.topic
+ERROR    KnowledgeService:knowledge_service.py:98 ⚠️ 索引失败 app/core/worker.py: 'NoneType' object has no attribute 'upsert'
+PASSED                                                                   [  4%]
+tests/test_agent_manager.py::TestAgentManager::test_safe_apply_commit_on_success 
+-------------------------------- live log call ---------------------------------
+ERROR    KnowledgeService:knowledge_service.py:98 ⚠️ 索引失败 app/core/worker.py: 'NoneType' object has no attribute 'upsert'
+PASSED                                                                   [  5%]
+tests/test_agent_tools.py::TestAgentFileTools::test_read_file_not_found PASSED [  6%]
+tests/test_agent_tools.py::TestAgentFileTools::test_read_file_security_check PASSED [  7%]
+tests/test_agent_tools.py::TestToolExecution::test_code_execution_failure_feedback PASSED [  8%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_add_and_persist_blacklist PASSED [  9%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_save_code_interception PASSED [ 10%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_remove_ignore_logic 
+-------------------------------- live log call ---------------------------------
+ERROR    KnowledgeService:knowledge_service.py:98 ⚠️ 索引失败 temp.py: 'NoneType' object has no attribute 'upsert'
+PASSED                                                                   [ 10%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_auto_cleanup_staging PASSED [ 11%]
+tests/test_blacklist_fingerprint.py::TestBlacklistFingerprint::test_content_mismatch_safety PASSED [ 12%]
+tests/test_blacklist_logic.py::TestBlacklistLogic::test_discard_only_affects_fingerprint PASSED [ 13%]
+tests/test_blacklist_logic.py::TestBlacklistLogic::test_manual_permanent_ignore PASSED [ 14%]
+tests/test_config.py::TestConfigManagerBasic::test_default_config_structure PASSED [ 15%]
+tests/test_config.py::TestConfigManagerBasic::test_chrome_port_default_value PASSED [ 16%]
+tests/test_config.py::TestConfigManagerBasic::test_auto_export_default_enabled PASSED [ 17%]
+tests/test_config.py::TestConfigManagerBasic::test_export_paths_are_strings PASSED [ 18%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_save_and_load_custom_config PASSED [ 19%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_load_creates_default_if_missing PASSED [ 20%]
+tests/test_config.py::TestConfigManagerSaveLoad::test_config_persistence_across_instances PASSED [ 20%]
+tests/test_config.py::TestConfigManagerValidation::test_port_is_integer PASSED [ 21%]
+tests/test_config.py::TestConfigManagerValidation::test_auto_export_is_boolean PASSED [ 22%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[9527] PASSED [ 23%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[8765] PASSED [ 24%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[3000] PASSED [ 25%]
+tests/test_config.py::TestConfigManagerValidation::test_various_valid_ports[5000] PASSED [ 26%]
+tests/test_config.py::TestConfigManagerEdgeCases::test_empty_path_strings PASSED [ 27%]
+tests/test_config.py::TestConfigManagerEdgeCases::test_config_not_modified_by_load PASSED [ 28%]
+tests/test_context_packing.py::TestContextPacking::test_pack_context_logic PASSED [ 29%]
+tests/test_docker_sandbox.py::TestDockerSandbox::test_code_execution_via_base64 
+-------------------------------- live log setup --------------------------------
+WARNING  DockerSandbox:docker_manager.py:46 ❌ Docker not available: Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))
+SKIPPED (Container not running)                                          [ 30%]
+tests/test_driver_interaction.py::TestInteractionManager::test_find_elements_wrapper PASSED [ 30%]
+tests/test_driver_interaction.py::TestInteractionManager::test_send_message_short PASSED [ 31%]
+tests/test_driver_interaction.py::TestInteractionManager::test_send_message_long PASSED [ 32%]
+tests/test_driver_interaction.py::TestInteractionManager::test_is_busy_logic PASSED [ 33%]
+tests/test_driver_interaction.py::TestInteractionManager::test_fingerprint_speed_optimization PASSED [ 34%]
+tests/test_driver_interaction.py::TestInteractionManager::test_smart_height_polling PASSED [ 35%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_id_standard PASSED [ 36%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_id_new_chat PASSED [ 37%]
+tests/test_driver_perception.py::TestDriverPerception::test_get_chat_title_resilience PASSED [ 38%]
+tests/test_driver_perception.py::TestDriverPerception::test_role_recognition_logic PASSED [ 39%]
+tests/test_file_service.py::TestFileService::test_http_image_download PASSED [ 40%]
+tests/test_interaction_core.py::TestInteractionCore::test_fast_expand_logic PASSED [ 40%]
+tests/test_interaction_core.py::TestInteractionCore::test_scroll_traverse_variable_speed PASSED [ 41%]
+tests/test_interaction_core.py::TestInteractionCore::test_scan_and_fix_last_message PASSED [ 42%]
+tests/test_interaction_core.py::TestInteractionCore::test_scroll_traverse_interrupt PASSED [ 43%]
+tests/test_local_worker.py::TestLocalWorker::test_fix_all_batch_logic FAILED [ 44%]
+tests/test_local_worker.py::TestLocalWorker::test_process_batch_resilience ERROR [ 45%]
+tests/test_local_worker_strategy_e.py::TestWorkerStrategyE::test_binary_star_hash ERROR [ 46%]
+tests/test_local_worker_strategy_e.py::TestWorkerStrategyE::test_deduce_state_logic ERROR [ 47%]
+tests/test_parser_core.py::TestParserCore::test_clean_monaco_structure PASSED [ 48%]
+tests/test_parser_core.py::TestParserCore::test_anchor_alignment_logic PASSED [ 49%]
+tests/test_parser_core.py::TestParserCore::test_fallback_mode PASSED     [ 50%]
+tests/test_parser_core.py::TestParserCore::test_n_image_structure PASSED [ 50%]
+tests/test_parser_merge.py::TestParserMerge::test_merge_adjacent_text PASSED [ 51%]
+tests/test_parser_merge.py::TestParserMerge::test_merge_adjacent_code_forbidden PASSED [ 52%]
+tests/test_parser_merge.py::TestParserMerge::test_mixed_interleave PASSED [ 53%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_handle_status_signal FAILED [ 54%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_notify_pull_mechanism ERROR [ 55%]
+tests/test_remote_protocol.py::TestRemoteProtocol::test_pong_latency_calculation ERROR [ 56%]
+tests/test_saas_features.py::TestSessionIsolation::test_auto_lock_first_session PASSED [ 57%]
+tests/test_saas_features.py::TestSessionIsolation::test_block_alien_session PASSED [ 58%]
+tests/test_saas_features.py::TestSessionIsolation::test_active_switch_acceptance PASSED [ 59%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_detect_new_file PASSED [ 60%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_detect_overwrite_file PASSED [ 60%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_ignore_same_content_crlf PASSED [ 61%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_apply_update_action PASSED [ 62%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_trigger_csharp_build PASSED [ 63%]
+tests/test_self_update.py::TestSelfUpdateRealWorld::test_ignore_system_files PASSED [ 64%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_sync_messages_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/messages "HTTP/1.1 200 OK"
+PASSED                                                                   [ 65%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_sync_code_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/sync/code "HTTP/1.1 200 OK"
+PASSED                                                                   [ 66%]
+tests/test_server_dual_channel.py::TestServerDualChannel::test_upload_endpoint 
+-------------------------------- live log call ---------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/upload "HTTP/1.1 200 OK"
+PASSED                                                                   [ 67%]
+tests/test_state_service.py::TestStateService::test_initial_state PASSED [ 68%]
+tests/test_state_service.py::TestStateService::test_update_user_turn PASSED [ 69%]
+tests/test_state_service.py::TestStateService::test_manual_correction PASSED [ 70%]
+tests/test_state_service.py::TestStateService::test_snapshot_logic PASSED [ 70%]
+tests/test_state_service.py::TestStateService::test_should_emit_sync PASSED [ 71%]
+tests/test_state_service.py::TestStateService::test_persistence PASSED   [ 72%]
+tests/test_tool_router.py::TestToolRouter::test_extract_code_block_standard PASSED [ 73%]
+tests/test_tool_router.py::TestToolRouter::test_extract_code_block_robustness PASSED [ 74%]
+tests/test_tool_router.py::TestToolRouter::test_gatekeeper_blocks_invalid_syntax PASSED [ 75%]
+tests/test_tool_router.py::TestToolRouter::test_idempotency PASSED       [ 76%]
+tests/test_ui_persistence.py::TestUIPersistence::test_window_geometry_persistence 

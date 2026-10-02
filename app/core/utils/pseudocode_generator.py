@@ -54,7 +54,7 @@ class PseudocodeGenerator:
                     break
             
             # 解析代码
-            tree = ast.parse(source_code)
+            tree = ast.parse(source_code, filename="<pseudocode-preview>")
             pseudo_body = self._visit(tree, 0)
             
             # 如果有首行注释，保留它们

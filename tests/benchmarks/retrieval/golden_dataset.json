@@ -1,0 +1,872 @@
+[
+  {
+    "query": "Retrieve Cloud SQL Proxy runner. It is used to manage the proxy\n        lifecycle per task.\n\n        :return: The Cloud SQL Proxy runner.\n        :rtype: CloudSqlProxyRunner",
+    "code": "def get_sqlproxy_runner(self):\n        \"\"\"\n        Retrieve Cloud SQL Proxy runner. It is used to manage the proxy\n        lifecycle per task.\n\n        :return: The Cloud SQL Proxy runner.\n        :rtype: CloudSqlProxyRunner\n        \"\"\"\n        if not self.use_proxy:\n            raise AirflowException(\"Proxy runner can only be retrieved in case of use_proxy = True\")\n        return CloudSqlProxyRunner(\n            path_prefix=self.sql_proxy_unique_path,\n            instance_specification=self._get_sqlproxy_instance_specification(),\n            project_id=self.project_id,\n            sql_proxy_version=self.sql_proxy_version,\n            sql_proxy_binary_path=self.sql_proxy_binary_path\n        )",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/apache/airflow/blob/b69c686ad8a0c89b9136bb4b31767257eb7b2597/airflow/contrib/hooks/gcp_sql_hook.py#L943-L959",
+    "func_name": "CloudSqlDatabaseHook.get_sqlproxy_runner",
+    "repo": "apache/airflow",
+    "id": "csn_py_001"
+  },
+  {
+    "query": "Downloads a Sina video by its unique vkey.\n    http://video.sina.com/",
+    "code": "def sina_download_by_vkey(vkey, title=None, output_dir='.', merge=True, info_only=False):\n    \"\"\"Downloads a Sina video by its unique vkey.\n    http://video.sina.com/\n    \"\"\"\n\n    url = 'http://video.sina.com/v/flvideo/%s_0.flv' % vkey\n    type, ext, size = url_info(url)\n\n    print_info(site_info, title, 'flv', size)\n    if not info_only:\n        download_urls([url], title, 'flv', size, output_dir = output_dir, merge = merge)",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/extractors/sina.py#L54-L64",
+    "func_name": "sina_download_by_vkey",
+    "repo": "soimort/you-get",
+    "id": "csn_py_002"
+  },
+  {
+    "query": "Execute the bash command in a temporary directory\n        which will be cleaned afterwards",
+    "code": "def execute(self, context):\n        \"\"\"\n        Execute the bash command in a temporary directory\n        which will be cleaned afterwards\n        \"\"\"\n        self.log.info('Tmp dir root location: \\n %s', gettempdir())\n\n        # Prepare env for child process.\n        if self.env is None:\n            self.env = os.environ.copy()\n\n        airflow_context_vars = context_to_airflow_vars(context, in_env_var_format=True)\n        self.log.info('Exporting the following env vars:\\n%s',\n                      '\\n'.join([\"{}={}\".format(k, v)\n                                 for k, v in\n                                 airflow_context_vars.items()]))\n        self.env.update(airflow_context_vars)\n\n        self.lineage_data = self.bash_command\n\n        with TemporaryDirectory(prefix='airflowtmp') as tmp_dir:\n            with NamedTemporaryFile(dir=tmp_dir, prefix=self.task_id) as tmp_file:\n                tmp_file.write(bytes(self.bash_command, 'utf_8'))\n                tmp_file.flush()\n                script_location = os.path.abspath(tmp_file.name)\n                self.log.info('Temporary script location: %s', script_location)\n\n                def pre_exec():\n                    # Restore default signal disposition and invoke setsid\n                    for sig in ('SIGPIPE', 'SIGXFZ', 'SIGXFSZ'):\n                        if hasattr(signal, sig):\n                            signal.signal(getattr(signal, sig), signal.SIG_DFL)\n                    os.setsid()\n\n                self.log.info('Running command: %s', self.bash_command)\n                sub_process = Popen(\n                    ['bash', tmp_file.name],\n                    stdout=PIPE,\n                    stderr=STDOUT,\n                    cwd=tmp_dir,\n                    env=self.env,\n                    preexec_fn=pre_exec)\n\n                self.sub_process = sub_process\n\n                self.log.info('Output:')\n                line = ''\n                for raw_line in iter(sub_process.stdout.readline, b''):\n                    line = raw_line.decode(self.output_encoding).rstrip()\n                    self.log.info(line)\n\n                sub_process.wait()\n\n                self.log.info('Command exited with return code %s', sub_process.returncode)\n\n                if sub_process.returncode:\n                    raise AirflowException('Bash command failed')\n\n        return line",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/apache/airflow/blob/b69c686ad8a0c89b9136bb4b31767257eb7b2597/airflow/operators/bash_operator.py#L86-L144",
+    "func_name": "BashOperator.execute",
+    "repo": "apache/airflow",
+    "id": "csn_py_003"
+  },
+  {
+    "query": "int, int, int->None\n    \n    Download ONE PART of the course.",
+    "code": "def wanmen_download_by_course_topic_part(json_api_content, tIndex, pIndex, output_dir='.', merge=True, info_only=False, **kwargs):\n    \"\"\"int, int, int->None\n    \n    Download ONE PART of the course.\"\"\"\n\n    html = json_api_content\n\n    title = _wanmen_get_title_by_json_topic_part(html, \n                                                  tIndex, \n                                                  pIndex)\n\n    bokeccID = _wanmen_get_boke_id_by_json_topic_part(html,\n                                                      tIndex, \n                                                     pIndex)\n\n    bokecc_download_by_id(vid = bokeccID, title = title, output_dir=output_dir, merge=merge, info_only=info_only, **kwargs)",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/extractors/wanmen.py#L69-L84",
+    "func_name": "wanmen_download_by_course_topic_part",
+    "repo": "soimort/you-get",
+    "id": "csn_py_004"
+  },
+  {
+    "query": "Creates a dag run for the specified dag\n    :param args:\n    :return:",
+    "code": "def trigger_dag(args):\n    \"\"\"\n    Creates a dag run for the specified dag\n    :param args:\n    :return:\n    \"\"\"\n    log = LoggingMixin().log\n    try:\n        message = api_client.trigger_dag(dag_id=args.dag_id,\n                                         run_id=args.run_id,\n                                         conf=args.conf,\n                                         execution_date=args.exec_date)\n    except IOError as err:\n        log.error(err)\n        raise AirflowException(err)\n    log.info(message)",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/apache/airflow/blob/b69c686ad8a0c89b9136bb4b31767257eb7b2597/airflow/bin/cli.py#L221-L236",
+    "func_name": "trigger_dag",
+    "repo": "apache/airflow",
+    "id": "csn_py_005"
+  },
+  {
+    "query": "Loads a tab-delimited file into a database table",
+    "code": "def bulk_load(self, table, tmp_file):\n        \"\"\"\n        Loads a tab-delimited file into a database table\n        \"\"\"\n        conn = self.get_conn()\n        cur = conn.cursor()\n        cur.execute(\"\"\"\n            LOAD DATA LOCAL INFILE '{tmp_file}'\n            INTO TABLE {table}\n            \"\"\".format(tmp_file=tmp_file, table=table))\n        conn.commit()",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/apache/airflow/blob/b69c686ad8a0c89b9136bb4b31767257eb7b2597/airflow/hooks/mysql_hook.py#L107-L117",
+    "func_name": "MySqlHook.bulk_load",
+    "repo": "apache/airflow",
+    "id": "csn_py_006"
+  },
+  {
+    "query": "Loads a tab-delimited file into a database table",
+    "code": "def bulk_load(self, table, tmp_file):\n        \"\"\"\n        Loads a tab-delimited file into a database table\n        \"\"\"\n        self.copy_expert(\"COPY {table} FROM STDIN\".format(table=table), tmp_file)",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/apache/airflow/blob/b69c686ad8a0c89b9136bb4b31767257eb7b2597/airflow/hooks/postgres_hook.py#L85-L89",
+    "func_name": "PostgresHook.bulk_load",
+    "repo": "apache/airflow",
+    "id": "csn_py_007"
+  },
+  {
+    "query": "Returns the state of a TaskInstance at the command line.\n    >>> airflow task_state tutorial sleep 2015-01-01\n    success",
+    "code": "def task_state(args):\n    \"\"\"\n    Returns the state of a TaskInstance at the command line.\n    >>> airflow task_state tutorial sleep 2015-01-01\n    success\n    \"\"\"\n    dag = get_dag(args)\n    task = dag.get_task(task_id=args.task_id)\n    ti = TaskInstance(task, args.execution_date)\n    print(ti.current_state())",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/apache/airflow/blob/b69c686ad8a0c89b9136bb4b31767257eb7b2597/airflow/bin/cli.py#L554-L563",
+    "func_name": "task_state",
+    "repo": "apache/airflow",
+    "id": "csn_py_008"
+  },
+  {
+    "query": "Extracts video ID from URL.",
+    "code": "def get_vid_from_url(url):\n        \"\"\"Extracts video ID from URL.\n        \"\"\"\n        return match1(url, r'youtu\\.be/([^?/]+)') or \\\n          match1(url, r'youtube\\.com/embed/([^/?]+)') or \\\n          match1(url, r'youtube\\.com/v/([^/?]+)') or \\\n          match1(url, r'youtube\\.com/watch/([^/?]+)') or \\\n          parse_query_param(url, 'v') or \\\n          parse_query_param(parse_query_param(url, 'u'), 'v')",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/extractors/youtube.py#L135-L143",
+    "func_name": "YouTube.get_vid_from_url",
+    "repo": "soimort/you-get",
+    "id": "csn_py_009"
+  },
+  {
+    "query": "Splicing URLs according to video ID to get video details",
+    "code": "def get_video_url_from_video_id(video_id):\n    \"\"\"Splicing URLs according to video ID to get video details\"\"\"\n    # from js\n    data = [\"\"] * 256\n    for index, _ in enumerate(data):\n        t = index\n        for i in range(8):\n            t = -306674912 ^ unsigned_right_shitf(t, 1) if 1 & t else unsigned_right_shitf(t, 1)\n        data[index] = t\n\n    def tmp():\n        rand_num = random.random()\n        path = \"/video/urls/v/1/toutiao/mp4/{video_id}?r={random_num}\".format(video_id=video_id,\n                                                                              random_num=str(rand_num)[2:])\n        e = o = r = -1\n        i, a = 0, len(path)\n        while i < a:\n            e = ord(path[i])\n            i += 1\n            if e < 128:\n                r = unsigned_right_shitf(r, 8) ^ data[255 & (r ^ e)]\n            else:\n                if e < 2048:\n                    r = unsigned_right_shitf(r, 8) ^ data[255 & (r ^ (192 | e >> 6 & 31))]\n                    r = unsigned_right_shitf(r, 8) ^ data[255 & (r ^ (128 | 63 & e))]\n                else:\n                    if 55296 <= e < 57344:\n                        e = (1023 & e) + 64\n                        i += 1\n                        o = 1023 & t.url(i)\n                        r = unsigned_right_shitf(r, 8) ^ data[255 & (r ^ (240 | e >> 8 & 7))]\n                        r = unsigned_right_shitf(r, 8) ^ data[255 & (r ^ (128 | e >> 2 & 63))]\n                        r = unsigned_right_shitf(r, 8) ^ data[255 & (r ^ (128 | o >> 6 & 15 | (3 & e) << 4))]\n                        r = unsigned_right_shitf(r, 8) ^ data[255 & (r ^ (128 | 63 & o))]\n                    else:\n                        r = unsigned_right_shitf(r, 8) ^ data[255 & (r ^ (224 | e >> 12 & 15))]\n                        r = unsigned_right_shitf(r, 8) ^ data[255 & (r ^ (128 | e >> 6 & 63))]\n                        r = unsigned_right_shitf(r, 8) ^ data[255 & (r ^ (128 | 63 & e))]\n\n        return \"https://ib.365yg.com{path}&s={param}\".format(path=path, param=unsigned_right_shitf(r ^ -1, 0))\n\n    while 1:\n        url = tmp()\n        if url.split(\"=\")[-1][0] != \"-\":  # 参数s不能为负数\n            return url",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/extractors/ixigua.py#L34-L78",
+    "func_name": "get_video_url_from_video_id",
+    "repo": "soimort/you-get",
+    "id": "csn_py_010"
+  },
+  {
+    "query": "Downloads CBS videos by URL.",
+    "code": "def cbs_download(url, output_dir='.', merge=True, info_only=False, **kwargs):\n    \"\"\"Downloads CBS videos by URL.\n    \"\"\"\n\n    html = get_content(url)\n    pid = match1(html, r'video\\.settings\\.pid\\s*=\\s*\\'([^\\']+)\\'')\n    title = match1(html, r'video\\.settings\\.title\\s*=\\s*\\\"([^\\\"]+)\\\"')\n\n    theplatform_download_by_pid(pid, title, output_dir=output_dir, merge=merge, info_only=info_only)",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/extractors/cbs.py#L9-L17",
+    "func_name": "cbs_download",
+    "repo": "soimort/you-get",
+    "id": "csn_py_011"
+  },
+  {
+    "query": "Extracts video ID from URL.",
+    "code": "def get_vid_from_url(url):\n        \"\"\"Extracts video ID from URL.\n        \"\"\"\n        vid = match1(url, 'https?://www.mgtv.com/(?:b|l)/\\d+/(\\d+).html')\n        if not vid:\n            vid = match1(url, 'https?://www.mgtv.com/hz/bdpz/\\d+/(\\d+).html')\n        return vid",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/extractors/mgtv.py#L27-L33",
+    "func_name": "MGTV.get_vid_from_url",
+    "repo": "soimort/you-get",
+    "id": "csn_py_012"
+  },
+  {
+    "query": "override DbApiHook get_uri method for get_sqlalchemy_engine()",
+    "code": "def get_uri(self):\n        \"\"\"\n        override DbApiHook get_uri method for get_sqlalchemy_engine()\n        \"\"\"\n        conn_config = self._get_conn_params()\n        uri = 'snowflake://{user}:{password}@{account}/{database}/'\n        uri += '{schema}?warehouse={warehouse}&role={role}'\n        return uri.format(**conn_config)",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/apache/airflow/blob/b69c686ad8a0c89b9136bb4b31767257eb7b2597/airflow/contrib/hooks/snowflake_hook.py#L98-L105",
+    "func_name": "SnowflakeHook.get_uri",
+    "repo": "apache/airflow",
+    "id": "csn_py_013"
+  },
+  {
+    "query": "returns aws_access_key_id, aws_secret_access_key\n        from extra\n\n        intended to be used by external import and export statements",
+    "code": "def _get_aws_credentials(self):\n        \"\"\"\n        returns aws_access_key_id, aws_secret_access_key\n        from extra\n\n        intended to be used by external import and export statements\n        \"\"\"\n        if self.snowflake_conn_id:\n            connection_object = self.get_connection(self.snowflake_conn_id)\n            if 'aws_secret_access_key' in connection_object.extra_dejson:\n                aws_access_key_id = connection_object.extra_dejson.get(\n                    'aws_access_key_id')\n                aws_secret_access_key = connection_object.extra_dejson.get(\n                    'aws_secret_access_key')\n        return aws_access_key_id, aws_secret_access_key",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/apache/airflow/blob/b69c686ad8a0c89b9136bb4b31767257eb7b2597/airflow/contrib/hooks/snowflake_hook.py#L115-L129",
+    "func_name": "SnowflakeHook._get_aws_credentials",
+    "repo": "apache/airflow",
+    "id": "csn_py_014"
+  },
+  {
+    "query": "Decompresses data for Content-Encoding: gzip.",
+    "code": "def ungzip(data):\n    \"\"\"Decompresses data for Content-Encoding: gzip.\n    \"\"\"\n    from io import BytesIO\n    import gzip\n    buffer = BytesIO(data)\n    f = gzip.GzipFile(fileobj=buffer)\n    return f.read()",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/common.py#L319-L326",
+    "func_name": "ungzip",
+    "repo": "soimort/you-get",
+    "id": "csn_py_015"
+  },
+  {
+    "query": "Get (branch, commit) from HEAD of a git repo.",
+    "code": "def get_head(repo_path):\n    \"\"\"Get (branch, commit) from HEAD of a git repo.\"\"\"\n    try:\n        ref = open(os.path.join(repo_path, '.git', 'HEAD'), 'r').read().strip()[5:].split('/')\n        branch = ref[-1]\n        commit = open(os.path.join(repo_path, '.git', *ref), 'r').read().strip()[:7]\n        return branch, commit\n    except:\n        return None",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/util/git.py#L7-L15",
+    "func_name": "get_head",
+    "repo": "soimort/you-get",
+    "id": "csn_py_016"
+  },
+  {
+    "query": "From http://cdn37.atwikiimg.com/sitescript/pub/dksitescript/FC2.site.js\n    Also com.hps.util.fc2.FC2EncrptUtil.makeMimiLocal\n    L110",
+    "code": "def makeMimi(upid):\n    \"\"\"From http://cdn37.atwikiimg.com/sitescript/pub/dksitescript/FC2.site.js\n    Also com.hps.util.fc2.FC2EncrptUtil.makeMimiLocal\n    L110\"\"\"\n    strSeed = \"gGddgPfeaf_gzyr\"\n    prehash = upid + \"_\" + strSeed\n    return md5(prehash.encode('utf-8')).hexdigest()",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/extractors/fc2video.py#L11-L17",
+    "func_name": "makeMimi",
+    "repo": "soimort/you-get",
+    "id": "csn_py_017"
+  },
+  {
+    "query": "Starts Cloud SQL Proxy.\n\n        You have to remember to stop the proxy if you started it!",
+    "code": "def start_proxy(self):\n        \"\"\"\n        Starts Cloud SQL Proxy.\n\n        You have to remember to stop the proxy if you started it!\n        \"\"\"\n        self._download_sql_proxy_if_needed()\n        if self.sql_proxy_process:\n            raise AirflowException(\"The sql proxy is already running: {}\".format(\n                self.sql_proxy_process))\n        else:\n            command_to_run = [self.sql_proxy_path]\n            command_to_run.extend(self.command_line_parameters)\n            try:\n                self.log.info(\"Creating directory %s\",\n                              self.cloud_sql_proxy_socket_directory)\n                os.makedirs(self.cloud_sql_proxy_socket_directory)\n            except OSError:\n                # Needed for python 2 compatibility (exists_ok missing)\n                pass\n            command_to_run.extend(self._get_credential_parameters())\n            self.log.info(\"Running the command: `%s`\", \" \".join(command_to_run))\n            self.sql_proxy_process = Popen(command_to_run,\n                                           stdin=PIPE, stdout=PIPE, stderr=PIPE)\n            self.log.info(\"The pid of cloud_sql_proxy: %s\", self.sql_proxy_process.pid)\n            while True:\n                line = self.sql_proxy_process.stderr.readline().decode('utf-8')\n                return_code = self.sql_proxy_process.poll()\n                if line == '' and return_code is not None:\n                    self.sql_proxy_process = None\n                    raise AirflowException(\n                        \"The cloud_sql_proxy finished early with return code {}!\".format(\n                            return_code))\n                if line != '':\n                    self.log.info(line)\n                if \"googleapi: Error\" in line or \"invalid instance name:\" in line:\n                    self.stop_proxy()\n                    raise AirflowException(\n                        \"Error when starting the cloud_sql_proxy {}!\".format(\n                            line))\n                if \"Ready for new connections\" in line:\n                    return",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/apache/airflow/blob/b69c686ad8a0c89b9136bb4b31767257eb7b2597/airflow/contrib/hooks/gcp_sql_hook.py#L524-L565",
+    "func_name": "CloudSqlProxyRunner.start_proxy",
+    "repo": "apache/airflow",
+    "id": "csn_py_018"
+  },
+  {
+    "query": "str, str, str, bool, bool ->None\n\n    Download Acfun video by vid.\n\n    Call Acfun API, decide which site to use, and pass the job to its\n    extractor.",
+    "code": "def acfun_download_by_vid(vid, title, output_dir='.', merge=True, info_only=False, **kwargs):\n    \"\"\"str, str, str, bool, bool ->None\n\n    Download Acfun video by vid.\n\n    Call Acfun API, decide which site to use, and pass the job to its\n    extractor.\n    \"\"\"\n\n    #first call the main parasing API\n    info = json.loads(get_content('http://www.acfun.cn/video/getVideo.aspx?id=' + vid))\n\n    sourceType = info['sourceType']\n\n    #decide sourceId to know which extractor to use\n    if 'sourceId' in info: sourceId = info['sourceId']\n    # danmakuId = info['danmakuId']\n\n    #call extractor decided by sourceId\n    if sourceType == 'sina':\n        sina_download_by_vid(sourceId, title, output_dir=output_dir, merge=merge, info_only=info_only)\n    elif sourceType == 'youku':\n        youku_download_by_vid(sourceId, title=title, output_dir=output_dir, merge=merge, info_only=info_only, **kwargs)\n    elif sourceType == 'tudou':\n        tudou_download_by_iid(sourceId, title, output_dir=output_dir, merge=merge, info_only=info_only)\n    elif sourceType == 'qq':\n        qq_download_by_vid(sourceId, title, True, output_dir=output_dir, merge=merge, info_only=info_only)\n    elif sourceType == 'letv':\n        letvcloud_download_by_vu(sourceId, '2d8c027396', title, output_dir=output_dir, merge=merge, info_only=info_only)\n    elif sourceType == 'zhuzhan':\n        #As in Jul.28.2016, Acfun is using embsig to anti hotlink so we need to pass this\n#In Mar. 2017 there is a dedicated ``acfun_proxy'' in youku cloud player\n#old code removed\n        url = 'http://www.acfun.cn/v/ac' + vid\n        yk_streams = youku_acfun_proxy(info['sourceId'], info['encode'], url)\n        seq = ['mp4hd3', 'mp4hd2', 'mp4hd', 'flvhd']\n        for t in seq:\n            if yk_streams.get(t):\n                preferred = yk_streams[t]\n                break\n#total_size in the json could be incorrect(F.I. 0)\n        size = 0\n        for url in preferred[0]:\n            _, _, seg_size = url_info(url)\n            size += seg_size\n#fallback to flvhd is not quite possible\n        if re.search(r'fid=[0-9A-Z\\-]*.flv', preferred[0][0]):\n            ext = 'flv'\n        else:\n            ext = 'mp4'\n        print_info(site_info, title, ext, size)\n        if not info_only:\n            download_urls(preferred[0], title, ext, size, output_dir=output_dir, merge=merge)\n    else:\n        raise NotImplementedError(sourceType)\n\n    if not info_only and not dry_run:\n        if not kwargs['caption']:\n            print('Skipping danmaku.')\n            return\n        try:\n            title = get_filename(title)\n            print('Downloading %s ...\\n' % (title + '.cmt.json'))\n            cmt = get_srt_json(vid)\n            with open(os.path.join(output_dir, title + '.cmt.json'), 'w', encoding='utf-8') as x:\n                x.write(cmt)\n        except:\n            pass",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/extractors/acfun.py#L42-L109",
+    "func_name": "acfun_download_by_vid",
+    "repo": "soimort/you-get",
+    "id": "csn_py_019"
+  },
+  {
+    "query": "str->dict\n    Information for CKPlayer API content.",
+    "code": "def ckplayer_get_info_by_xml(ckinfo):\n    \"\"\"str->dict\n    Information for CKPlayer API content.\"\"\"\n    e = ET.XML(ckinfo)\n    video_dict = {'title': '',\n                  #'duration': 0,\n                  'links': [],\n                  'size': 0,\n                  'flashvars': '',}\n    dictified = dictify(e)['ckplayer']\n    if 'info' in dictified:\n        if '_text' in dictified['info'][0]['title'][0]:  #title\n            video_dict['title'] = dictified['info'][0]['title'][0]['_text'].strip()\n\n    #if dictify(e)['ckplayer']['info'][0]['title'][0]['_text'].strip():  #duration\n        #video_dict['title'] = dictify(e)['ckplayer']['info'][0]['title'][0]['_text'].strip()\n\n    if '_text' in dictified['video'][0]['size'][0]:  #size exists for 1 piece\n        video_dict['size'] = sum([int(i['size'][0]['_text']) for i in dictified['video']])\n\n    if '_text' in dictified['video'][0]['file'][0]:  #link exist\n        video_dict['links'] = [i['file'][0]['_text'].strip() for i in dictified['video']]\n\n    if '_text' in dictified['flashvars'][0]:\n        video_dict['flashvars'] = dictified['flashvars'][0]['_text'].strip()\n\n    return video_dict",
+    "language": "python",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/soimort/you-get/blob/b746ac01c9f39de94cac2d56f665285b0523b974/src/you_get/extractors/ckplayer.py#L13-L39",
+    "func_name": "ckplayer_get_info_by_xml",
+    "repo": "soimort/you-get",
+    "id": "csn_py_020"
+  },
+  {
+    "query": "x = x mod m (HAC 14.42)",
+    "code": "function barrettReduce(x) {\n  var self = this\n  x.drShiftTo(self.m.t - 1, self.r2)\n  if (x.t > self.m.t + 1) {\n    x.t = self.m.t + 1\n    x.clamp()\n  }\n  self.mu.multiplyUpperTo(self.r2, self.m.t + 1, self.q3)\n  self.m.multiplyLowerTo(self.q3, self.m.t + 1, self.r2)\n  while (x.compareTo(self.r2) < 0) x.dAddOffset(1, self.m.t + 1)\n  x.subTo(self.r2, x)\n  while (x.compareTo(self.m) >= 0) x.subTo(self.m, x)\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/everitoken/evtjs/blob/87d5dac3ae3205e654821c03c010e4738fc4b8a1/src/bigi/lib/bigi.js#L1194-L1206",
+    "func_name": "barrettReduce",
+    "repo": "everitoken/evtjs",
+    "id": "csn_ja_001"
+  },
+  {
+    "query": "A grid is used to harmonize negative space in a layout.",
+    "code": "function Grid(props) {\n  const {\n    celled,\n    centered,\n    children,\n    className,\n    columns,\n    container,\n    divided,\n    doubling,\n    inverted,\n    padded,\n    relaxed,\n    reversed,\n    stackable,\n    stretched,\n    textAlign,\n    verticalAlign,\n  } = props\n\n  const classes = cx(\n    'ui',\n    useKeyOnly(centered, 'centered'),\n    useKeyOnly(container, 'container'),\n    useKeyOnly(doubling, 'doubling'),\n    useKeyOnly(inverted, 'inverted'),\n    useKeyOnly(stackable, 'stackable'),\n    useKeyOnly(stretched, 'stretched'),\n    useKeyOrValueAndKey(celled, 'celled'),\n    useKeyOrValueAndKey(divided, 'divided'),\n    useKeyOrValueAndKey(padded, 'padded'),\n    useKeyOrValueAndKey(relaxed, 'relaxed'),\n    useMultipleProp(reversed, 'reversed'),\n    useTextAlignProp(textAlign),\n    useVerticalAlignProp(verticalAlign),\n    useWidthProp(columns, 'column', true),\n    'grid',\n    className,\n  )\n  const rest = getUnhandledProps(Grid, props)\n  const ElementType = getElementType(Grid, props)\n\n  return (\n    <ElementType {...rest} className={classes}>\n      {children}\n    </ElementType>\n  )\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/Semantic-Org/Semantic-UI-React/blob/c42f7351df35ba1861f1dce2b01c6861a4011075/src/collections/Grid/Grid.js#L23-L70",
+    "func_name": "Grid",
+    "repo": "Semantic-Org/Semantic-UI-React",
+    "id": "csn_ja_002"
+  },
+  {
+    "query": "am2 avoids a big mult-and-extract completely. Max digit bits should be <= 30 because we do bitwise ops on values up to 2*hdvalue^2-hdvalue-1 (< 2^31)",
+    "code": "function am2(i, x, w, j, c, n) {\n  var xl = x & 0x7fff,\n    xh = x >> 15\n  while (--n >= 0) {\n    var l = this[i] & 0x7fff\n    var h = this[i++] >> 15\n    var m = xh * l + h * xl\n    l = xl * l + ((m & 0x7fff) << 15) + w[j] + (c & 0x3fffffff)\n    c = (l >>> 30) + (m >>> 15) + xh * h + (c >>> 30)\n    w[j++] = l & 0x3fffffff\n  }\n  return c\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/everitoken/evtjs/blob/87d5dac3ae3205e654821c03c010e4738fc4b8a1/src/bigi/lib/bigi.js#L43-L55",
+    "func_name": "am2",
+    "repo": "everitoken/evtjs",
+    "id": "csn_ja_003"
+  },
+  {
+    "query": "@arg {String|Buffer} dataSha256 - sha256 hash 32 byte buffer or hex string\n@arg {String} [encoding = 'hex'] - dataSha256 encoding (if string)\n\n@return {PublicKey}",
+    "code": "function recoverHash(dataSha256, encoding = \"hex\") {\n        //let time = new Date().valueOf();\n\n        if (typeof dataSha256 === \"string\") {\n            dataSha256 = Buffer.from(dataSha256, encoding);\n        }\n        if (dataSha256.length !== 32 || !Buffer.isBuffer(dataSha256)) {\n            throw new Error(\"dataSha256: 32 byte String or buffer requred\");\n        }\n\n        // sign the message\n        if (secp256k1 != null) {\n            let buffer = toBuffer();\n            //console.log(\"[recoverHash] accelerating supported, length of sign: \" + buffer.length);\n            var ret = PublicKey.fromBuffer(secp256k1.recover(dataSha256, buffer.slice(1), buffer[0] - 4 - 27, true));\n        \n            //time = (new Date().valueOf()) - time;\n\n            //console.log(\"[+\" + time + \"ms] recoverHash (c binding)\");\n\n            return ret;\n        }\n        else {\n            //console.log(\"[recoverHash] accelerating not supported\");\n            const e = BigInteger.fromBuffer(dataSha256);\n            let i2 = i;\n            i2 -= 27;\n            i2 = i2 & 3;\n            const Q = ecdsa.recoverPubKey(curve, e, { r, s, i }, i2);\n\n            // time = (new Date().valueOf()) - time;\n            //console.log(\"[+\" + time + \"ms] recoverHash\");\n\n            return PublicKey.fromPoint(Q);\n        }\n    }",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/everitoken/evtjs/blob/87d5dac3ae3205e654821c03c010e4738fc4b8a1/src/ecc/signature.js#L93-L128",
+    "func_name": "recoverHash",
+    "repo": "everitoken/evtjs",
+    "id": "csn_ja_004"
+  },
+  {
+    "query": "Parse a buffer to a array of segments\n@param {Buffer} buffer",
+    "code": "function parseSegments(buffer) {\n    if (buffer.length == 0) throw new Error(\"bad segments stream\");\n\n    let pointer = 0;\n    let segments = [ ];\n\n    while (pointer < buffer.length) {\n        let seg = parseSegment(buffer, pointer);\n        segments.push(seg);\n        pointer += seg.bufferLength;\n        delete seg.bufferLength;\n    }\n\n    if (pointer != buffer.length) {\n        throw new Error(\"Bad / incomplete segments\");\n    }\n\n    return segments;\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/everitoken/evtjs/blob/87d5dac3ae3205e654821c03c010e4738fc4b8a1/src/evtLink.js#L187-L205",
+    "func_name": "parseSegments",
+    "repo": "everitoken/evtjs",
+    "id": "csn_ja_005"
+  },
+  {
+    "query": "am1: use a single mult and divide to get the high bits, max digit bits should be 26 because max internal value = 2*dvalue^2-2*dvalue (< 2^53)",
+    "code": "function am1(i, x, w, j, c, n) {\n  while (--n >= 0) {\n    var v = x * this[i++] + w[j] + c\n    c = Math.floor(v / 0x4000000)\n    w[j++] = v & 0x3ffffff\n  }\n  return c\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/everitoken/evtjs/blob/87d5dac3ae3205e654821c03c010e4738fc4b8a1/src/bigi/lib/bigi.js#L32-L39",
+    "func_name": "am1",
+    "repo": "everitoken/evtjs",
+    "id": "csn_ja_006"
+  },
+  {
+    "query": "This function writes a minimal `package.json` file for a compiled package. It defines `name`, `main`, `author`, and `license`. It also defines `types`. n.b. types intended for development usage only.",
+    "code": "function writePackageManifest (packageName) {\n  const packagePath = require.resolve(packageName + '/package.json')\n  let { name, main, author, license, types, typings } = require(packagePath)\n  if (!main) {\n    main = 'index.js'\n  }\n\n  let typesFile = types || typings\n  if (typesFile) {\n    typesFile = require.resolve(join(packageName, typesFile))\n  }\n\n  const compiledPackagePath = join(__dirname, `dist/compiled/${packageName}`)\n\n  const potentialLicensePath = join(dirname(packagePath), './LICENSE')\n  if (existsSync(potentialLicensePath)) {\n    this._.files.push({\n      dir: compiledPackagePath,\n      base: 'LICENSE',\n      data: readFileSync(potentialLicensePath, 'utf8')\n    })\n  }\n\n  this._.files.push({\n    dir: compiledPackagePath,\n    base: 'package.json',\n    data:\n      JSON.stringify(\n        Object.assign(\n          {},\n          { name, main: `${basename(main, '.' + extname(main))}` },\n          author ? { author } : undefined,\n          license ? { license } : undefined,\n          typesFile\n            ? {\n              types: relative(compiledPackagePath, typesFile)\n            }\n            : undefined\n        )\n      ) + '\\n'\n  })\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/zeit/next.js/blob/3641f79a0f68d1093cc238b50b8d47eec1c25cfd/packages/next/taskfile-ncc.js#L34-L75",
+    "func_name": "writePackageManifest",
+    "repo": "zeit/next.js",
+    "id": "csn_ja_007"
+  },
+  {
+    "query": "A statistic can contain a label to help provide context for the presented value.",
+    "code": "function StatisticLabel(props) {\n  const { children, className, content } = props\n  const classes = cx('label', className)\n  const rest = getUnhandledProps(StatisticLabel, props)\n  const ElementType = getElementType(StatisticLabel, props)\n\n  return (\n    <ElementType {...rest} className={classes}>\n      {childrenUtils.isNil(children) ? content : children}\n    </ElementType>\n  )\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/Semantic-Org/Semantic-UI-React/blob/c42f7351df35ba1861f1dce2b01c6861a4011075/src/views/Statistic/StatisticLabel.js#L16-L27",
+    "func_name": "StatisticLabel",
+    "repo": "Semantic-Org/Semantic-UI-React",
+    "id": "csn_ja_008"
+  },
+  {
+    "query": "A column sub-component for Grid.",
+    "code": "function GridColumn(props) {\n  const {\n    children,\n    className,\n    computer,\n    color,\n    floated,\n    largeScreen,\n    mobile,\n    only,\n    stretched,\n    tablet,\n    textAlign,\n    verticalAlign,\n    widescreen,\n    width,\n  } = props\n\n  const classes = cx(\n    color,\n    useKeyOnly(stretched, 'stretched'),\n    useMultipleProp(only, 'only'),\n    useTextAlignProp(textAlign),\n    useValueAndKey(floated, 'floated'),\n    useVerticalAlignProp(verticalAlign),\n    useWidthProp(computer, 'wide computer'),\n    useWidthProp(largeScreen, 'wide large screen'),\n    useWidthProp(mobile, 'wide mobile'),\n    useWidthProp(tablet, 'wide tablet'),\n    useWidthProp(widescreen, 'wide widescreen'),\n    useWidthProp(width, 'wide'),\n    'column',\n    className,\n  )\n  const rest = getUnhandledProps(GridColumn, props)\n  const ElementType = getElementType(GridColumn, props)\n\n  return (\n    <ElementType {...rest} className={classes}>\n      {children}\n    </ElementType>\n  )\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/Semantic-Org/Semantic-UI-React/blob/c42f7351df35ba1861f1dce2b01c6861a4011075/src/collections/Grid/GridColumn.js#L22-L64",
+    "func_name": "GridColumn",
+    "repo": "Semantic-Org/Semantic-UI-React",
+    "id": "csn_ja_009"
+  },
+  {
+    "query": "Run self-checking code and gather CPU entropy.\n\nInitialization happens once even if called multiple times.\n\n@return {Promise}",
+    "code": "function initialize() {\n    if(initialized) {\n        return;\n    }\n\n    unitTest();\n    keyUtils.addEntropy(...keyUtils.cpuEntropy());\n    assert(keyUtils.entropyCount() >= 128, \"insufficient entropy\");\n\n    initialized = true;\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/everitoken/evtjs/blob/87d5dac3ae3205e654821c03c010e4738fc4b8a1/src/ecc/key_private.js#L266-L276",
+    "func_name": "initialize",
+    "repo": "everitoken/evtjs",
+    "id": "csn_ja_010"
+  },
+  {
+    "query": "/* Encode EVT Address in address.cpp",
+    "code": "function encodeAddress(str) {\n\n    /* Check avalibility of evt_address */\n    if (typeof str !== \"string\" || str.length !== 53 || !str.startsWith(\"EVT\")) throw new Error(\"EVTAddress should be a string with length 53 starts with EVT.\");\n    str = str.substr(3);\n\n    if (str === \"0\".repeat(50)) return Buffer.from([0, 0]); // 0000\n    else if (str[0] === \"0\") return encodeGeneratedAddressToBin(\"EVT\" + str); // generated address\n    var buf = Buffer.concat([Buffer.from([1, 0]), new Buffer(base58.decode(str))]); // normal\n    //console.log(buf)\n    return buf.slice(0, buf.length - 4);\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/everitoken/evtjs/blob/87d5dac3ae3205e654821c03c010e4738fc4b8a1/lib/format.js#L468-L479",
+    "func_name": "encodeAddress",
+    "repo": "everitoken/evtjs",
+    "id": "csn_ja_011"
+  },
+  {
+    "query": "A divider visually segments content into groups.",
+    "code": "function Divider(props) {\n  const {\n    children,\n    className,\n    clearing,\n    content,\n    fitted,\n    hidden,\n    horizontal,\n    inverted,\n    section,\n    vertical,\n  } = props\n\n  const classes = cx(\n    'ui',\n    useKeyOnly(clearing, 'clearing'),\n    useKeyOnly(fitted, 'fitted'),\n    useKeyOnly(hidden, 'hidden'),\n    useKeyOnly(horizontal, 'horizontal'),\n    useKeyOnly(inverted, 'inverted'),\n    useKeyOnly(section, 'section'),\n    useKeyOnly(vertical, 'vertical'),\n    'divider',\n    className,\n  )\n  const rest = getUnhandledProps(Divider, props)\n  const ElementType = getElementType(Divider, props)\n\n  return (\n    <ElementType {...rest} className={classes}>\n      {childrenUtils.isNil(children) ? content : children}\n    </ElementType>\n  )\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/Semantic-Org/Semantic-UI-React/blob/c42f7351df35ba1861f1dce2b01c6861a4011075/src/elements/Divider/Divider.js#L16-L50",
+    "func_name": "Divider",
+    "repo": "Semantic-Org/Semantic-UI-React",
+    "id": "csn_ja_012"
+  },
+  {
+    "query": "Targeted scripts can only be invoked by you, the user, eg via a right-click option on the Sites or History tabs",
+    "code": "function invokeWith(msg) {\n\t// Debugging can be done using println like this\n\tprint('Finding comments in ' + msg.getRequestHeader().getURI().toString()); \n\n\tvar body = msg.getResponseBody().toString()\n\t// Look for html comments\n\tif (body.indexOf('<!--') > 0) {\n\t\tvar o = body.indexOf('<!--');\n\t\twhile (o > 0) {\n\t\t\tvar e = body.indexOf('-->', o);\n\t\t\tprint(\"\\t\" + body.substr(o,e-o+3)) \n\t\t\to = body.indexOf('<!--', e);\n\t\t}\n\t}\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/zaproxy/zaproxy/blob/688486b806508970d048228059045c9f5b6725d0/src/scripts/templates/targeted/Find HTML comments.js#L3-L17",
+    "func_name": "invokeWith",
+    "repo": "zaproxy/zaproxy",
+    "id": "csn_ja_013"
+  },
+  {
+    "query": "(public) test primality with certainty >= 1-.5^t",
+    "code": "function bnIsProbablePrime(t) {\n  var i, x = this.abs()\n  if (x.t == 1 && x[0] <= lowprimes[lowprimes.length - 1]) {\n    for (i = 0; i < lowprimes.length; ++i)\n      if (x[0] == lowprimes[i]) return true\n    return false\n  }\n  if (x.isEven()) return false\n  i = 1\n  while (i < lowprimes.length) {\n    var m = lowprimes[i],\n      j = i + 1\n    while (j < lowprimes.length && m < lplim) m *= lowprimes[j++]\n    m = x.modInt(m)\n    while (i < j) if (m % lowprimes[i++] == 0) return false\n  }\n  return x.millerRabin(t)\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/everitoken/evtjs/blob/87d5dac3ae3205e654821c03c010e4738fc4b8a1/src/bigi/lib/bigi.js#L1424-L1441",
+    "func_name": "bnIsProbablePrime",
+    "repo": "everitoken/evtjs",
+    "id": "csn_ja_014"
+  },
+  {
+    "query": "Compilation with warnings (e.g. ESLint).",
+    "code": "function handleWarnings (warnings) {\n  clearOutdatedErrors()\n\n  // Print warnings to the console.\n  const formatted = formatWebpackMessages({\n    warnings: warnings,\n    errors: []\n  })\n\n  if (typeof console !== 'undefined' && typeof console.warn === 'function') {\n    for (let i = 0; i < formatted.warnings.length; i++) {\n      if (i === 5) {\n        console.warn(\n          'There were more warnings in other files.\\n' +\n            'You can find a complete log in the terminal.'\n        )\n        break\n      }\n      console.warn(stripAnsi(formatted.warnings[i]))\n    }\n  }\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/zeit/next.js/blob/3641f79a0f68d1093cc238b50b8d47eec1c25cfd/packages/next/client/dev-error-overlay/hot-dev-client.js#L148-L169",
+    "func_name": "handleWarnings",
+    "repo": "zeit/next.js",
+    "id": "csn_ja_015"
+  },
+  {
+    "query": "ECIES\n@arg {string|Object} pubkey wif, PublicKey object\n@return {Buffer} 64 byte shared secret",
+    "code": "function getSharedSecret(public_key) {\n        public_key = PublicKey(public_key);\n        let KB = public_key.toUncompressed().toBuffer();\n        let KBP = Point.fromAffine(\n            secp256k1,\n            BigInteger.fromBuffer( KB.slice( 1,33 )), // x\n            BigInteger.fromBuffer( KB.slice( 33,65 )) // y\n        );\n        let r = toBuffer();\n        let P = KBP.multiply(BigInteger.fromBuffer(r));\n        let S = P.affineX.toBuffer({size: 32});\n        // SHA512 used in ECIES\n        return hash.sha512(S);\n    }",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/everitoken/evtjs/blob/87d5dac3ae3205e654821c03c010e4738fc4b8a1/src/ecc/key_private.js#L81-L94",
+    "func_name": "getSharedSecret",
+    "repo": "everitoken/evtjs",
+    "id": "csn_ja_016"
+  },
+  {
+    "query": "An item can contain content.",
+    "code": "function ItemContent(props) {\n  const { children, className, content, description, extra, header, meta, verticalAlign } = props\n\n  const classes = cx(useVerticalAlignProp(verticalAlign), 'content', className)\n  const rest = getUnhandledProps(ItemContent, props)\n  const ElementType = getElementType(ItemContent, props)\n\n  if (!childrenUtils.isNil(children)) {\n    return (\n      <ElementType {...rest} className={classes}>\n        {children}\n      </ElementType>\n    )\n  }\n\n  return (\n    <ElementType {...rest} className={classes}>\n      {ItemHeader.create(header, { autoGenerateKey: false })}\n      {ItemMeta.create(meta, { autoGenerateKey: false })}\n      {ItemDescription.create(description, { autoGenerateKey: false })}\n      {ItemExtra.create(extra, { autoGenerateKey: false })}\n      {content}\n    </ElementType>\n  )\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/Semantic-Org/Semantic-UI-React/blob/c42f7351df35ba1861f1dce2b01c6861a4011075/src/views/Item/ItemContent.js#L21-L45",
+    "func_name": "ItemContent",
+    "repo": "Semantic-Org/Semantic-UI-React",
+    "id": "csn_ja_017"
+  },
+  {
+    "query": "A comment can contain an image or avatar.",
+    "code": "function CommentAvatar(props) {\n  const { className, src } = props\n\n  const classes = cx('avatar', className)\n  const rest = getUnhandledProps(CommentAvatar, props)\n  const [imageProps, rootProps] = partitionHTMLProps(rest, { htmlProps: htmlImageProps })\n  const ElementType = getElementType(CommentAvatar, props)\n\n  return (\n    <ElementType {...rootProps} className={classes}>\n      {createHTMLImage(src, { autoGenerateKey: false, defaultProps: imageProps })}\n    </ElementType>\n  )\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/Semantic-Org/Semantic-UI-React/blob/c42f7351df35ba1861f1dce2b01c6861a4011075/src/views/Comment/CommentAvatar.js#L17-L30",
+    "func_name": "CommentAvatar",
+    "repo": "Semantic-Org/Semantic-UI-React",
+    "id": "csn_ja_018"
+  },
+  {
+    "query": "A card can contain a description with one or more paragraphs.",
+    "code": "function CardDescription(props) {\n  const { children, className, content, textAlign } = props\n  const classes = cx(useTextAlignProp(textAlign), 'description', className)\n  const rest = getUnhandledProps(CardDescription, props)\n  const ElementType = getElementType(CardDescription, props)\n\n  return (\n    <ElementType {...rest} className={classes}>\n      {childrenUtils.isNil(children) ? content : children}\n    </ElementType>\n  )\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/Semantic-Org/Semantic-UI-React/blob/c42f7351df35ba1861f1dce2b01c6861a4011075/src/views/Card/CardDescription.js#L18-L29",
+    "func_name": "CardDescription",
+    "repo": "Semantic-Org/Semantic-UI-React",
+    "id": "csn_ja_019"
+  },
+  {
+    "query": "/* Decode EVT Address in address.cpp",
+    "code": "function decodeAddress(bytes) {\n\n    if (bytes.length === 2 && bytes.equals(Buffer.from([0, 0]))) return \"EVT\" + \"0\".repeat(50); // 0000\n    else if (bytes.slice(0, 2).equals(Buffer.from([2, 0]))) return decodeGeneratedAddressFromBin(bytes); // generated address\n    return \"EVT\" + KeyUtils.checkEncode(bytes.slice(2));\n}",
+    "language": "javascript",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/everitoken/evtjs/blob/87d5dac3ae3205e654821c03c010e4738fc4b8a1/lib/format.js#L481-L486",
+    "func_name": "decodeAddress",
+    "repo": "everitoken/evtjs",
+    "id": "csn_ja_020"
+  },
+  {
+    "query": "Calls the associated hook function.\n@param <T> the value type\n@param source the hook's input value\n@return the value returned by the hook",
+    "code": "@SuppressWarnings({ \"rawtypes\", \"unchecked\" })\n    @NonNull\n    public static <T> Flowable<T> onAssembly(@NonNull Flowable<T> source) {\n        Function<? super Flowable, ? extends Flowable> f = onFlowableAssembly;\n        if (f != null) {\n            return apply(f, source);\n        }\n        return source;\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/plugins/RxJavaPlugins.java#L1017-L1025",
+    "func_name": "RxJavaPlugins.onAssembly",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_001"
+  },
+  {
+    "query": "Construct a Disposable by wrapping a Runnable that is\nexecuted exactly once when the Disposable is disposed.\n@param run the Runnable to wrap\n@return the new Disposable instance",
+    "code": "@NonNull\n    public static Disposable fromRunnable(@NonNull Runnable run) {\n        ObjectHelper.requireNonNull(run, \"run is null\");\n        return new RunnableDisposable(run);\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/disposables/Disposables.java#L41-L45",
+    "func_name": "Disposables.fromRunnable",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_002"
+  },
+  {
+    "query": "Construct a Disposable by wrapping a Future that is\ncancelled exactly once when the Disposable is disposed.\n@param future the Future to wrap\n@return the new Disposable instance",
+    "code": "@NonNull\n    public static Disposable fromFuture(@NonNull Future<?> future) {\n        ObjectHelper.requireNonNull(future, \"future is null\");\n        return fromFuture(future, true);\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/disposables/Disposables.java#L65-L69",
+    "func_name": "Disposables.fromFuture",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_003"
+  },
+  {
+    "query": "Calls the associated hook function.\n@param <T> the value type\n@param source the hook's input value\n@param observer the observer\n@return the value returned by the hook",
+    "code": "@SuppressWarnings({ \"rawtypes\", \"unchecked\" })\n    @NonNull\n    public static <T> Observer<? super T> onSubscribe(@NonNull Observable<T> source, @NonNull Observer<? super T> observer) {\n        BiFunction<? super Observable, ? super Observer, ? extends Observer> f = onObservableSubscribe;\n        if (f != null) {\n            return apply(f, source, observer);\n        }\n        return observer;\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/plugins/RxJavaPlugins.java#L936-L944",
+    "func_name": "RxJavaPlugins.onSubscribe",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_004"
+  },
+  {
+    "query": "Construct a Disposable by wrapping a Action that is\nexecuted exactly once when the Disposable is disposed.\n@param run the Action to wrap\n@return the new Disposable instance",
+    "code": "@NonNull\n    public static Disposable fromAction(@NonNull Action run) {\n        ObjectHelper.requireNonNull(run, \"run is null\");\n        return new ActionDisposable(run);\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/disposables/Disposables.java#L53-L57",
+    "func_name": "Disposables.fromAction",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_005"
+  },
+  {
+    "query": "Calls the associated hook function.\n@param <T> the value type\n@param source the hook's input value\n@return the value returned by the hook",
+    "code": "@SuppressWarnings({ \"rawtypes\", \"unchecked\" })\n    @NonNull\n    public static <T> Maybe<T> onAssembly(@NonNull Maybe<T> source) {\n        Function<? super Maybe, ? extends Maybe> f = onMaybeAssembly;\n        if (f != null) {\n            return apply(f, source);\n        }\n        return source;\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/plugins/RxJavaPlugins.java#L1001-L1009",
+    "func_name": "RxJavaPlugins.onAssembly",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_006"
+  },
+  {
+    "query": "Calls the associated hook function.\n@param defaultScheduler the hook's input value\n@return the value returned by the hook",
+    "code": "@NonNull\n    public static Scheduler onIoScheduler(@NonNull Scheduler defaultScheduler) {\n        Function<? super Scheduler, ? extends Scheduler> f = onIoHandler;\n        if (f == null) {\n            return defaultScheduler;\n        }\n        return apply(f, defaultScheduler);\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/plugins/RxJavaPlugins.java#L437-L444",
+    "func_name": "RxJavaPlugins.onIoScheduler",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_007"
+  },
+  {
+    "query": "Calls the associated hook function.\n@param <T> the value type\n@param source the hook's input value\n@param observer the observer\n@return the value returned by the hook",
+    "code": "@SuppressWarnings({ \"rawtypes\", \"unchecked\" })\n    @NonNull\n    public static <T> SingleObserver<? super T> onSubscribe(@NonNull Single<T> source, @NonNull SingleObserver<? super T> observer) {\n        BiFunction<? super Single, ? super SingleObserver, ? extends SingleObserver> f = onSingleSubscribe;\n        if (f != null) {\n            return apply(f, source, observer);\n        }\n        return observer;\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/plugins/RxJavaPlugins.java#L953-L961",
+    "func_name": "RxJavaPlugins.onSubscribe",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_008"
+  },
+  {
+    "query": "Run the specified Action when a 'rail' completes or signals an error.\n\n@param onAfterTerminate the callback\n@return the new ParallelFlowable instance",
+    "code": "@CheckReturnValue\n    @NonNull\n    public final ParallelFlowable<T> doAfterTerminated(@NonNull Action onAfterTerminate) {\n        ObjectHelper.requireNonNull(onAfterTerminate, \"onAfterTerminate is null\");\n        return RxJavaPlugins.onAssembly(new ParallelPeek<T>(this,\n                Functions.emptyConsumer(),\n                Functions.emptyConsumer(),\n                Functions.emptyConsumer(),\n                Functions.EMPTY_ACTION,\n                onAfterTerminate,\n                Functions.emptyConsumer(),\n                Functions.EMPTY_LONG_CONSUMER,\n                Functions.EMPTY_ACTION\n                ));\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/parallel/ParallelFlowable.java#L648-L662",
+    "func_name": "ParallelFlowable.doAfterTerminated",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_009"
+  },
+  {
+    "query": "Calls the associated hook function.\n@param <T> the value type\n@param source the hook's input value\n@return the value returned by the hook",
+    "code": "@SuppressWarnings({ \"rawtypes\", \"unchecked\" })\n    @NonNull\n    public static <T> ConnectableFlowable<T> onAssembly(@NonNull ConnectableFlowable<T> source) {\n        Function<? super ConnectableFlowable, ? extends ConnectableFlowable> f = onConnectableFlowableAssembly;\n        if (f != null) {\n            return apply(f, source);\n        }\n        return source;\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/plugins/RxJavaPlugins.java#L1033-L1041",
+    "func_name": "RxJavaPlugins.onAssembly",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_010"
+  },
+  {
+    "query": "Sets the specific hook function.\n@param handler the hook function to set, null allowed",
+    "code": "public static void setIoSchedulerHandler(@Nullable Function<? super Scheduler, ? extends Scheduler> handler) {\n        if (lockdown) {\n            throw new IllegalStateException(\"Plugins can't be changed anymore\");\n        }\n        onIoHandler = handler;\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/plugins/RxJavaPlugins.java#L603-L608",
+    "func_name": "RxJavaPlugins.setIoSchedulerHandler",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_011"
+  },
+  {
+    "query": "Calls the associated hook function.\n@param source the hook's input value\n@return the value returned by the hook",
+    "code": "@NonNull\n    public static Completable onAssembly(@NonNull Completable source) {\n        Function<? super Completable, ? extends Completable> f = onCompletableAssembly;\n        if (f != null) {\n            return apply(f, source);\n        }\n        return source;\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/plugins/RxJavaPlugins.java#L1096-L1103",
+    "func_name": "RxJavaPlugins.onAssembly",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_012"
+  },
+  {
+    "query": "Sets the specific hook function.\n@param handler the hook function to set, null allowed",
+    "code": "public static void setSingleSchedulerHandler(@Nullable Function<? super Scheduler, ? extends Scheduler> handler) {\n        if (lockdown) {\n            throw new IllegalStateException(\"Plugins can't be changed anymore\");\n        }\n        onSingleHandler = handler;\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/plugins/RxJavaPlugins.java#L636-L641",
+    "func_name": "RxJavaPlugins.setSingleSchedulerHandler",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_013"
+  },
+  {
+    "query": "Call the specified consumer with the request amount if any rail receives a request.\n\n@param onRequest the callback\n@return the new ParallelFlowable instance",
+    "code": "@CheckReturnValue\n    @NonNull\n    public final ParallelFlowable<T> doOnRequest(@NonNull LongConsumer onRequest) {\n        ObjectHelper.requireNonNull(onRequest, \"onRequest is null\");\n        return RxJavaPlugins.onAssembly(new ParallelPeek<T>(this,\n                Functions.emptyConsumer(),\n                Functions.emptyConsumer(),\n                Functions.emptyConsumer(),\n                Functions.EMPTY_ACTION,\n                Functions.EMPTY_ACTION,\n                Functions.emptyConsumer(),\n                onRequest,\n                Functions.EMPTY_ACTION\n                ));\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/parallel/ParallelFlowable.java#L692-L706",
+    "func_name": "ParallelFlowable.doOnRequest",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_014"
+  },
+  {
+    "query": "Sets the specific hook function.\n@param onCompletableSubscribe the hook function to set, null allowed",
+    "code": "public static void setOnCompletableSubscribe(\n            @Nullable BiFunction<? super Completable, ? super CompletableObserver, ? extends CompletableObserver> onCompletableSubscribe) {\n        if (lockdown) {\n            throw new IllegalStateException(\"Plugins can't be changed anymore\");\n        }\n        RxJavaPlugins.onCompletableSubscribe = onCompletableSubscribe;\n    }",
+    "language": "java",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/ReactiveX/RxJava/blob/ac84182aa2bd866b53e01c8e3fe99683b882c60e/src/main/java/io/reactivex/plugins/RxJavaPlugins.java#L783-L789",
+    "func_name": "RxJavaPlugins.setOnCompletableSubscribe",
+    "repo": "ReactiveX/RxJava",
+    "id": "csn_ja_015"
+  },
+  {
+    "query": "// XXX_OneofFuncs is for the internal use of the proto package.",
+    "code": "func (*Compare) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {\n\treturn _Compare_OneofMarshaler, _Compare_OneofUnmarshaler, _Compare_OneofSizer, []interface{}{\n\t\t(*Compare_Version)(nil),\n\t\t(*Compare_CreateRevision)(nil),\n\t\t(*Compare_ModRevision)(nil),\n\t\t(*Compare_Value)(nil),\n\t\t(*Compare_Lease)(nil),\n\t}\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/etcdserver/etcdserverpb/rpc.pb.go#L1111-L1119",
+    "func_name": "XXX_OneofFuncs",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_001"
+  },
+  {
+    "query": "// Enqueue puts a value into a queue with a given priority.",
+    "code": "func (q *PriorityQueue) Enqueue(val string, pr uint16) error {\n\tprefix := fmt.Sprintf(\"%s%05d\", q.key, pr)\n\t_, err := newSequentialKV(q.client, prefix, val)\n\treturn err\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/contrib/recipes/priority_queue.go#L38-L42",
+    "func_name": "Enqueue",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_002"
+  },
+  {
+    "query": "// NewCert generates TLS cert by using the given cert,key and parse function.",
+    "code": "func NewCert(certfile, keyfile string, parseFunc func([]byte, []byte) (tls.Certificate, error)) (*tls.Certificate, error) {\n\tcert, err := ioutil.ReadFile(certfile)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\n\tkey, err := ioutil.ReadFile(keyfile)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\n\tif parseFunc == nil {\n\t\tparseFunc = tls.X509KeyPair\n\t}\n\n\ttlsCert, err := parseFunc(cert, key)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\treturn &tlsCert, nil\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/pkg/tlsutil/tlsutil.go#L53-L73",
+    "func_name": "NewCert",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_003"
+  },
+  {
+    "query": "// Pause pauses the peer. The peer will simply drops all incoming\n// messages without returning an error.",
+    "code": "func (p *peer) Pause() {\n\tp.mu.Lock()\n\tdefer p.mu.Unlock()\n\tp.paused = true\n\tp.msgAppReader.pause()\n\tp.msgAppV2Reader.pause()\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/etcdserver/api/rafthttp/peer.go#L314-L320",
+    "func_name": "Pause",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_004"
+  },
+  {
+    "query": "// startStreamWriter creates a streamWrite and starts a long running go-routine that accepts\n// messages and writes to the attached outgoing connection.",
+    "code": "func startStreamWriter(lg *zap.Logger, local, id types.ID, status *peerStatus, fs *stats.FollowerStats, r Raft) *streamWriter {\n\tw := &streamWriter{\n\t\tlg: lg,\n\n\t\tlocalID: local,\n\t\tpeerID:  id,\n\n\t\tstatus: status,\n\t\tfs:     fs,\n\t\tr:      r,\n\t\tmsgc:   make(chan raftpb.Message, streamBufSize),\n\t\tconnc:  make(chan *outgoingConn),\n\t\tstopc:  make(chan struct{}),\n\t\tdone:   make(chan struct{}),\n\t}\n\tgo w.run()\n\treturn w\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/etcdserver/api/rafthttp/stream.go#L132-L149",
+    "func_name": "startStreamWriter",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_005"
+  },
+  {
+    "query": "// MarshalJSON translates the raft status into JSON.\n// TODO: try to simplify this by introducing ID type into raft",
+    "code": "func (s Status) MarshalJSON() ([]byte, error) {\n\tj := fmt.Sprintf(`{\"id\":\"%x\",\"term\":%d,\"vote\":\"%x\",\"commit\":%d,\"lead\":\"%x\",\"raftState\":%q,\"applied\":%d,\"progress\":{`,\n\t\ts.ID, s.Term, s.Vote, s.Commit, s.Lead, s.RaftState, s.Applied)\n\n\tif len(s.Progress) == 0 {\n\t\tj += \"},\"\n\t} else {\n\t\tfor k, v := range s.Progress {\n\t\t\tsubj := fmt.Sprintf(`\"%x\":{\"match\":%d,\"next\":%d,\"state\":%q},`, k, v.Match, v.Next, v.State)\n\t\t\tj += subj\n\t\t}\n\t\t// remove the trailing \",\"\n\t\tj = j[:len(j)-1] + \"},\"\n\t}\n\n\tj += fmt.Sprintf(`\"leadtransferee\":\"%x\"}`, s.LeadTransferee)\n\treturn []byte(j), nil\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/raft/status.go#L69-L86",
+    "func_name": "MarshalJSON",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_006"
+  },
+  {
+    "query": "// XXX_OneofFuncs is for the internal use of the proto package.",
+    "code": "func (*RequestOp) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {\n\treturn _RequestOp_OneofMarshaler, _RequestOp_OneofUnmarshaler, _RequestOp_OneofSizer, []interface{}{\n\t\t(*RequestOp_RequestRange)(nil),\n\t\t(*RequestOp_RequestPut)(nil),\n\t\t(*RequestOp_RequestDeleteRange)(nil),\n\t\t(*RequestOp_RequestTxn)(nil),\n\t}\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/etcdserver/etcdserverpb/rpc.pb.go#L690-L697",
+    "func_name": "XXX_OneofFuncs",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_007"
+  },
+  {
+    "query": "// OpCompact wraps slice CompactOption to create a CompactOp.",
+    "code": "func OpCompact(rev int64, opts ...CompactOption) CompactOp {\n\tret := CompactOp{revision: rev}\n\tret.applyCompactOpts(opts)\n\treturn ret\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/clientv3/compact_op.go#L37-L41",
+    "func_name": "OpCompact",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_008"
+  },
+  {
+    "query": "// cmps guards the txn from updates to read set",
+    "code": "func (rs readSet) cmps() []v3.Cmp {\n\tcmps := make([]v3.Cmp, 0, len(rs))\n\tfor k, rk := range rs {\n\t\tcmps = append(cmps, isKeyCurrent(k, rk))\n\t}\n\treturn cmps\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/clientv3/concurrency/stm.go#L208-L214",
+    "func_name": "cmps",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_009"
+  },
+  {
+    "query": "// NewServer returns a new agent server.",
+    "code": "func NewServer(\n\tlg *zap.Logger,\n\tnetwork string,\n\taddress string,\n) *Server {\n\treturn &Server{\n\t\tlg:                         lg,\n\t\tnetwork:                    network,\n\t\taddress:                    address,\n\t\tlast:                       rpcpb.Operation_NOT_STARTED,\n\t\tadvertiseClientPortToProxy: make(map[int]proxy.Server),\n\t\tadvertisePeerPortToProxy:   make(map[int]proxy.Server),\n\t}\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/functional/agent/server.go#L61-L74",
+    "func_name": "NewServer",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_010"
+  },
+  {
+    "query": "// newTxnResp allocates a txn response for a txn request given a path.",
+    "code": "func newTxnResp(rt *pb.TxnRequest, txnPath []bool) (txnResp *pb.TxnResponse, txnCount int) {\n\treqs := rt.Success\n\tif !txnPath[0] {\n\t\treqs = rt.Failure\n\t}\n\tresps := make([]*pb.ResponseOp, len(reqs))\n\ttxnResp = &pb.TxnResponse{\n\t\tResponses: resps,\n\t\tSucceeded: txnPath[0],\n\t\tHeader:    &pb.ResponseHeader{},\n\t}\n\tfor i, req := range reqs {\n\t\tswitch tv := req.Request.(type) {\n\t\tcase *pb.RequestOp_RequestRange:\n\t\t\tresps[i] = &pb.ResponseOp{Response: &pb.ResponseOp_ResponseRange{}}\n\t\tcase *pb.RequestOp_RequestPut:\n\t\t\tresps[i] = &pb.ResponseOp{Response: &pb.ResponseOp_ResponsePut{}}\n\t\tcase *pb.RequestOp_RequestDeleteRange:\n\t\t\tresps[i] = &pb.ResponseOp{Response: &pb.ResponseOp_ResponseDeleteRange{}}\n\t\tcase *pb.RequestOp_RequestTxn:\n\t\t\tresp, txns := newTxnResp(tv.RequestTxn, txnPath[1:])\n\t\t\tresps[i] = &pb.ResponseOp{Response: &pb.ResponseOp_ResponseTxn{ResponseTxn: resp}}\n\t\t\ttxnPath = txnPath[1+txns:]\n\t\t\ttxnCount += txns + 1\n\t\tdefault:\n\t\t}\n\t}\n\treturn txnResp, txnCount\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/etcdserver/apply.go#L381-L409",
+    "func_name": "newTxnResp",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_011"
+  },
+  {
+    "query": "// XXX_OneofFuncs is for the internal use of the proto package.",
+    "code": "func (*ResponseOp) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {\n\treturn _ResponseOp_OneofMarshaler, _ResponseOp_OneofUnmarshaler, _ResponseOp_OneofSizer, []interface{}{\n\t\t(*ResponseOp_ResponseRange)(nil),\n\t\t(*ResponseOp_ResponsePut)(nil),\n\t\t(*ResponseOp_ResponseDeleteRange)(nil),\n\t\t(*ResponseOp_ResponseTxn)(nil),\n\t}\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/etcdserver/etcdserverpb/rpc.pb.go#L877-L884",
+    "func_name": "XXX_OneofFuncs",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_012"
+  },
+  {
+    "query": "// NewCertPool creates x509 certPool with provided CA files.",
+    "code": "func NewCertPool(CAFiles []string) (*x509.CertPool, error) {\n\tcertPool := x509.NewCertPool()\n\n\tfor _, CAFile := range CAFiles {\n\t\tpemByte, err := ioutil.ReadFile(CAFile)\n\t\tif err != nil {\n\t\t\treturn nil, err\n\t\t}\n\n\t\tfor {\n\t\t\tvar block *pem.Block\n\t\t\tblock, pemByte = pem.Decode(pemByte)\n\t\t\tif block == nil {\n\t\t\t\tbreak\n\t\t\t}\n\t\t\tcert, err := x509.ParseCertificate(block.Bytes)\n\t\t\tif err != nil {\n\t\t\t\treturn nil, err\n\t\t\t}\n\n\t\t\tcertPool.AddCert(cert)\n\t\t}\n\t}\n\n\treturn certPool, nil\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/pkg/tlsutil/tlsutil.go#L25-L50",
+    "func_name": "NewCertPool",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_013"
+  },
+  {
+    "query": "// SaveDBFrom saves snapshot of the database from the given reader. It\n// guarantees the save operation is atomic.",
+    "code": "func (s *Snapshotter) SaveDBFrom(r io.Reader, id uint64) (int64, error) {\n\tstart := time.Now()\n\n\tf, err := ioutil.TempFile(s.dir, \"tmp\")\n\tif err != nil {\n\t\treturn 0, err\n\t}\n\tvar n int64\n\tn, err = io.Copy(f, r)\n\tif err == nil {\n\t\tfsyncStart := time.Now()\n\t\terr = fileutil.Fsync(f)\n\t\tsnapDBFsyncSec.Observe(time.Since(fsyncStart).Seconds())\n\t}\n\tf.Close()\n\tif err != nil {\n\t\tos.Remove(f.Name())\n\t\treturn n, err\n\t}\n\tfn := s.dbFilePath(id)\n\tif fileutil.Exist(fn) {\n\t\tos.Remove(f.Name())\n\t\treturn n, nil\n\t}\n\terr = os.Rename(f.Name(), fn)\n\tif err != nil {\n\t\tos.Remove(f.Name())\n\t\treturn n, err\n\t}\n\n\tif s.lg != nil {\n\t\ts.lg.Info(\n\t\t\t\"saved database snapshot to disk\",\n\t\t\tzap.String(\"path\", fn),\n\t\t\tzap.Int64(\"bytes\", n),\n\t\t\tzap.String(\"size\", humanize.Bytes(uint64(n))),\n\t\t)\n\t} else {\n\t\tplog.Infof(\"saved database snapshot to disk [total bytes: %d]\", n)\n\t}\n\n\tsnapDBSaveSec.Observe(time.Since(start).Seconds())\n\treturn n, nil\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/etcdserver/api/snap/db.go#L36-L79",
+    "func_name": "SaveDBFrom",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_014"
+  },
+  {
+    "query": "// add adds an inflight into inflights",
+    "code": "func (in *inflights) add(inflight uint64) {\n\tif in.full() {\n\t\tpanic(\"cannot add into a full inflights\")\n\t}\n\tnext := in.start + in.count\n\tsize := in.size\n\tif next >= size {\n\t\tnext -= size\n\t}\n\tif next >= len(in.buffer) {\n\t\tin.growBuf()\n\t}\n\tin.buffer[next] = inflight\n\tin.count++\n}",
+    "language": "go",
+    "source": "CodeSearchNet",
+    "url": "https://github.com/etcd-io/etcd/blob/616592d9ba993e3fe9798eef581316016df98906/raft/progress.go#L213-L227",
+    "func_name": "add",
+    "repo": "etcd-io/etcd",
+    "id": "csn_go_015"
+  },
+  {
+    "id": "sup_yaml_001",
+    "query": "database connection configuration with host port and credentials",
+    "code": "database:\n  host: localhost\n  port: 5432\n  name: myapp_production\n  username: admin\n  password: ${DB_PASSWORD}\n  pool:\n    max_connections: 20\n    timeout: 30",
+    "language": "yaml",
+    "source": "manual",
+    "url": "",
+    "func_name": "database_config",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_yaml_002",
+    "query": "logging configuration with file rotation and log levels",
+    "code": "logging:\n  level: INFO\n  handlers:\n    file:\n      class: RotatingFileHandler\n      filename: app.log\n      maxBytes: 10485760\n      backupCount: 5\n    console:\n      class: StreamHandler\n      level: DEBUG",
+    "language": "yaml",
+    "source": "manual",
+    "url": "",
+    "func_name": "logging_config",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_toml_001",
+    "query": "python project metadata with dependencies and build system",
+    "code": "[project]\nname = \"myapp\"\nversion = \"1.2.0\"\nrequires-python = \">=3.10\"\ndependencies = [\n    \"fastapi>=0.100\",\n    \"sqlalchemy>=2.0\",\n]\n\n[build-system]\nrequires = [\"hatchling\"]\nbuild-backend = \"hatchling.build\"",
+    "language": "toml",
+    "source": "manual",
+    "url": "",
+    "func_name": "pyproject_config",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_md_001",
+    "query": "API authentication documentation with token usage examples",
+    "code": "## Authentication\n\nAll API requests require a Bearer token.\n\nAuthorization: Bearer <your-api-token>\n\nPOST /auth/login to obtain a token.\nTokens expire after 24 hours.",
+    "language": "markdown",
+    "source": "manual",
+    "url": "",
+    "func_name": "auth_docs",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_md_002",
+    "query": "getting started guide with installation and quick start steps",
+    "code": "## Quick Start\n\n### Installation\npip install myapp\n\n### Usage\nfrom myapp import Client\nclient = Client(api_key=\"your-key\")\nresult = client.query(\"hello\")\nprint(result)",
+    "language": "markdown",
+    "source": "manual",
+    "url": "",
+    "func_name": "quickstart_docs",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_md_003",
+    "query": "error handling and troubleshooting common issues",
+    "code": "## Troubleshooting\n\n### Connection Refused\nEnsure the server is running and the port is correct.\n\n### Authentication Failed\nCheck that your API token has not expired.\n\n### Rate Limited\nDefault limit is 100 requests/minute.\nUse exponential backoff for retries.",
+    "language": "markdown",
+    "source": "manual",
+    "url": "",
+    "func_name": "troubleshooting_docs",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_docker_001",
+    "query": "multi-stage docker build for python application with slim image",
+    "code": "FROM python:3.11 AS builder\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\n\nFROM python:3.11-slim\nWORKDIR /app\nCOPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages\nCOPY . .\nEXPOSE 8000\nCMD [\"python\", \"-m\", \"uvicorn\", \"main:app\"]",
+    "language": "dockerfile",
+    "source": "manual",
+    "url": "",
+    "func_name": "multistage_build",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_docker_002",
+    "query": "docker compose service with redis cache and health check",
+    "code": "services:\n  redis:\n    image: redis:7-alpine\n    ports:\n      - \"6379:6379\"\n    healthcheck:\n      test: [\"CMD\", \"redis-cli\", \"ping\"]\n      interval: 10s\n      timeout: 5s\n      retries: 3\n    volumes:\n      - redis_data:/data",
+    "language": "yaml",
+    "source": "manual",
+    "url": "",
+    "func_name": "redis_compose",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_shell_001",
+    "query": "deployment script with backup and rollback on failure",
+    "code": "#!/bin/bash\nset -euo pipefail\n\nBACKUP=\"/backups/$(date +%Y%m%d)\"\nmkdir -p \"$BACKUP\"\ncp -r /app/current \"$BACKUP/\"\n\necho \"Deploying...\"\nif ! rsync -az dist/ /app/current/; then\n    echo \"Failed, rolling back\"\n    cp -r \"$BACKUP/current/\" /app/current/\n    exit 1\nfi\necho \"Deploy OK\"",
+    "language": "shell",
+    "source": "manual",
+    "url": "",
+    "func_name": "deploy_script",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_shell_002",
+    "query": "database migration script with version check and dry run",
+    "code": "#!/bin/bash\nset -euo pipefail\n\nDRY_RUN=${1:-false}\nCURRENT=$(cat db/version.txt 2>/dev/null || echo \"0\")\n\nfor f in db/migrations/*.sql; do\n    VER=$(basename \"$f\" .sql)\n    if [ \"$VER\" -gt \"$CURRENT\" ]; then\n        echo \"Applying migration v$VER\"\n        if [ \"$DRY_RUN\" = \"false\" ]; then\n            psql -f \"$f\"\n            echo \"$VER\" > db/version.txt\n        fi\n    fi\ndone",
+    "language": "shell",
+    "source": "manual",
+    "url": "",
+    "func_name": "migrate_script",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_md_004",
+    "query": "changelog with version history and breaking changes",
+    "code": "## Changelog\n\n### v2.0.0 (2025-01-15)\n- **BREAKING**: Removed deprecated `sync()` method\n- Added async pipeline support\n- Fixed memory leak in connection pool\n\n### v1.5.0 (2024-11-20)\n- Added batch processing API\n- Improved error messages for auth failures\n- Updated dependencies",
+    "language": "markdown",
+    "source": "manual",
+    "url": "",
+    "func_name": "changelog_docs",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_md_005",
+    "query": "contributing guide with pull request and code review process",
+    "code": "## Contributing\n\n### Pull Request Process\n1. Fork the repository and create a feature branch\n2. Write tests for your changes\n3. Ensure all tests pass with `pytest`\n4. Submit a PR with a clear description\n\n### Code Review\n- At least one maintainer approval required\n- CI must pass before merge\n- Squash commits on merge",
+    "language": "markdown",
+    "source": "manual",
+    "url": "",
+    "func_name": "contributing_docs",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_md_006",
+    "query": "architecture overview with component diagram and data flow",
+    "code": "## Architecture\n\n### Components\n- **API Gateway**: Handles routing and rate limiting\n- **Worker Service**: Processes async tasks via message queue\n- **Storage Layer**: PostgreSQL for metadata, S3 for files\n\n### Data Flow\n1. Client sends request to API Gateway\n2. Gateway validates auth and enqueues task\n3. Worker picks up task and processes it\n4. Result stored in DB and returned via webhook",
+    "language": "markdown",
+    "source": "manual",
+    "url": "",
+    "func_name": "architecture_docs",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_md_007",
+    "query": "environment variables and configuration reference table",
+    "code": "## Configuration Reference\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `DB_HOST` | localhost | Database hostname |\n| `DB_PORT` | 5432 | Database port |\n| `REDIS_URL` | redis://localhost | Cache connection URL |\n| `LOG_LEVEL` | INFO | Logging verbosity |\n| `MAX_WORKERS` | 4 | Concurrent worker threads |\n| `API_TIMEOUT` | 30 | Request timeout in seconds |",
+    "language": "markdown",
+    "source": "manual",
+    "url": "",
+    "func_name": "config_reference",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_md_008",
+    "query": "REST API endpoint reference with request and response examples",
+    "code": "## API Reference\n\n### POST /api/v1/tasks\nCreate a new processing task.\n\nRequest body:\n{\"input\": \"data\", \"priority\": \"high\"}\n\nResponse (201):\n{\"task_id\": \"abc-123\", \"status\": \"queued\"}\n\n### GET /api/v1/tasks/:id\nGet task status and result.\n\nResponse (200):\n{\"task_id\": \"abc-123\", \"status\": \"done\", \"result\": {}}",
+    "language": "markdown",
+    "source": "manual",
+    "url": "",
+    "func_name": "api_reference",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_md_009",
+    "query": "database schema migration guide with upgrade and rollback steps",
+    "code": "## Database Migrations\n\n### Running Migrations\nApply pending migrations:\nalembic upgrade head\n\n### Rolling Back\nRevert the last migration:\nalembic downgrade -1\n\n### Creating New Migrations\nAuto-generate from model changes:\nalembic revision --autogenerate -m \"add users table\"\n\nAlways review generated SQL before applying.",
+    "language": "markdown",
+    "source": "manual",
+    "url": "",
+    "func_name": "migration_guide",
+    "repo": "synthetic"
+  },
+  {
+    "id": "sup_md_010",
+    "query": "security policy with vulnerability reporting and disclosure process",
+    "code": "## Security Policy\n\n### Reporting Vulnerabilities\nEmail security@example.com with details.\nDo NOT open a public GitHub issue.\n\n### Response Timeline\n- Acknowledgment within 24 hours\n- Initial assessment within 72 hours\n- Fix released within 30 days for critical issues\n\n### Supported Versions\n| Version | Supported |\n|---------|-----------|\n| 2.x     | Yes       |\n| 1.x     | Security fixes only |",
+    "language": "markdown",
+    "source": "manual",
+    "url": "",
+    "func_name": "security_policy",
+    "repo": "synthetic"
+  }
+]

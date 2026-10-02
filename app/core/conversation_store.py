@@ -11,6 +11,8 @@ import json
 import os
 import time
 import uuid
+from dataclasses import asdict, is_dataclass
+from copy import deepcopy
 from pathlib import Path
 from typing import Optional
 
@@ -22,10 +24,23 @@ from app.core.logging import get_logger
 logger = get_logger("app.core.conversation_store", side="worker")
 
 
+def _json_safe(value):
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if is_dataclass(value):
+        return _json_safe(asdict(value))
+    if isinstance(value, dict):
+        return {str(k): _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_json_safe(v) for v in value]
+    return str(value)
+
+
 class ConversationStore:
     """多对话管理器"""
 
     def __init__(self, storage_dir: str = None, config: Optional[ContextConfig] = None):
+        self._explicit_storage_dir = storage_dir is not None
         if storage_dir:
             self.storage_dir = Path(storage_dir)
         else:
@@ -42,6 +57,13 @@ class ConversationStore:
         if self.active_id:
             logger.info("[ConversationStore] 保存当前对话: %s", self.active_id)
             self.save_current()
+        if self._explicit_storage_dir:
+            logger.info(
+                "[ConversationStore] 使用全局对话目录，项目切换不迁移会话索引: %s (current_project=%s)",
+                self.storage_dir,
+                new_root,
+            )
+            return
         self.storage_dir = Path(new_root) / "conversations"
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         self.active_id = None
@@ -92,8 +114,11 @@ class ConversationStore:
         """保存单个对话的完整数据"""
         if conv_id not in self._index:
             return
+        existing = self._load_conversation_data(conv_id) or {}
         # 如果是当前活跃对话，从context_manager 提取最新状态
         data = {"meta": self._index[conv_id]}
+        if isinstance(existing.get("last_request_snapshot"), dict):
+            data["last_request_snapshot"] = existing["last_request_snapshot"]
         if conv_id == self.active_id and self.context_manager:
             data["conversation_system_prompt"] = self.get_conversation_system_prompt(conv_id)
             data["system_prompt"] = self.context_manager._system_content or ""
@@ -109,7 +134,6 @@ class ConversationStore:
             meta["tokens_used"] = data["token_usage"].get("total_used", 0)
         else:
             # 从文件加载已有数据
-            existing = self._load_conversation_data(conv_id)
             if existing:
                 data = existing
 
@@ -132,6 +156,59 @@ class ConversationStore:
         if conv_id not in self._index:
             return None
         return self._load_conversation_data(conv_id)
+
+    def get_last_request_snapshot(self, conv_id: str) -> Optional[dict]:
+        """读取指定对话最近一次实际请求快照。"""
+        if not conv_id or conv_id not in self._index:
+            return None
+        data = self._load_conversation_data(conv_id) or {}
+        snap = data.get("last_request_snapshot")
+        return deepcopy(snap) if isinstance(snap, dict) else None
+
+    def set_last_request_snapshot(self, conv_id: str, snapshot: Optional[dict]) -> bool:
+        """持久化指定对话最近一次实际请求快照。"""
+        if not conv_id or conv_id not in self._index:
+            return False
+        data = self._load_conversation_data(conv_id) or {"meta": self._index[conv_id]}
+        if "meta" not in data or not isinstance(data["meta"], dict):
+            data["meta"] = self._index[conv_id]
+        else:
+            data["meta"] = self._index[conv_id]
+
+        if isinstance(snapshot, dict) and snapshot:
+            stored = _json_safe(snapshot)
+            stored["conversation_id"] = stored.get("conversation_id") or conv_id
+            data["last_request_snapshot"] = stored
+            try:
+                self._index[conv_id]["last_snapshot_at"] = float(stored.get("timestamp") or time.time())
+            except Exception:
+                self._index[conv_id]["last_snapshot_at"] = time.time()
+        else:
+            data.pop("last_request_snapshot", None)
+            self._index[conv_id].pop("last_snapshot_at", None)
+
+        with open(self._conv_path(conv_id), "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        self._save_index()
+        return True
+
+    def get_latest_request_snapshot(self) -> Optional[dict]:
+        """跨对话查找最近一次实际请求快照，用于空选择或重启后的兜底展示。"""
+        latest_snap = None
+        latest_ts = -1.0
+        for conv_id, meta in self._index.items():
+            data = self._load_conversation_data(conv_id) or {}
+            snap = data.get("last_request_snapshot")
+            if not isinstance(snap, dict) or not snap:
+                continue
+            try:
+                ts = float(snap.get("timestamp") or meta.get("last_snapshot_at") or 0)
+            except Exception:
+                ts = 0.0
+            if ts >= latest_ts:
+                latest_ts = ts
+                latest_snap = snap
+        return deepcopy(latest_snap) if isinstance(latest_snap, dict) else None
 
     def get_conversation_system_prompt(self, conv_id: str) -> str:
         """读取指定对话的原始 conversation system prompt。"""
@@ -200,6 +277,7 @@ class ConversationStore:
             return False
         meta = self._index[conv_id]
         token_usage = cm.get_token_usage() if hasattr(cm, 'get_token_usage') else {}
+        existing = self._load_conversation_data(conv_id) or {}
         data = {
             "meta": meta,
             "conversation_system_prompt": self.get_conversation_system_prompt(conv_id),
@@ -210,6 +288,8 @@ class ConversationStore:
             "token_usage": token_usage,
             "compact_state": self.get_compact_state(conv_id),
         }
+        if isinstance(existing.get("last_request_snapshot"), dict):
+            data["last_request_snapshot"] = existing["last_request_snapshot"]
         meta["updated_at"] = time.time()
         meta["turns"] = token_usage.get("history_turns", 0)
         meta["tokens_used"] = token_usage.get("total_used", 0)
@@ -226,6 +306,8 @@ class ConversationStore:
         """新建对话，返回 conv_id"""
         conv_id = uuid.uuid4().hex[:12]
         now = time.time()
+        project_root = str(ProjectContext.get().get_project_root())
+        project_name = ProjectContext.get().project_name or Path(project_root).name or "未命名项目"
         self._index[conv_id] = {
             "id": conv_id,
             "title": title,
@@ -239,6 +321,8 @@ class ConversationStore:
             "manual_title": False,
             "pinned": False,
             "model_usage": None,
+            "project_root": project_root,
+            "project_name": project_name,
         }
         # 初始化空对话文件
         data = {
@@ -334,7 +418,7 @@ class ConversationStore:
         return usage if isinstance(usage, dict) else None
 
     def set_model_usage(self, conv_id: str, usage: Optional[dict]) -> bool:
-        """设置指定对话使用的 Profile/Chain。传 None 表示回退全局默认。"""
+        """设置指定对话使用的 Profile/Chain 和会话级模型参数。传 None 表示回退全局默认。"""
         if conv_id not in self._index:
             return False
         normalized = None
@@ -343,6 +427,18 @@ class ConversationStore:
             ref = str(usage.get("ref") or "").strip()
             if ref_type in ("profile", "chain") and ref:
                 normalized = {"type": ref_type, "ref": ref}
+                model = str(usage.get("model") or "").strip()
+                if model:
+                    normalized["model"] = model
+                reasoning = usage.get("reasoning")
+                if isinstance(reasoning, dict):
+                    effort = str(reasoning.get("effort") or "medium").strip().lower()
+                    if effort not in ("low", "medium", "high"):
+                        effort = "medium"
+                    normalized["reasoning"] = {
+                        "enabled": bool(reasoning.get("enabled", False)),
+                        "effort": effort,
+                    }
         self._index[conv_id]["model_usage"] = normalized
         self._index[conv_id]["updated_at"] = time.time()
         data = self._load_conversation_data(conv_id) or {"meta": self._index[conv_id]}
@@ -385,10 +481,14 @@ class ConversationStore:
         2. 同组内按最后一次真实对话时间（last_message_at）倒序
         """
         result = []
+        fallback_root = str(ProjectContext.get().get_project_root())
+        fallback_project = ProjectContext.get().project_name or Path(fallback_root).name or "未命名项目"
         for conv_id, meta in self._index.items():
             from datetime import datetime
             last_msg_ts = meta.get("last_message_at", meta.get("created_at", 0))
             last_msg_dt = datetime.fromtimestamp(last_msg_ts)
+            project_root = meta.get("project_root") or fallback_root
+            project_name = meta.get("project_name") or Path(str(project_root)).name or fallback_project
             result.append({
                 "id": conv_id,
                 "title": meta.get("title", "未命名"),
@@ -400,6 +500,8 @@ class ConversationStore:
                 "tokens_used": meta.get("tokens_used", 0),
                 "pinned": bool(meta.get("pinned", False)),
                 "model_usage": meta.get("model_usage"),
+                "project_root": project_root,
+                "project_name": project_name,
             })
         result.sort(
             key=lambda x: (

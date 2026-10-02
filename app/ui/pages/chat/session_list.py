@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QAction
 from app.ui.components.session_item import SessionItemWidget
 from app.ui.theme import Theme, Palette, theme_manager
+from app.core.app_constants import UI_SIZES
 
 class SessionList(QListWidget):
     session_selected = Signal(int)
@@ -11,7 +12,7 @@ class SessionList(QListWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMinimumWidth(220)
+        self.setMinimumWidth(UI_SIZES["default_sidebar_width"])
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
         self.itemClicked.connect(self.on_item_clicked)

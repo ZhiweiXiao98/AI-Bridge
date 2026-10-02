@@ -1,0 +1,221 @@
+{
+  "scan_time": "2026-03-11",
+  "total_files": 138,
+  "categories": {
+    "app/core/agent_manager.py": 1,
+    "app/core/auth_service.py": 1,
+    "app/core/code_validator.py": 1,
+    "app/core/config.py": 1,
+    "app/core/connection_manager.py": 1,
+    "app/core/docker_manager.py": 1,
+    "app/core/driver": 4,
+    "app/core/engine": 1,
+    "app/core/execution_history.py": 1,
+    "app/core/git_manager.py": 1,
+    "app/core/remote_worker.py": 1,
+    "app/core/sandbox": 1,
+    "app/core/self_update.py": 1,
+    "app/core/services": 8,
+    "app/core/skills": 12,
+    "app/core/utils": 2,
+    "app/core/worker.py": 1,
+    "app/ui/components": 18,
+    "app/ui/components/panels": 5,
+    "app/ui": 9,
+    "app/ui/managers": 2,
+    "app/ui/pages": 8,
+    "app/ui/panels": 1,
+    "tools": 22,
+    "docs": 34
+  },
+  "files": {
+    "app/core/agent_manager.py": [
+      "app/core/agent_manager.py"
+    ],
+    "app/core/auth_service.py": [
+      "app/core/auth_service.py"
+    ],
+    "app/core/code_validator.py": [
+      "app/core/code_validator.py"
+    ],
+    "app/core/config.py": [
+      "app/core/config.py"
+    ],
+    "app/core/connection_manager.py": [
+      "app/core/connection_manager.py"
+    ],
+    "app/core/docker_manager.py": [
+      "app/core/docker_manager.py"
+    ],
+    "app/core/driver": [
+      "app/core/driver/config.py",
+      "app/core/driver/connection.py",
+      "app/core/driver/interaction.py",
+      "app/core/driver/parser.py"
+    ],
+    "app/core/engine": [
+      "app/core/engine/conversation_engine.py"
+    ],
+    "app/core/execution_history.py": [
+      "app/core/execution_history.py"
+    ],
+    "app/core/git_manager.py": [
+      "app/core/git_manager.py"
+    ],
+    "app/core/remote_worker.py": [
+      "app/core/remote_worker.py"
+    ],
+    "app/core/sandbox": [
+      "app/core/sandbox/README.md"
+    ],
+    "app/core/self_update.py": [
+      "app/core/self_update.py"
+    ],
+    "app/core/services": [
+      "app/core/services/context_pack_service.py",
+      "app/core/services/context_scanner.py",
+      "app/core/services/file_service.py",
+      "app/core/services/knowledge_service.py",
+      "app/core/services/scheduler_service.py",
+      "app/core/services/state_service.py",
+      "app/core/services/tool_router_service.py",
+      "app/core/services/update_service.py"
+    ],
+    "app/core/skills": [
+      "app/core/skills/GENERATED_PROMPT.md",
+      "app/core/skills/SKILLS_GUIDE.md",
+      "app/core/skills/base.py",
+      "app/core/skills/core/code_execution/SKILL.md",
+      "app/core/skills/core/code_execution/skill.py",
+      "app/core/skills/core/file_operations/SKILL.md",
+      "app/core/skills/core/file_operations/skill.py",
+      "app/core/skills/core/knowledge_search/SKILL.md",
+      "app/core/skills/core/knowledge_search/skill.py",
+      "app/core/skills/external/README.md",
+      "app/core/skills/loader.py",
+      "app/core/skills/manager.py"
+    ],
+    "app/core/utils": [
+      "app/core/utils/error_reporter.py",
+      "app/core/utils/pseudocode_generator.py"
+    ],
+    "app/core/worker.py": [
+      "app/core/worker.py"
+    ],
+    "app/ui/components": [
+      "app/ui/components/base.py",
+      "app/ui/components/chat.py",
+      "app/ui/components/code_pseudo_viewer.py",
+      "app/ui/components/collapsible_sidebar.py",
+      "app/ui/components/dockable_panel.py",
+      "app/ui/components/editor.py",
+      "app/ui/components/forensic_editor.py",
+      "app/ui/components/icon_bar.py",
+      "app/ui/components/input.py",
+      "app/ui/components/logic_viewer.py",
+      "app/ui/components/ops_panel.py",
+      "app/ui/components/overlay.py",
+      "app/ui/components/panel_icons.py",
+      "app/ui/components/preview_dialog.py",
+      "app/ui/components/prototype_panel.py",
+      "app/ui/components/session_item.py",
+      "app/ui/components/task_panel.py",
+      "app/ui/components/theme_editor.py"
+    ],
+    "app/ui/components/panels": [
+      "app/ui/components/panels/code_review_panel.py",
+      "app/ui/components/panels/git_control_panel.py",
+      "app/ui/components/panels/runtime_log_panel.py",
+      "app/ui/components/panels/sandbox_monitor_panel.py",
+      "app/ui/components/panels/task_schedule_panel.py"
+    ],
+    "app/ui": [
+      "app/ui/dialogs/import_skill_dialog.py",
+      "app/ui/dialogs/skill_detail_dialog.py",
+      "app/ui/login_window.py",
+      "app/ui/main_window.py",
+      "app/ui/modeling_page.py",
+      "app/ui/settings_page.py",
+      "app/ui/theme.py",
+      "app/ui/widgets.py",
+      "app/ui/widgets/skill_card.py"
+    ],
+    "app/ui/managers": [
+      "app/ui/managers/panel_manager.py",
+      "app/ui/managers/workspace_manager.py"
+    ],
+    "app/ui/pages": [
+      "app/ui/pages/chat/header.py",
+      "app/ui/pages/chat/input_area.py",
+      "app/ui/pages/chat/message_area.py",
+      "app/ui/pages/chat/page.py",
+      "app/ui/pages/chat/session_list.py",
+      "app/ui/pages/code_review_page.py",
+      "app/ui/pages/console_page.py",
+      "app/ui/pages/context_page.py"
+    ],
+    "app/ui/panels": [
+      "app/ui/panels/skills_panel.py"
+    ],
+    "tools": [
+      "tools/_diagnose_test_framework.py",
+      "tools/check_env_status.py",
+      "tools/debug_scout.py",
+      "tools/fix_rag_db.py",
+      "tools/generate_skills_prompt.py",
+      "tools/hard_purge_knowledge.py",
+      "tools/inspect_code_block.py",
+      "tools/install_plugins.py",
+      "tools/install_reqs.py",
+      "tools/pack_dist.py",
+      "tools/query_knowledge_base.py",
+      "tools/rebuild_knowledge_index.py",
+      "tools/reindex_project.py",
+      "tools/run_tests.py",
+      "tools/setup_env.py",
+      "tools/smart_update_structure.py",
+      "tools/test_code_extraction.py",
+      "tools/test_rag_query.py",
+      "tools/user_manager.py",
+      "tools/verify_rag_functionality.py",
+      "tools/visualize_architecture.py",
+      "tools/临时.py"
+    ],
+    "docs": [
+      "docs/Agent工具使用精通指南.md",
+      "docs/AI协作协议.md",
+      "docs/AI报告.md",
+      "docs/Docker 拉取镜像卡住问题修复记录.md",
+      "docs/执行逻辑反转完成记录.md",
+      "docs/浮动面板路线图.md",
+      "docs/函数调用完成报告.md",
+      "docs/函数调用最终报告.md",
+      "docs/函数调用总结.md",
+      "docs/实施总结.md",
+      "docs/面板布局修复完成记录.md",
+      "docs/面板布局修复最终记录.md",
+      "docs/项目完成报告.md",
+      "docs/项目结构导航.md",
+      "docs/导出HTML/项目结构转储.html",
+      "docs/快速参考卡.md",
+      "docs/沙盒面板快速开始.md",
+      "docs/沙盒改进记录.md",
+      "docs/滚动到底部功能记录.md",
+      "docs/Skills面板改进记录.md",
+      "docs/Skills系统设计.md",
+      "docs/Skills系统实现记录.md",
+      "docs/Skills界面集成方案.md",
+      "docs/Skills界面集成示例.py",
+      "docs/状态管理宣言.md",
+      "docs/测试完成总结.md",
+      "docs/测试执行摘要.md",
+      "docs/测试快速开始.md",
+      "docs/测试策略.md",
+      "docs/测试修复总结.md",
+      "docs/UI架构分析.md",
+      "docs/验证检查清单.md",
+      "docs/中文结构化伪代码视图计划.md",
+      "docs/侧车会话模式.md"
+    ]
+  }
+}

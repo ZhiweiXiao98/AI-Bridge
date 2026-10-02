@@ -12,7 +12,9 @@ from app.core.services.tool_router_service import ToolRouterService
 class TestToolRouter:
     @pytest.fixture
     def mock_agent(self):
-        return MagicMock()
+        agent = MagicMock()
+        agent.knowledge_service = None
+        return agent
 
     @pytest.fixture
     def mock_docker(self):
@@ -25,6 +27,7 @@ class TestToolRouter:
     @pytest.fixture
     def router(self, mock_agent, mock_docker):
         # 核心：Mock 掉 DockerManager 的实例化，确保 router 使用我们的 mock_docker
+        mock_agent.docker_manager = mock_docker
         with patch('app.core.services.tool_router_service.DockerManager', return_value=mock_docker):
             service = ToolRouterService(mock_agent)
             # 双重保险：强制替换实例属性
@@ -44,7 +47,7 @@ class TestToolRouter:
         result = router.maybe_handle_tool_from_messages("chat_1", msgs)
         
         assert result is not None, "Standard extraction failed"
-        assert "Mock Output" in result
+        assert "Mock Output" in result.combined_feedback
         # 验证执行的代码（不包含 # EXEC 标记）
         router.docker.execute_code.assert_called_with(code_without_marker)
 
@@ -61,7 +64,7 @@ class TestToolRouter:
         result = router.maybe_handle_tool_from_messages("chat_2", msgs)
         
         assert result is not None, "Code block extraction failed"
-        router.docker.execute_code.assert_called_with(code_without_marker)
+        router.runtime_executor.docker_manager.execute_code.assert_called_with(code_without_marker)
 
     def test_gatekeeper_blocks_invalid_syntax(self, router):
         """测试语法守门员拦截无效代码"""
@@ -96,7 +99,7 @@ class TestToolRouter:
         
         # 诊断断言
         assert res1 is not None, "First call failed to execute (Result is None)"
-        assert router.docker.execute_code.call_count == 1, "First call did not trigger Docker"
+        assert router.runtime_executor.docker_manager.execute_code.call_count == 1, "First call did not trigger Docker"
         # 验证执行的代码不包含 # EXEC
         router.docker.execute_code.assert_called_with(code_without_marker)
 
@@ -106,7 +109,7 @@ class TestToolRouter:
         
         # 4. 验证：应该返回 None (被去重拦截)，且 Docker 调用次数保持为 1
         assert res2 is None, "Second call was not deduplicated"
-        assert router.docker.execute_code.call_count == 1, "Docker was called again!"
+        assert router.runtime_executor.docker_manager.execute_code.call_count == 1, "Docker was called again!"
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

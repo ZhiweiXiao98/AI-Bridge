@@ -541,8 +541,8 @@ if my_skill:
 如果你是接手维护 Skills 系统的新 AI，请：
 
 1. **先阅读这些文档**：
-   - `docs/SKILLS_SYSTEM_DESIGN.md` - 了解整体设计
-   - `docs/SKILLS_SYSTEM_IMPLEMENTATION.md` - 了解实施状态
+   - `docs/Skills系统设计.md` - 了解整体设计
+   - `docs/Skills系统实现记录.md` - 了解实施状态
    - `app/core/skills/SKILLS_GUIDE.md` - 本文档
 
 2. **理解项目上下文**：
@@ -576,9 +576,9 @@ if my_skill:
 ## 📚 参考资源
 
 ### 项目文档
-- `docs/SKILLS_SYSTEM_DESIGN.md` - 系统设计
-- `docs/SKILLS_SYSTEM_IMPLEMENTATION.md` - 实施总结
-- `docs/AGENT_TOOL_MASTERY.md` - AI 工具使用教科书
+- `docs/Skills系统设计.md` - 系统设计
+- `docs/Skills系统实现记录.md` - 实施总结
+- `docs/Agent工具使用精通指南.md` - AI 工具使用教科书
 
 ### 代码文件
 - `app/core/skills/base.py` - 基类定义

@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "OVGTNCqxwmA=",
+  "success": true,
+  "projectFilePath": "E:\\BaiduSyncdisk\\AI_Model_Hub\\RhinoBIM_Client\\RhinoBIM.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\1\\.nuget\\packages\\eto.forms\\2.7.5\\eto.forms.2.7.5.nupkg.sha512",
+    "C:\\Users\\1\\.nuget\\packages\\microsoft.netframework.referenceassemblies\\1.0.3\\microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
+    "C:\\Users\\1\\.nuget\\packages\\microsoft.netframework.referenceassemblies.net48\\1.0.3\\microsoft.netframework.referenceassemblies.net48.1.0.3.nupkg.sha512",
+    "C:\\Users\\1\\.nuget\\packages\\rhinocommon\\8.26.25349.19001\\rhinocommon.8.26.25349.19001.nupkg.sha512",
+    "C:\\Users\\1\\.nuget\\packages\\system.componentmodel.annotations\\5.0.0\\system.componentmodel.annotations.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

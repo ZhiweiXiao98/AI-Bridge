@@ -1,0 +1,5066 @@
+{
+  "meta": {
+    "title": "对话 - 欧亿AI-8.0 Pro",
+    "viewport": "width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover",
+    "X-UA-Compatible": "ie=edge",
+    "generator": "GoAmzAI(EP-Version)",
+    "theme-color": "#17171a",
+    "color-scheme": "dark",
+    "keywords": "欧亿AI, ChatGPT, Claude, Gemini, 文心一言, 通义, 混元, 智能AI系统, 人工智能, 大语言模型, AI智能平台",
+    "description": "欧亿AI：All In One AI工具平台，集成问答+绘画+导图+PDF对话等功能!（ai8.rcouyi.com）注册邀请即送额度免费使用，欢迎体验。支持联网功能、 支持上下文对话、支持模糊匹配自定义回复消息、 支持注册配置自定义赠送额度、支持生成专属邀请码邀请用户双方共同获得额度。"
+  },
+  "site_config": {
+    "name": "欧亿AI-8.0 Pro",
+    "logo": "https://mj.rcouyi.com/upload/2025/06/21/logo.png",
+    "style": {
+      "primaryColor": "#764AF1",
+      "primaryColorHover": "#8B61FF",
+      "primaryColorPressed": "#6538D6",
+      "primaryLowColorDark": "#1A1137",
+      "borderRadius": "8px",
+      "logoScanLight": true,
+      "primaryColorSuppl": "#8B61FF",
+      "primaryLowColor": "#F4F0FF",
+      "defMode": "auto"
+    },
+    "menus": [
+      {
+        "badgeColor": "#E02929",
+        "key": "chat",
+        "action": "path",
+        "value": "/chat",
+        "open": true,
+        "icon": "ri:chat-ai-line",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "draw",
+        "action": "path",
+        "value": "/draw",
+        "open": true,
+        "icon": "ic:outline-draw",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "video",
+        "action": "path",
+        "value": "/video",
+        "open": true,
+        "icon": "ri:video-on-ai-line",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "music",
+        "action": "path",
+        "value": "/music",
+        "open": true,
+        "icon": "ph:music-notes-duotone",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "ppt",
+        "action": "path",
+        "value": "/ppt",
+        "open": true,
+        "icon": "icon-park-outline:ppt",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "img-create",
+        "action": "path",
+        "value": "/img-create",
+        "open": true,
+        "icon": "fluent:image-sparkle-16-regular",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "app",
+        "action": "path",
+        "value": "/app",
+        "open": true,
+        "icon": "ri:apps-2-ai-line",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "galleries",
+        "action": "path",
+        "value": "/galleries",
+        "open": true,
+        "icon": "ant-design:picture-outlined",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "mind",
+        "action": "path",
+        "value": "/mind",
+        "open": true,
+        "icon": "material-symbols:mindfulness-outline",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "pdf",
+        "action": "path",
+        "value": "/pdf",
+        "open": true,
+        "icon": "ph:file-pdf-duotone",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "rag",
+        "action": "path",
+        "value": "/rag",
+        "open": true,
+        "icon": "ph:book-duotone",
+        "sys": true
+      },
+      {
+        "badgeColor": "#E02929",
+        "key": "promotion",
+        "action": "path",
+        "value": "/promotion",
+        "open": true,
+        "icon": "ph:handshake-duotone",
+        "sys": true
+      },
+      {
+        "name": "画布绘画",
+        "badgeColor": "#CB1B1B",
+        "key": "0f75e6c36a1c256ea9ff9b0a3d535405",
+        "action": "url",
+        "value": "https://ai.dian-ying.cn",
+        "open": true,
+        "icon": "fa fa-file-alt"
+      },
+      {
+        "name": "客户端",
+        "key": "0c13481943001e2d0aa09aca4a603abd",
+        "action": "url",
+        "value": "https://ai-uptime.rcouyi.com",
+        "open": true,
+        "icon": "fas fa-user"
+      }
+    ],
+    "gm": {},
+    "ofd": true,
+    "setting": {
+      "captchaMode": "slide",
+      "builtinAvatar": false,
+      "guestUserAccess": true,
+      "footerContent": "",
+      "oauth": [],
+      "integralIcon": "⚡",
+      "wechatBrowserPay": false,
+      "authPageBanner": null,
+      "integralName": "积分",
+      "captchaOffLogin": false,
+      "mobileMaxShow": 6,
+      "codeCaptcha": true,
+      "giftSign": true,
+      "share": true
+    },
+    "auth": {
+      "phoneReg": true,
+      "phoneCodeLogin": true,
+      "phoneRegValidate": true,
+      "mailReg": true,
+      "mailCodeLogin": true,
+      "mailRegValidate": true
+    },
+    "mt": {
+      "icx": true
+    },
+    "dd": "mfoS2YWk4LnJjb3V5aS5jb20=cG0J9"
+  },
+  "css_design_system": {
+    "design_system": {
+      "name": "Amethyst Design System V3.0",
+      "css_variables": {
+        "brand-purple-500": "#764AF1",
+        "brand-purple-400": "#8B61FF",
+        "brand-purple-600": "#6538D6",
+        "neutral-0": "#FFFFFF",
+        "neutral-50": "#F9FAFB",
+        "neutral-100": "#F3F4F6",
+        "neutral-200": "#E5E7EB",
+        "neutral-500": "#6B7280",
+        "neutral-700": "#374151",
+        "neutral-800": "#1F2937",
+        "neutral-900": "#111827",
+        "bg-canvas": "var(--neutral-900)",
+        "bg-surface": "var(--neutral-800)",
+        "bg-surface-secondary": "#1A1137",
+        "bg-interactive": "#24184E",
+        "bg-brand": "var(--brand-purple-500)",
+        "text-primary": "var(--neutral-50)",
+        "text-secondary": "var(--neutral-500)",
+        "text-on-brand": "var(--neutral-0)",
+        "text-link": "var(--brand-purple-400)",
+        "text-disabled": "var(--neutral-700)",
+        "border-default": "var(--neutral-700)",
+        "border-interactive": "var(--brand-purple-400)",
+        "border-disabled": "var(--neutral-800)",
+        "brand-hover": "var(--brand-purple-400)",
+        "brand-pressed": "var(--brand-purple-600)",
+        "shadow-sm": "0 1px 2px 0 rgb(0 0 0 / 0.15)",
+        "shadow-md": "0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2)",
+        "shadow-lg": "0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.25)",
+        "shadow-brand": "0 4px 14px 0 rgba(139, 97, 255, 0.35)",
+        "radius-sm": "4px",
+        "radius-md": "8px",
+        "radius-lg": "16px",
+        "radius-full": "9999px",
+        "spacing-unit": "4px",
+        "primary": "not(:disabled):active {\n  background-color: var(--brand-pressed) !important",
+        "default": "not(:disabled):hover {\n  border-color: var(--border-interactive) !important"
+      },
+      "features": [
+        "品牌色阶",
+        "中性色阶",
+        "语义变量(背景/文字/边框/交互/阴影)",
+        "暗黑模式",
+        "组件重塑(按钮/输入框)"
+      ]
+    },
+    "naive_ui_components": [
+      "n-spin",
+      "vueuc/virtual-list",
+      "n-input-number",
+      "n-slider",
+      "n-internal-selection",
+      "n-select",
+      "n-form-item",
+      "n-form",
+      "n-internal-select-menu",
+      "n-pop-select",
+      "n-base-loading",
+      "n-message",
+      "n-collapse",
+      "n-button-group",
+      "n-base-clear",
+      "n-input",
+      "n-popconfirm",
+      "n-alert",
+      "n-divider",
+      "n-tag",
+      "n-base-close",
+      "n-card",
+      "n-scrollbar",
+      "n-drawer",
+      "n-base-icon",
+      "n-skeleton",
+      "n-menu",
+      "n-layout-sider",
+      "n-layout",
+      "n-modal",
+      "n-avatar",
+      "n-dropdown",
+      "n-badge",
+      "vueuc/binder",
+      "n-popover",
+      "n-base-wave",
+      "n-icon",
+      "n-button",
+      "n-text",
+      "n-notification",
+      "n-global",
+      "n-loading-bar"
+    ],
+    "other_styles": []
+  },
+  "assets": {
+    "js_entry": [
+      "/assets/app-NH56F_z3.js"
+    ],
+    "css_entry": [
+      "/assets/app-Bxa_U8Od.css",
+      "/assets/chat-markdown-DOZhzTvn.css",
+      "/assets/aa-type-form-panel-view-C1oiNqPV.css",
+      "/assets/realtime-voice-ODmfZIAc.css",
+      "/assets/aa-chat-input-DTHQJ3JP.css",
+      "/assets/aa-footer-DhP4-_su.css",
+      "/assets/aa-sidebar-list-item-DZCfRmxd.css",
+      "/assets/aa-skeleton-DvLlwGX8.css",
+      "/assets/items-CmH9JasO.css",
+      "/assets/icon-B_1YIZUd.css",
+      "/assets/apps-30L1Iv9V.css",
+      "/assets/chat-BPSunIPU.css",
+      "/assets/dist-chSTM-fo.css"
+    ],
+    "preload_modules": [
+      "/assets/chat-BB0F3UhH.js",
+      "/assets/exports-CBfVbuDN.js",
+      "/assets/chat-markdown-CVB1hqyh.js",
+      "/assets/typeof-DTIT1V4I.js",
+      "/assets/pako.esm-Chi7eHs7.js",
+      "/assets/aa-image-DdIIPluy.js",
+      "/assets/aa-spin-Dq1Xdi7a.js",
+      "/assets/share-popover-2cLsKFcw.js",
+      "/assets/aa-popover-C_0qjlLX.js",
+      "/assets/ask-BvxzjctL.js",
+      "/assets/aa-type-form-panel-view-DsZC-XNO.js",
+      "/assets/components-CQ45nth0.js",
+      "/assets/clone-BTK8-ES4.js",
+      "/assets/relativeTime-BwZfxf10.js",
+      "/assets/realtime-voice-RO48OC8F.js",
+      "/assets/aa-chat-input-CsWJ23VG.js",
+      "/assets/aa-empty-COnb8av-.js",
+      "/assets/aa-footer-COEtLktJ.js",
+      "/assets/aa-popconfirm-eDMNKPC5.js",
+      "/assets/aa-sidebar-list-item-SN01S6C8.js",
+      "/assets/aa-skeleton-CCvclB4M.js",
+      "/assets/items-Dz2wwIhX.js",
+      "/assets/file-BLCgcn9m.js",
+      "/assets/md-render-D3Mi7e_P.js",
+      "/assets/discover-3toDrAcX.js",
+      "/assets/ai-float-helpers-tsVya8uq.js",
+      "/assets/apps-C_wiLioB.js",
+      "/assets/hooks-B0pvGMfW.js",
+      "/assets/icon-D_A-Nxcq.js",
+      "/assets/new-default-msg-CiA4Dy-w.js",
+      "/assets/chat-parse-73rs5qDk.js",
+      "/assets/create-BQz3B-58.js",
+      "/assets/vision-B0iuNriH.js",
+      "/assets/models-PxOWUwyu.js",
+      "/assets/app-NH56F_z3.js",
+      "/assets/katex-D5thOnY8.js",
+      "/assets/mhchem-TzhPIg54.js",
+      "/assets/index7-B0AsHmFz.js",
+      "/assets/CodeBlockNode-DcqiT_e_.js",
+      "/assets/dist-fDWDNepU.js",
+      "/assets/hast-util-to-html-Cw0aTODn.js",
+      "/assets/extended-9o1G_I0n.js",
+      "/assets/wasm-XYK0XXoD.js",
+      "/assets/github-light-Crgse3kU.js",
+      "/assets/slack-dark-D2NxoCa5.js",
+      "/assets/jsx-Bwoj939S.js",
+      "/assets/tsx-COVkqbzF.js",
+      "/assets/vue-Bph8ZqzK.js",
+      "/assets/css-C2lUcYSt.js",
+      "/assets/html-derivative-DQLPk6Ut.js",
+      "/assets/html-B4QaFoND.js",
+      "/assets/javascript-N3ixvdms.js",
+      "/assets/json-CGott6Np.js",
+      "/assets/typescript-BHX4dB02.js",
+      "/assets/csharp-ClSTtjNy.js",
+      "/assets/python-BzhzO2ss.js",
+      "/assets/java-BpDEHNAy.js",
+      "/assets/c-CzMbSeOW.js",
+      "/assets/cpp-CEYAQSE9.js",
+      "/assets/glsl-C-qp7XCp.js",
+      "/assets/regexp-_q9RXnYx.js",
+      "/assets/sql-BgldMHor.js",
+      "/assets/rust-CSevEgov.js",
+      "/assets/go-CXg9Bamg.js",
+      "/assets/shellscript-CPgFEh6w.js",
+      "/assets/powershell-Ca4D0MlV.js",
+      "/assets/markdown-l8fxI1aK.js",
+      "/assets/xml-CU4tyFJJ.js",
+      "/assets/yaml-Qs2KlGG5.js",
+      "/assets/toml-CPt8uMvo.js",
+      "/assets/docker-D6ss0umm.js",
+      "/assets/kotlin-Cp3z-kDJ.js",
+      "/assets/objective-c-B1a476bi.js",
+      "/assets/objective-cpp-6MORALvS.js",
+      "/assets/php-S1MgNXxH.js",
+      "/assets/ruby-Cf-v3Q7Z.js",
+      "/assets/graphql-Cveh1hkw.js",
+      "/assets/haml-CP-Ro7BD.js",
+      "/assets/lua-D_ndV9Yf.js",
+      "/assets/scala-DshjWhJ8.js",
+      "/assets/svelte-CQUdaF6n.js",
+      "/assets/postcss-jNcCH3jj.js",
+      "/assets/swift-RGJ2eOIR.js",
+      "/assets/erlang-B-tGm5id.js",
+      "/assets/angular-html-zT5p5MDt.js",
+      "/assets/angular-ts-Bo46z-JB.js",
+      "/assets/scss-B0PihHXS.js",
+      "/assets/dart-B-MoIGtK.js",
+      "/assets/mermaid-DbY93Hyj.js",
+      "/assets/cmake-DtPDKR1u.js",
+      "/assets/nginx-UyRDKcww.js"
+    ]
+  },
+  "page_layout": {
+    "header": {
+      "class": "global-header",
+      "text_preview": "欧亿AI-8.0 Pro 简体中文 我的套餐"
+    },
+    "main_layout": {
+      "class": "global-layout user-layout h-full flex flex-col",
+      "sidebar": {
+        "class": "n-layout-sider n-layout-sider--static-positioned n-layout-sider--left-placement n-layout-sider--bordered n-layout-sider--show-content animate__animated animate__fadeInLeft animate__faster",
+        "text_preview": "对话 绘画 视频 音乐 PPT 图像创作 应用 画廊 思维导图 PDF 知识库 推广 画布绘画 客户端 公告通知 我"
+      },
+      "content_area": {
+        "class": "n-layout-content n-layout n-layout--static-positioned",
+        "text_preview": "对话 18 个会话 · 6 置顶 🔔✨⚡ 【重要公告】请文明使用本平台，严禁滥用或生成违规内容，违规将永久封号并记录留存！感谢理解与支持！✨⚡🔔 Web_Profile 0 2 小时内 Copy - 修复守护进程bug 65 5 天内 修复守护进程bug 65 4 天内 Copy - 守护进程 65 6 天内 守护进程 65 5 天内 Copy - claude 65 6 天内 claude 65 9 天内 新对话 8 5 天内 Copy - 白色 网格 地面 铺装 写实 6 10 天内 白色 网格 地面 铺装 写实 8 12 天内 新对话 8 12 天内 服务器安全检查 65 13 天内 Concise Title for Our Conversation 65 16 天内 Concise Title for Our Conversation 🎯 0 16 天内 Summary Title for Our Conversation💬 0 12 天内 Constraints Shape Our Title 65 19 天内 你好 我们 的 对话 😊 47 1 个月内 慧眼项目摄像头配置"
+      }
+    },
+    "mobile_menu": {
+      "class": "mobile-global-menu",
+      "style": "display: none;",
+      "text_preview": "对话 绘画 视频 音乐 PPT 图像创作 应用 画廊 思维导图 PDF 知识库 推广 画布绘画 客户端 公告通知 我"
+    }
+  },
+  "dom_tree": {
+    "_tag": "div",
+    "id": "app",
+    "_children": [
+      {
+        "_tag": "div",
+        "_class": "n-config-provider h-full safe-area-content global-theme-dark",
+        "style": "--aa-c-primary: #764AF1; --aa-c-primary-low: #1A1137;",
+        "_children": [
+          {
+            "_tag": "div",
+            "_class": "dark",
+            "id": "app-main",
+            "_children": [
+              {
+                "_tag": "div",
+                "_class": "global-header",
+                "_children": [
+                  {
+                    "_tag": "div",
+                    "_class": "select-none truncate h-full relative l no-drag",
+                    "_children": [
+                      {
+                        "_tag": "a",
+                        "href": "/",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "flex items-center logo-scan-light",
+                            "title": "v3.0.3"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "_tag": "div",
+                    "_class": "r capitalize",
+                    "_children": [
+                      {
+                        "_tag": "div",
+                        "_class": "n-space",
+                        "role": "none",
+                        "style": "display: flex; flex-flow: wrap; justify-content: flex-start; align-items: center; gap: 4px 8px;",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "role": "none",
+                            "style": "max-width: 100%;"
+                          },
+                          {
+                            "_tag": "div",
+                            "role": "none",
+                            "style": "max-width: 100%;"
+                          },
+                          {
+                            "_tag": "div",
+                            "role": "none",
+                            "style": "max-width: 100%;"
+                          },
+                          {
+                            "_tag": "div",
+                            "role": "none",
+                            "style": "max-width: 100%;"
+                          },
+                          {
+                            "_tag": "div",
+                            "role": "none",
+                            "style": "max-width: 100%;"
+                          },
+                          {
+                            "_tag": "div",
+                            "role": "none",
+                            "style": "max-width: 100%;"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "_tag": "div",
+                "_class": "global-layout user-layout h-full flex flex-col",
+                "_children": [
+                  {
+                    "_tag": "div",
+                    "_class": "n-layout n-layout--static-positioned aa-m-gh",
+                    "style": "--n-bezier: cubic-bezier(.4, 0, .2, 1); --n-color: #101014; --n-text-color: rgba(255, 255, 255, 0.82);",
+                    "_children": [
+                      {
+                        "_tag": "div",
+                        "_class": "n-layout-scroll-container",
+                        "style": "display: flex; flex-flow: row; width: 100%;",
+                        "_children": [
+                          {
+                            "_tag": "aside",
+                            "_class": "n-layout-sider n-layout-sider--static-positioned n-layout-sider--left-placement n-layout-sider--bordered n-layout-sider--show-content animate__animated animate__fadeInLeft animate__faster"
+                          },
+                          {
+                            "_tag": "div",
+                            "_class": "n-layout-content n-layout n-layout--static-positioned",
+                            "style": "--n-bezier: cubic-bezier(.4, 0, .2, 1); --n-color: #101014; --n-text-color: rgba(255, 255, 255, 0.82); padding-bottom: 0px;"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "_tag": "div",
+                "_class": "mobile-global-menu",
+                "style": "display: none;",
+                "_children": [
+                  {
+                    "_tag": "div",
+                    "_class": "menus h-full mt-2",
+                    "_children": [
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "_tag": "div",
+                        "_class": "menu-item",
+                        "_children": [
+                          {
+                            "_tag": "div",
+                            "_class": "n-badge"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "links": [
+    {
+      "text": "欧亿AI-8.0 Pro",
+      "href": "/"
+    },
+    {
+      "text": "",
+      "href": "/me/gift"
+    },
+    {
+      "text": "我的套餐",
+      "href": "/me/plan"
+    },
+    {
+      "text": "",
+      "href": "/me"
+    },
+    {
+      "text": "对话",
+      "href": "/chat"
+    },
+    {
+      "text": "绘画",
+      "href": "/draw"
+    },
+    {
+      "text": "视频",
+      "href": "/video"
+    },
+    {
+      "text": "音乐",
+      "href": "/music"
+    },
+    {
+      "text": "PPT",
+      "href": "/ppt"
+    },
+    {
+      "text": "图像创作",
+      "href": "/img-create"
+    },
+    {
+      "text": "应用",
+      "href": "/app"
+    },
+    {
+      "text": "画廊",
+      "href": "/galleries"
+    },
+    {
+      "text": "思维导图",
+      "href": "/mind"
+    },
+    {
+      "text": "PDF",
+      "href": "/pdf"
+    },
+    {
+      "text": "知识库",
+      "href": "/rag"
+    },
+    {
+      "text": "推广",
+      "href": "/promotion"
+    },
+    {
+      "text": "公告通知",
+      "href": "/notice"
+    }
+  ],
+  "interactive_elements": [
+    {
+      "tag": "a",
+      "label": "欧亿AI-8.0 Pro",
+      "href": "/"
+    },
+    {
+      "tag": "button",
+      "label": "简体中文",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--small-type n-button--secondary hover no-drag"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--small-type n-button--secondary hover no-drag"
+    },
+    {
+      "tag": "a",
+      "href": "/me/gift"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--small-type n-button--secondary hover no-drag"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--small-type n-button--secondary hover no-drag"
+    },
+    {
+      "tag": "a",
+      "label": "我的套餐",
+      "href": "/me/plan"
+    },
+    {
+      "tag": "button",
+      "label": "我的套餐",
+      "type": "button",
+      "class": "n-button n-button--success-type n-button--small-type n-button--secondary hover no-drag head-plan-entry"
+    },
+    {
+      "tag": "a",
+      "href": "/me",
+      "class": "block"
+    },
+    {
+      "tag": "a",
+      "label": "对话",
+      "href": "/chat",
+      "class": "router-link-active router-link-exact-active"
+    },
+    {
+      "tag": "a",
+      "label": "绘画",
+      "href": "/draw"
+    },
+    {
+      "tag": "a",
+      "label": "视频",
+      "href": "/video"
+    },
+    {
+      "tag": "a",
+      "label": "音乐",
+      "href": "/music"
+    },
+    {
+      "tag": "a",
+      "label": "PPT",
+      "href": "/ppt"
+    },
+    {
+      "tag": "a",
+      "label": "图像创作",
+      "href": "/img-create"
+    },
+    {
+      "tag": "a",
+      "label": "应用",
+      "href": "/app"
+    },
+    {
+      "tag": "a",
+      "label": "画廊",
+      "href": "/galleries"
+    },
+    {
+      "tag": "a",
+      "label": "思维导图",
+      "href": "/mind"
+    },
+    {
+      "tag": "a",
+      "label": "PDF",
+      "href": "/pdf"
+    },
+    {
+      "tag": "a",
+      "label": "知识库",
+      "href": "/rag"
+    },
+    {
+      "tag": "a",
+      "label": "推广",
+      "href": "/promotion"
+    },
+    {
+      "tag": "a",
+      "label": "公告通知",
+      "href": "/notice"
+    },
+    {
+      "tag": "a",
+      "label": "我",
+      "href": "/me"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--medium-type n-button--secondary aa-sidebar-toolbar__btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--medium-type aa-sidebar-toolbar__btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--medium-type session-toolbar-extra-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--small-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--small-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--small-type"
+    },
+    {
+      "tag": "button",
+      "label": "加载更多",
+      "type": "button",
+      "class": "n-button n-button--primary-type n-button--medium-type n-button--secondary"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "chat-md-action-btn"
+    },
+    {
+      "tag": "textarea",
+      "role": "textbox",
+      "class": "inputarea monaco-mouse-cursor-text"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type"
+    },
+    {
+      "tag": "button",
+      "label": "回到底部",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--small-type n-button--secondary"
+    },
+    {
+      "tag": "button",
+      "label": "配置",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type clickable"
+    },
+    {
+      "tag": "button",
+      "label": "列表",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type clickable"
+    },
+    {
+      "tag": "button",
+      "label": "Gpt 5.5 Medium",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type !normal-case"
+    },
+    {
+      "tag": "button",
+      "label": "清空",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--tiny-type n-button--ghost clickable"
+    },
+    {
+      "tag": "textarea",
+      "placeholder": "输入消息内容",
+      "class": "n-input__textarea-el"
+    },
+    {
+      "tag": "button",
+      "label": "附件",
+      "type": "button",
+      "class": "n-button n-button--default-type n-button--small-type"
+    },
+    {
+      "tag": "button",
+      "label": "发送",
+      "type": "button",
+      "class": "n-button n-button--primary-type n-button--small-type n-button--disabled n-button--secondary"
+    },
+    {
+      "tag": "button",
+      "type": "button",
+      "class": "n-button n-button--primary-type n-button--small-type n-button--secondary"
+    }
+  ],
+  "unique_images": [
+    {
+      "src": "https://mj.rcouyi.com/upload/2025/06/21/logo.png",
+      "alt": "logo"
+    },
+    {
+      "src": "https://ai8.rcouyi.com/assets/b1-COq11GXB.png",
+      "alt": ""
+    },
+    {
+      "src": "https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/claude-color.svg",
+      "alt": "icon"
+    },
+    {
+      "src": "https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/gemini-color.svg",
+      "alt": "icon"
+    }
+  ],
+  "chat_conversations": [
+    "Web_Profile 0 2 小时内",
+    "Web_Profile 0 2 小时内",
+    "Web_Profile 0 2 小时内",
+    "Web_Profile 0 2 小时内",
+    "Web_Profile",
+    "Web_Profile",
+    "0 2 小时内",
+    "Copy - 修复守护进程bug 65 5 天内",
+    "Copy - 修复守护进程bug 65 5 天内",
+    "Copy - 修复守护进程bug 65 5 天内",
+    "Copy - 修复守护进程bug 65 5 天内",
+    "Copy - 修复守护进程bug",
+    "Copy - 修复守护进程bug",
+    "65 5 天内",
+    "修复守护进程bug 65 4 天内",
+    "修复守护进程bug 65 4 天内",
+    "修复守护进程bug 65 4 天内",
+    "修复守护进程bug 65 4 天内",
+    "修复守护进程bug",
+    "修复守护进程bug",
+    "65 4 天内",
+    "Copy - 守护进程 65 6 天内",
+    "Copy - 守护进程 65 6 天内",
+    "Copy - 守护进程 65 6 天内",
+    "Copy - 守护进程 65 6 天内",
+    "Copy - 守护进程",
+    "Copy - 守护进程",
+    "65 6 天内",
+    "守护进程 65 5 天内",
+    "守护进程 65 5 天内",
+    "守护进程 65 5 天内",
+    "守护进程 65 5 天内",
+    "守护进程",
+    "守护进程",
+    "65 5 天内",
+    "Copy - claude 65 6 天内",
+    "Copy - claude 65 6 天内",
+    "Copy - claude 65 6 天内",
+    "Copy - claude 65 6 天内",
+    "Copy - claude",
+    "Copy - claude",
+    "65 6 天内",
+    "claude 65 9 天内",
+    "claude 65 9 天内",
+    "claude 65 9 天内",
+    "claude 65 9 天内",
+    "claude",
+    "claude",
+    "65 9 天内",
+    "新对话 8 5 天内",
+    "新对话 8 5 天内",
+    "新对话 8 5 天内",
+    "新对话 8 5 天内",
+    "新对话",
+    "新对话",
+    "8 5 天内",
+    "Copy - 白色 网格 地面 铺装 写实 6 10 天内",
+    "Copy - 白色 网格 地面 铺装 写实 6 10 天内",
+    "Copy - 白色 网格 地面 铺装 写实 6 10 天内",
+    "Copy - 白色 网格 地面 铺装 写实 6 10 天内",
+    "Copy - 白色 网格 地面 铺装 写实",
+    "Copy - 白色 网格 地面 铺装 写实",
+    "6 10 天内",
+    "白色 网格 地面 铺装 写实 8 12 天内",
+    "白色 网格 地面 铺装 写实 8 12 天内",
+    "白色 网格 地面 铺装 写实 8 12 天内",
+    "白色 网格 地面 铺装 写实 8 12 天内",
+    "白色 网格 地面 铺装 写实",
+    "白色 网格 地面 铺装 写实",
+    "8 12 天内",
+    "新对话 8 12 天内",
+    "新对话 8 12 天内",
+    "新对话 8 12 天内",
+    "新对话 8 12 天内",
+    "新对话",
+    "新对话",
+    "8 12 天内",
+    "服务器安全检查 65 13 天内",
+    "服务器安全检查 65 13 天内",
+    "服务器安全检查 65 13 天内",
+    "服务器安全检查 65 13 天内",
+    "服务器安全检查",
+    "服务器安全检查",
+    "65 13 天内",
+    "Concise Title for Our Conversation 65 16 天内",
+    "Concise Title for Our Conversation 65 16 天内",
+    "Concise Title for Our Conversation 65 16 天内",
+    "Concise Title for Our Conversation 65 16 天内",
+    "Concise Title for Our Conversation",
+    "Concise Title for Our Conversation",
+    "65 16 天内",
+    "Concise Title for Our Conversation 🎯 0 16 天内",
+    "Concise Title for Our Conversation 🎯 0 16 天内",
+    "Concise Title for Our Conversation 🎯 0 16 天内",
+    "Concise Title for Our Conversation 🎯 0 16 天内",
+    "Concise Title for Our Conversation 🎯",
+    "Concise Title for Our Conversation 🎯",
+    "0 16 天内",
+    "Summary Title for Our Conversation💬 0 12 天内",
+    "Summary Title for Our Conversation💬 0 12 天内",
+    "Summary Title for Our Conversation💬 0 12 天内",
+    "Summary Title for Our Conversation💬 0 12 天内",
+    "Summary Title for Our Conversation💬",
+    "Summary Title for Our Conversation💬",
+    "0 12 天内",
+    "Constraints Shape Our Title 65 19 天内",
+    "Constraints Shape Our Title 65 19 天内",
+    "Constraints Shape Our Title 65 19 天内",
+    "Constraints Shape Our Title 65 19 天内",
+    "Constraints Shape Our Title",
+    "Constraints Shape Our Title",
+    "65 19 天内",
+    "你好 我们 的 对话 😊 47 1 个月内",
+    "你好 我们 的 对话 😊 47 1 个月内",
+    "你好 我们 的 对话 😊 47 1 个月内",
+    "你好 我们 的 对话 😊 47 1 个月内",
+    "你好 我们 的 对话 😊",
+    "你好 我们 的 对话 😊",
+    "47 1 个月内",
+    "慧眼项目摄像头配置 65 1 个月内",
+    "慧眼项目摄像头配置 65 1 个月内",
+    "慧眼项目摄像头配置 65 1 个月内",
+    "慧眼项目摄像头配置 65 1 个月内",
+    "慧眼项目摄像头配置",
+    "慧眼项目摄像头配置",
+    "65 1 个月内",
+    "曼 你好 友好 问候 与 帮助 65 1 个月内",
+    "曼 你好 友好 问候 与 帮助 65 1 个月内",
+    "曼 你好 友好 问候 与 帮助 65 1 个月内",
+    "你好 友好 问候 与 帮助 65 1 个月内",
+    "你好 友好 问候 与 帮助",
+    "你好 友好 问候 与 帮助",
+    "65 1 个月内"
+  ],
+  "chat_bubbles": [],
+  "input_areas": [
+    {
+      "class": "chat-input-box",
+      "text_preview": "回到底部 配置 列表 Gpt 5.5 Medium 清空 输入消息内容 附件 Enter发送 / Shift+Enter换行 发送",
+      "placeholders": [
+        "输入消息内容"
+      ]
+    },
+    {
+      "class": "chat-input-toolbar mb-3 flex justify-between items-center",
+      "text_preview": "配置 列表 Gpt 5.5 Medium 清空",
+      "placeholders": []
+    },
+    {
+      "class": "aa-chat-input",
+      "text_preview": "输入消息内容 附件 Enter发送 / Shift+Enter换行 发送",
+      "placeholders": [
+        "输入消息内容"
+      ]
+    },
+    {
+      "class": "n-input n-input--textarea n-input--autosize n-input--stateful w-full chat-input",
+      "text_preview": "输入消息内容",
+      "placeholders": [
+        "输入消息内容"
+      ]
+    }
+  ],
+  "toolbar_actions": [
+    {
+      "class": "aa-sidebar-toolbar px-2.5 py-3",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "aa-sidebar-toolbar__head",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "mt-2 text-xs text-muted chat-toolbar",
+      "actions": [
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        },
+        {
+          "text": "",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "class": "chat-input-toolbar mb-3 flex justify-between items-center",
+      "actions": [
+        {
+          "text": "配置",
+          "title": ""
+        },
+        {
+          "text": "列表",
+          "title": ""
+        },
+        {
+          "text": "Gpt 5.5 Medium",
+          "title": ""
+        },
+        {
+          "text": "清空",
+          "title": ""
+        }
+      ]
+    }
+  ],
+  "model_selector": [],
+  "function_panels": [
+    {
+      "class": "n-config-provider h-full safe-area-content global-theme-dark",
+      "text_preview": "欧亿AI-8.0 Pro 简体中文 我的套餐 对话 绘画 视频 音乐 PPT 图像创作 应用 画廊 思维导图 PDF 知识库 推广 画布绘画 客户端 公告通知 我 对话 18 个会话 · 6 置顶 🔔✨⚡ 【重要公告】请文明使用本平台，严禁滥用或生成违规内容，违规将永久封号并记录留存！感谢理解与支持！✨⚡🔔 Web_Profile 0 2 小时内 Copy - 修复守护进程bug 65 5 天内 修复守护进程bug 65 4 天内 Copy - 守护进程 65 6 天内 守护进程 65 5 天内 Copy - claude 65 6 天内 claude 65 9 天内 新对话 8 5 天内 C"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Plain Text"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Plain Text"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "**considering"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Tool_call"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Plain Text"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Plain Text"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Plain Text"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Plain Text"
+    },
+    {
+      "class": "code-block-header flex justify-between items-center border-b px-[var(--ms-inset-panel-x)] py-[var(--ms-inset-panel-y)] border-[var(--code-border)] bg-[var(--code-header-bg)] text-[var(--code-fg)]",
+      "text_preview": "Plain Text"
+    }
+  ],
+  "all_text_content": [
+    "欧亿AI-8.0 Pro",
+    "简体中文",
+    "我的套餐",
+    "PPT",
+    "图像创作",
+    "思维导图",
+    "PDF",
+    "知识库",
+    "画布绘画",
+    "客户端",
+    "公告通知",
+    "18 个会话 · 6 置顶",
+    "🔔✨⚡ 【重要公告】请文明使用本平台，严禁滥用或生成违规内容，违规将永久封号并记录留存！感谢理解与支持！✨⚡🔔",
+    "Web_Profile",
+    "2 小时内",
+    "Copy - 修复守护进程bug",
+    "5 天内",
+    "修复守护进程bug",
+    "4 天内",
+    "Copy - 守护进程",
+    "6 天内",
+    "守护进程",
+    "Copy - claude",
+    "claude",
+    "9 天内",
+    "新对话",
+    "Copy - 白色 网格 地面 铺装 写实",
+    "10 天内",
+    "白色 网格 地面 铺装 写实",
+    "12 天内",
+    "服务器安全检查",
+    "13 天内",
+    "Concise Title for Our Conversation",
+    "16 天内",
+    "Concise Title for Our Conversation 🎯",
+    "Summary Title for Our Conversation💬",
+    "Constraints Shape Our Title",
+    "19 天内",
+    "你好 我们 的 对话 😊",
+    "1 个月内",
+    "慧眼项目摄像头配置",
+    "你好 友好 问候 与 帮助",
+    "Gpt 5.5 Medium",
+    "加载更多",
+    "我把我收到的，你发送的消息完整发你一遍： 正在继续收口这条链路，我先把桥接层和任务层的最终状态核对一遍。```tool_call { \"name\": \"file_operations\", \"arguments\": { \"operation\": \"read_lines\", \"path\": \"app/core/worker_modules/worker_daemon_bridge.py\", \"start_line\": 58, \"end_line\": 90 } } ```",
+    "2026-05-07 00:25:09",
+    "深度思考",
+    "Tool_call",
+    "\"name\": \"file_operations\",",
+    "\"arguments\": {",
+    "\"operation\": \"read_lines\",",
+    "\"path\": \"app/core/worker_modules/worker_daemon",
+    "_bridge.py\",",
+    "\"start_line\": 58,",
+    "\"end_line\": 90",
+    "以上内容为 AI 生成，不代表本网站立场，请勿删除或修改本标记",
+    "61511 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"5952378:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_081de4f9\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"5952378:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_081de4f9\", \"tool_call_id\": \"toolcall_081de4f9\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] 📄 File: app/core/worker_modules/worker_daemon_bridge.py (Lines 58-89 of 89) Content with line numbers: 58 | def on_reply_completed(self, reply_text: str, mode: str, chat_id: str = \"\", recent_context: str = \"\"): 59 | logger.info( 60 | \"[DaemonBridge] 收到回复完成: enabled=%s suggest_enabled=%s running=%s mode=%s chat_id=%s reply_len=%d recent_context_len=%d\", 61 | self._config.enabled, 62 | getattr(self._config, 'suggest', None) and self._config.suggest.enabled, 63 | self.daemon_thread.isRunning(), 64 | mode, 65 | chat_id, 66 | len(reply_text or \"\"), 67 | len(recent_context or \"\"), 68 | ) 69 | if not self._config.enabled or not self._config.suggest.enabled: 70 | logger.info(\"[DaemonBridge] 跳过建议: 守护进程或建议功能已关闭\") 71 | return 72 | if not self.daemon_thread.isRunning(): 73 | logger.info(\"[DaemonBridge] 跳过建议: 守护线程未运行\") 74 | return 75 | self.event_bus.emit(DaemonEventBus.EVENT_REPLY_COMPLETED, { 76 | \"reply_text\": reply_text, 77 | \"mode\": mode, 78 | \"chat_id\": chat_id, 79 | \"recent_context\": recent_context, 80 | }) 81 | logger.info(\"[DaemonBridge] reply_completed 已转发到事件总线\") 82 | 83 | def _on_suggestion(self, suggestions): 84 | try: 85 | count = len(suggestions or []) if isinstance(suggestions, (list, tuple)) else 1 86 | except Exception: 87 | count = -1 88 | logger.info(\"[DaemonBridge] 收到建议结果: count=%s\", count) 89 | self.daemon_suggestion_signal.emit(suggestions) [TOOL_RESULT_END] [TOOL_RESULTS_END] [USER_MESSAGE_BEGIN] 你继续未完成的事 [USER_MESSAGE_END]",
+    "2026-05-07 00:25:45",
+    "继续核对 worker 侧的最终调用链，确认",
+    "recent_context",
+    "已经完整接上。",
+    "\"path\": \"app/core/worker.py\",",
+    "\"start_line\": 762,",
+    "\"end_line\": 850",
+    "52077 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"5952381:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_2038d619\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"5952381:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_2038d619\", \"tool_call_id\": \"toolcall_2038d619\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] 📄 File: app/core/worker.py (Lines 762-850 of 3463) Content with line numbers: 762 | def _notify_daemon_reply_completed(self, mode: str, chat_id: str = \"\"): 763 | try: 764 | logger.info( 765 | \"[DaemonWorker] 进入回复完成通知: mode=%s chat_id=%s has_connector=%s has_api_source=%s has_daemon_bridge=%s\", 766 | mode, 767 | chat_id, 768 | bool(getattr(self, 'connector', None)), 769 | bool(getattr(self, 'api_source', None)), 770 | bool(getattr(self, 'daemon_bridge', None)), 771 | ) 772 | 773 | reply_text = \"\" 774 | recent_context = \"\" 775 | history_count = 0 776 | assistant_count = 0 777 | 778 | def _extract_text(msg): 779 | if not isinstance(msg, dict): 780 | return \"\" 781 | if mode == \"browser\": 782 | text_parts = [] 783 | for seg in (msg.get(\"segments\") or []): 784 | if not isinstance(seg, dict): 785 | continue 786 | content = str(seg.get(\"content\", \"\") or \"\") 787 | if not content.strip(): 788 | continue 789 | if seg.get(\"type\") == \"code\": 790 | lang = str(seg.get(\"language\", \"\") or \"text\").strip() or \"text\" 791 | if content.strip().startswith(\"```\"): 792 | text_parts.append(content) 793 | else: 794 | text_parts.append(f\"```{lang}\\n{content}\\n```\") 795 | else: 796 | text_parts.append(content) 797 | if not text_parts: 798 | fallback_text = str(msg.get(\"content\", \"\") or msg.get(\"text\", \"\") or \"\") 799 | if fallback_text.strip(): 800 | text_parts.append(fallback_text) 801 | return \"\\n\\n\".join(text_parts).strip() 802 | return str(msg.get(\"content\", \"\") or msg.get(\"text\", \"\") or \"\").strip() 803 | 804 | def _normalize_role(msg): 805 | if not isinstance(msg, dict): 806 | return \"\" 807 | role = str(msg.get(\"role\", \"\") or \"\").strip().lower() 808 | if mode == \"browser\" and role == \"ai\": 809 | return \"assistant\" 810 | return role 811 | 812 | def _build_recent_context(entries, reply_index): 813 | if reply_index is None or reply_index <= 0: 814 | return \"\" 815 | start_index = max(0, reply_index - 5) 816 | context_lines = [] 817 | for item in entries[start_index:reply_index]: 818 | role = item.get(\"role\", \"\") 819 | text = str(item.get(\"text\", \"\") or \"\").strip() 820 | if not text: 821 | continue 822 | label = \"用户\" if role == \"user\" else \"AI\" if role in (\"assistant\", \"ai\") else role or \"未知\" 823 | context_lines.append(f\"{label}：{text}\") 824 | return \"\\n\".join(context_lines).strip() 825 | 826 | message_entries = [] 827 | if mode == \"api\" and self.api_source: 828 | logger.info(\"[DaemonWorker] API 准备读取历史消息\") 829 | history = self.api_source.get_history_as_messages() or [] 830 | history_count = len(history) 831 | logger.info(\"[DaemonWorker] API 历史消息读取完成: count=%d\", history_count) 832 | for msg in history: 833 | if not isinstance(msg, dict): 834 | continue 835 | role = _normalize_role(msg) 836 | text = _extract_text(msg) 837 | if not text: 838 | continue 839 | message_entries.append({\"role\": role, \"text\": text}) 840 | elif mode == \"browser\" and self.connector: 841 | logger.info(\"[DaemonWorker] Browser 准备读取结构化消息\") 842 | if hasattr(self.connector, \"get_chat_content\"): 843 | raw_msgs, _is_at_bottom = self.connector.get_chat_content(auto_wake=False) 844 | else: 845 | logger.warning(\"[DaemonWorker] Browser connector 不支持 get_chat_content，无法读取回复文本\") 846 | raw_msgs = [] 847 | raw_msgs = raw_msgs or [] 848 | history_count = len(raw_msgs) 849 | logger.info(\"[DaemonWorker] Browser 消息读取完成: count=%d type=%s\", history_count, type(raw_msgs).__name__) 850 | for msg in raw_msgs: [TOOL_RESULT_END] [TOOL_RESULTS_END]",
+    "2026-05-07 00:26:15",
+    "继续把这段链路收尾，确认最终触发参数已经完整传下去。",
+    "\"start_line\": 850,",
+    "\"end_line\": 860",
+    "52593 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"5952384:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_3d5dd58b\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"5952384:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_3d5dd58b\", \"tool_call_id\": \"toolcall_3d5dd58b\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] 📄 File: app/core/worker.py (Lines 850-860 of 3463) Content with line numbers: 850 | for msg in raw_msgs: 851 | if not isinstance(msg, dict): 852 | continue 853 | role = _normalize_role(msg) 854 | text = _extract_text(msg) 855 | if not text: 856 | continue 857 | message_entries.append({\"role\": role, \"text\": text}) 858 | else: 859 | logger.warning( 860 | \"[DaemonWorker] 回复完成通知缺少可用消息源: mode=%s has_connector=%s has_api_source=%s\", [TOOL_RESULT_END] [TOOL_RESULTS_END]",
+    "2026-05-07 00:26:43",
+    "继续确认最后的触发调用点，确保参数没有漏传。",
+    "\"start_line\": 860,",
+    "\"end_line\": 875",
+    "62952 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"5952391:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_e6948a72\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"5952391:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_e6948a72\", \"tool_call_id\": \"toolcall_e6948a72\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] 📄 File: app/core/worker.py (Lines 860-875 of 3463) Content with line numbers: 860 | \"[DaemonWorker] 回复完成通知缺少可用消息源: mode=%s has_connector=%s has_api_source=%s\", 861 | mode, 862 | bool(getattr(self, 'connector', None)), 863 | bool(getattr(self, 'api_source', None)), 864 | ) 865 | 866 | reply_index = None 867 | for idx in range(len(message_entries) - 1, -1, -1): 868 | role = message_entries[idx].get(\"role\", \"\") 869 | if role in (\"assistant\", \"ai\"): 870 | reply_index = idx 871 | reply_text = str(message_entries[idx].get(\"text\", \"\") or \"\").strip() 872 | assistant_count += 1 873 | logger.info(\"[DaemonWorker] 命中 assistant 消息: reverse_idx=%d reply_len=%d\", len(message_entries) - idx, len(reply_text or \"\")) 874 | break 875 | [TOOL_RESULT_END] [TOOL_RESULTS_END]",
+    "2026-05-07 00:27:19",
+    "继续确认后半段，看看",
+    "是不是已经随调用一起传出。",
+    "\"start_line\": 875,",
+    "\"end_line\": 890",
+    "52110 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"5952394:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_b61c1538\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"5952394:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_b61c1538\", \"tool_call_id\": \"toolcall_b61c1538\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] 📄 File: app/core/worker.py (Lines 875-890 of 3463) Content with line numbers: 875 | 876 | recent_context = _build_recent_context(message_entries, reply_index) 877 | 878 | logger.info( 879 | \"[DaemonWorker] 回复完成检查: mode=%s chat_id=%s history_count=%d assistant_count=%d reply_len=%d recent_context_len=%d has_daemon_bridge=%s\", 880 | mode, 881 | chat_id, 882 | history_count, 883 | assistant_count, 884 | len(reply_text or \"\"), 885 | len(recent_context or \"\"), 886 | bool(getattr(self, 'daemon_bridge', None)), 887 | ) 888 | if reply_text: 889 | logger.info(\"[DaemonWorker] 触发守护通知: mode=%s chat_id=%s\", mode, chat_id) 890 | self.daemon_bridge.on_reply_completed(reply_text, mode, chat_id, recent_context=recent_context) [TOOL_RESULT_END] [TOOL_RESULTS_END]",
+    "2026-05-07 00:27:50",
+    "完成了，链路已经收口。",
+    "现在状态是：",
+    "worker.py",
+    "已经组装并传出",
+    "worker_daemon_bridge.py",
+    "已兼容新参数，并把",
+    "继续转发",
+    "suggest_task.py",
+    "已把“最新回复 + 最近上下文 + 模式”一起喂给模型",
+    "Prompt/Daemon_Suggest.md",
+    "已改成要求结合上下文，不允许只靠最后一句泛化",
+    "相关文件写入和语法校验都通过了",
+    "你现在可以先观察这几件事：",
+    "建议内容是否还会出现“继续 / 好的”这种泛化词",
+    "是否更贴近当前对话语境",
+    "浏览器模式和 API 模式下的建议风格是否一致",
+    "如果你愿意，下一步我建议先不再改代码，先跑一轮真实对话观察结果。",
+    "如果观察后还偏泛，我们再继续优化 prompt 或把上下文再加深一层。",
+    "52341 Tokens",
+    "将本轮修改追加到日志当中，日志很大，千万别看全文，规范格式如下 # filename: AI_JOURNAL.md # 🚁 AI Bridge 行驶记录仪 (Flight Recorder) > 记录每一次重要的代码变更、Bug修复与架构决策。 ## 格式规范 每次解决完一个问题，请在末尾追加一条标准记录。 ## 日期 | 标题 | 状态 内容... ### 主标题规范 ‘## 日期 | 标题 | 状态’ 中必须尽量包含以下 3 项： - 日期 - 本轮标题 / 核心动作 - 当前状态（`✅ 已解决 / 🚧 进行中 / ⚠️ 搁置`） 示例： ## 2026-04-01 | file_operations 恢复验证 + AI_JOURNAL 结构升级 | ✅ 已解决 ### 正文固定九段式 每条记录正文统一使用以下结构： #### 1. 用户原始诉求 尽量保留用户当时的真实要求、边界条件和偏好，不要只写 AI 转述结论。 #### 2. 背景与上下文 说明本轮任务出现前的系统状态、相关历史、所属主线、前置问题或依赖关系。 #### 3. 目标 明确本轮要达成的结果，最好写成可以验证的完成态。 #### 4. 实施方案 记录采用的解决思路、关键设计决策、修改策略与注意事项。 #### 5. 关键改动文件 列出实际改动、重点检查或重点验证的文件路径。若未改文件，也应说明仅做验证/排查。 #### 6. 验证与证据 记录验证动作、关键日志、执行结果、测试输出、人工核对结论等。 #### 7. 问题与排查 记录过程中遇到的报错、误判、失败尝试、回退动作、定位过程和修正方式。 #### 8. 结果与影响 说明最终结果、影响范围、保留内容、回退内容、兼容性影响与后续约束。 #### 9. 状态与下一步 必须包含： - **状态**: `✅ 已解决 / 🚧 进行中 / ⚠️ 搁置` - **下一步**: 若仍有后续动作，明确写出。 ### 推荐附加字段 如有必要，可在正文开头补充： - **标签**: `file_operations` `skills` `journal` 用于提升后续检索、分类与压缩质量。 ### 记录原则 1. 尽量保留用户关键原话与约束，不要过度摘要。 2. 优先记录事实、决策、文件、证据，不写空泛总结。 3. 如果本轮有错误尝试、回退或误判，必须写入“问题与排查”。 4. 如果只是验证、审计或定位问题，没有真正改代码，也要如实记录。 5. 每条记录应尽量做到“只看主标题和九段标题即可快速理解全貌”。 6. 标题尽量具体，避免只写“修复问题”“优化逻辑”这类模糊表述。 ### 推荐模板 ## YYYY-MM-DD | 标题 | ✅ 已解决 - **标签**: `tag1` `tag2` #### 1. 用户原始诉求 ... #### 2. 背景与上下文 ... #### 3. 目标 ... #### 4. 实施方案 ... #### 5. 关键改动文件 - `path/to/file` #### 6. 验证与证据 - ... #### 7. 问题与排查 ... #### 8. 结果与影响 ... #### 9. 状态与下一步 - **状态**: ✅ 已解决 - **下一步**: ... ---",
+    "2026-05-07 00:28:44",
+    "\"operation\": \"append_file\",",
+    "\"path\": \"AI_JOURNAL.md\",",
+    "\"content\": \"\\n## 2026-05-03 | 守护建议链路补齐",
+    "recent_context + 提示词收口 | ✅ 已解决\\n\\n- **标签**:",
+    "`file_operations` `journal` `daemon`",
+    "`suggest`\\n\\n#### 1.",
+    "用户原始诉求\\n用户明确表示：建议内容出现“内容泛化”现象，希望“边优化提示词和上下",
+    "文，边观察”，并同意先从提示词和输入上下文链路入手，不要先大改 UI。\\n\\n#### 2.",
+    "背景与上下文\\n本轮任务属于守护进程建议生成主线：`DaemonThread ->",
+    "SuggestTask -> SuggestionBar`。前置检查发现",
+    "`suggest_task.py` 仅使用 AI 最新回复作为输入，缺少最近对话",
+    "上下文，导致模型容易输出“继续 / 好的 / 泛泛追问”等低信息量建议。UI",
+    "侧建议条此前已完成宽度跟随与换行优化，但这并不能解决建议内容泛化的根因。\\n\\n#### 3.",
+    "目标\\n让建议生成任务在保留原有链路的前提下，补入最近对话上下文，使模型能够结合“最新回复 +",
+    "最近上下",
+    "文 + 对话模式”生成更贴合当前语境的后续引导建议，同时收口提示词，减少泛化输出。\\n\\n####",
+    "4. 实施方案\\n采用最小侵入式改造：\\n1. 在 `worker.py` 的回复完成通知中，从",
+    "API / 浏览器两种消息源统一抽取消息，构建 `recent_context`。\\n2. 扩展",
+    "`worker_daemon_bridge.py` 的 `on_reply_completed()`",
+    "签名，兼容接收并转发 `recent_context`。\\n3. 修改",
+    "`suggest_task.py`，将 `reply_text`、`recent_context`",
+    "和 `mode` 一并作为 LLM 输入，避免只看单句回复。\\n4. 更新",
+    "`Prompt/Daemon_Suggest.",
+    "md`，明确要求必须结合最近上下文，不允许只根据最后一句泛化猜测。\\n5.",
+    "保持原有降级与静默逻辑不变，避免影响主对话链路。\\n\\n#### 5. 关键改动文件\\n-",
+    "`app/core/worker.py`\\n-",
+    "`app/core/worker_modules/worker_daemon_bridge.py`\\n-",
+    "`app/core/daemon/",
+    "tasks/suggest_task.py`\\n-",
+    "`Prompt/Daemon_Suggest.md`\\n\\n#### 6. 验证与证据\\n-",
+    "`replace_in_file` / `write_file` 均返回 `Verified:",
+    "True`。\\n- 相关 Python 文件均通过语法校验。\\n- 回读确认：`worker.py`",
+    "已在触发守护通知前构建",
+    "`recent_context` 并传入",
+    "bridge；`worker_daemon_bridge.py`",
+    "已兼容新参数并继续转发；`suggest_task.py` 已将上下文与模式纳入",
+    "prompt；`Prompt/Daemon_Suggest.md`",
+    "已收敛为“必须结合上下文”的输出规则。\\n\\n#### 7. 问题与排查\\n- 初期仅修改了",
+    "`suggest_task.py` 和提示词，后续核对发现 `worker.py` 已传入新字段，但",
+    "`worker_daemon_bridge.py` 仍停留在旧签名，存在运行时参数不匹配风险。\\n-",
+    "随后补做了 bridge 兼容更新，消除链路断点。\\n-",
+    "过程中曾出现对工具输出格式的误解，已按用户要求修正为“单独",
+    "工具块”或“句子后换行再发工具块”的输出方式。\\n\\n#### 8.",
+    "结果与影响\\n建议生成链路已从“单句回复驱动”升级为“最新回复 +",
+    "最近上下文驱动”，预计可显著降低泛化建议的比例。UI",
+    "调整保留不变，仅作为展示层优化，不再是本轮关注重点。对主对话链路无破坏性影响，守护建议",
+    "仍保持可静默关闭与失败降级。\\n\\n#### 9. 状态与下一步\\n- **状态**: ✅",
+    "已解决\\n- **下一步**: 先观察真实对话中建议质量是否仍出现“继续 /",
+    "好的”等泛化词；若仍偏泛，再继续细化 prompt 或进一步增加上下文层级。\\n\"",
+    "44529 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"5952406:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_30443a2a\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"5952406:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_30443a2a\", \"tool_call_id\": \"toolcall_30443a2a\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] ✅ append_file succeeded Path: AI_JOURNAL.md Bytes: 3358 Lines: 44 Verified: True DuplicateGuardTriggered: False AllowDuplicateAppend: False Atomic: True ValidateCode: True [TOOL_RESULT_END] [TOOL_RESULTS_END] [USER_MESSAGE_BEGIN] 将本轮修改追加到日志当中，日志很大，千万别看全文，规范格式如下 # filename: AI_JOURNAL.md # 🚁 AI Bridge 行驶记录仪 (Flight Recorder) > 记录每一次重要的代码变更、Bug修复与架构决策。 ## 格式规范 每次解决完一个问题，请在末尾追加一条标准记录。 ## 日期 | 标题 | 状态 内容... ### 主标题规范 ‘## 日期 | 标题 | 状态’ 中必须尽量包含以下 3 项： - 日期 - 本轮标题 / 核心动作 - 当前状态（`✅ 已解决 / 🚧 进行中 / ⚠️ 搁置`） 示例： ## 2026-04-01 | file_operations 恢复验证 + AI_JOURNAL 结构升级 | ✅ 已解决 ### 正文固定九段式 每条记录正文统一使用以下结构： #### 1. 用户原始诉求 尽量保留用户当时的真实要求、边界条件和偏好，不要只写 AI 转述结论。 #### 2. 背景与上下文 说明本轮任务出现前的系统状态、相关历史、所属主线、前置问题或依赖关系。 #### 3. 目标 明确本轮要达成的结果，最好写成可以验证的完成态。 #### 4. 实施方案 记录采用的解决思路、关键设计决策、修改策略与注意事项。 #### 5. 关键改动文件 列出实际改动、重点检查或重点验证的文件路径。若未改文件，也应说明仅做验证/排查。 #### 6. 验证与证据 记录验证动作、关键日志、执行结果、测试输出、人工核对结论等。 #### 7. 问题与排查 记录过程中遇到的报错、误判、失败尝试、回退动作、定位过程和修正方式。 #### 8. 结果与影响 说明最终结果、影响范围、保留内容、回退内容、兼容性影响与后续约束。 #### 9. 状态与下一步 必须包含： - **状态**: `✅ 已解决 / 🚧 进行中 / ⚠️ 搁置` - **下一步**: 若仍有后续动作，明确写出。 ### 推荐附加字段 如有必要，可在正文开头补充： - **标签**: `file_operations` `skills` `journal` 用于提升后续检索、分类与压缩质量。 ### 记录原则 1. 尽量保留用户关键原话与约束，不要过度摘要。 2. 优先记录事实、决策、文件、证据，不写空泛总结。 3. 如果本轮有错误尝试、回退或误判，必须写入“问题与排查”。 4. 如果只是验证、审计或定位问题，没有真正改代码，也要如实记录。 5. 每条记录应尽量做到“只看主标题和九段标题即可快速理解全貌”。 6. 标题尽量具体，避免只写“修复问题”“优化逻辑”这类模糊表述。 ### 推荐模板 ## YYYY-MM-DD | 标题 | ✅ 已解决 - **标签**: `tag1` `tag2` #### 1. 用户原始诉求 ... #### 2. 背景与上下文 ... #### 3. 目标 ... #### 4. 实施方案 ... #### 5. 关键改动文件 - `path/to/file` #### 6. 验证与证据 - ... #### 7. 问题与排查 ... #### 8. 结果与影响 ... #### 9. 状态与下一步 - **状态**: ✅ 已解决 - **下一步**: ... --- [USER_MESSAGE_END]",
+    "2026-05-07 00:29:25",
+    "已追加到",
+    "AI_JOURNAL.md",
+    "末尾了。",
+    "这次记录已经按你给的九段式格式写入，并且没有读全文，只是直接追加。",
+    "如果你要，我下一步可以继续把这轮的日志标题再微调得更贴近你的命名习惯。",
+    "43191 Tokens",
+    "你认为现在，我们的建议助手还有什么优化点",
+    "2026-05-08 23:02:43",
+    "我认为现在这套建议助手已经",
+    "能用了",
+    "，下一步最值得做的不是“再堆更多模型能力”，而是把它做得",
+    "更准、更稳、更可控",
+    "优先优化这 4 个方向：",
+    "输入上下文再精炼",
+    "输出结果再约束",
+    "建议之间再去重和分层",
+    "加反馈闭环",
+    "1）输入上下文再精炼",
+    "现在已经有了",
+    "reply_text + recent_context + mode",
+    "，这是对的，但还可以再细一点。",
+    "我建议补的内容",
+    "最后一条用户消息",
+    "最近一轮完整对话切片",
+    "当前对话模式",
+    "（browser / api）",
+    "回复是否偏技术 / 偏确认 / 偏执行",
+    "当前建议任务是否有上下文摘要",
+    "为什么",
+    "因为“最近上下文”如果只是原样拼接，模型还是可能抓错重点。",
+    "最好把上下文拆成几块，告诉模型：",
+    "哪句是用户说的",
+    "哪句是 AI 回的",
+    "这轮对话主要在干什么",
+    "这样建议会更像“接话”，而不是“猜话”。",
+    "2）输出结果再约束",
+    "现在 prompt 已经收紧了，但还可以更强一点。",
+    "我建议把输出规则明确成三类",
+    "每次强制覆盖：",
+    "追问类",
+    "确认类",
+    "补充类",
+    "并且要求：",
+    "不允许三条都同一类",
+    "不允许出现“继续 / 好的 / 嗯嗯”这种空话",
+    "不允许复述 AI 原文",
+    "不允许超过指定长度",
+    "不允许带标点过多或太书面",
+    "模型最容易偷懒，输出一些“听起来像建议、实际没用”的词。",
+    "规则越明确，泛化越少。",
+    "3）建议之间做去重和分层",
+    "这是很实用的一步。",
+    "你现在可以进一步做的事",
+    "对返回的 2~3 条建议：",
+    "做一次",
+    "语义去重",
+    "意图分层",
+    "长度控制",
+    "如果三条太像，自动重采样或替换",
+    "有时候模型会输出这种结构：",
+    "你再说一下",
+    "能再展开吗",
+    "详细说说",
+    "表面不同，本质一样。",
+    "用户看到这种会觉得“又水了”。",
+    "4）加反馈闭环",
+    "这个我认为是后面最值钱的。",
+    "建议记录这些指标",
+    "哪些建议被点击了",
+    "哪些建议被拖拽了",
+    "哪些建议被忽略了",
+    "不同模式下的采纳率",
+    "哪种 prompt 版本更有效",
+    "这类功能不能只靠主观感觉。",
+    "你得知道：",
+    "用户到底爱点哪类建议",
+    "哪类建议是“看着好看但没人用”",
+    "browser 和 api 模式是不是需要不同风格",
+    "5）browser / API 双模式可以继续分化一点",
+    "这个项目我觉得很重要。",
+    "Browser 模式",
+    "输入常常更“纯文本”",
+    "role 识别可能不稳定",
+    "更适合保守建议",
+    "prompt 要少依赖结构化字段",
+    "API 模式",
+    "上下文更规整",
+    "更适合结构化输入",
+    "可以更主动地做“意图识别”",
+    "建议可以更精确、更短",
+    "两种模式的消息质量本来就不一样。",
+    "如果完全用同一套策略，效果通常会打折。",
+    "6）建议助手可以加一个“低置信度静默”",
+    "这点很关键。",
+    "当模型发现：",
+    "最近上下文太短",
+    "回复太杂",
+    "没有明确用户意图",
+    "本轮只是寒暄或收尾",
+    "那就：",
+    "少生成",
+    "低频生成",
+    "甚至直接不展示",
+    "不是每一轮都适合给建议。",
+    "“宁可少给，也不要乱给”通常更符合体验。",
+    "我建议的优先级",
+    "如果你问我下一步先做什么，我会排成这样：",
+    "第一优先",
+    "上下文结构化",
+    "输出三类约束",
+    "去重过滤",
+    "第二优先",
+    "采纳反馈埋点",
+    "browser / API 分风格",
+    "第三优先",
+    "低置信度静默",
+    "版本化 prompt A/B 测试",
+    "一句话总结",
+    "现在的建议助手已经从“能跑”进入“可调优”阶段了。",
+    "下一阶段最值得做的是：",
+    "把输入变清楚，把输出变约束，把结果变可统计。",
+    "如果你愿意，我下一条可以直接给你画一版",
+    "建议助手的优化路线图",
+    "，按“短期 / 中期 / 长期”分层列出来。",
+    "54269 Tokens",
+    "既然已经打通了最基础的“接收输入 -> LLM生成 -> 输出建议”的线路，接下来要让它从“能用”变成“好用且懂用户”，可以参考关于 Claude Code、OpenClaw 以及复杂 Agent 架构的设计理念。 以下是我为你梳理的 **5 个高阶优化方向**，按落地优先级排序： ### 1. 记忆与“人设”系统（让它越来越像你） 基础线路的 AI 往往每次都是“失忆”状态，或者只能机械地模仿。你需要引入类似 Claude Code 的**三层记忆架构**： * **会话记忆（Session Memory）**：记住当前聊天上下文（如刚才对方说了什么，你的情绪是什么）。 * **持久记忆（Persistent Memory）**：为“你”建立一个专属的 Profile。记录你的常用口头禅、专业术语、不喜欢用的词汇。可以通过一个后台的分析 Agent，定期（如每天/每晚，类似资料中提到的 `KAIROS /dream` 机制）把你手动修改过的最终回复提取出来，总结成“回复风格指南（Style Guide）”保存为 Markdown 或 JSON。 * **纠错反馈（Feedback Loop）**：如果在它的建议上你做了大幅度修改，系统应该提供一个“采纳并学习”的按钮，把这次 Diff 作为经验存入数据库，下次不再犯同样的错。 ### 2. 引入 MCP（Model Context Protocol）赋予“寻根问底”的能力 一个好的嘴替不能只靠“瞎编”，它需要结合实际情况。 * **场景痛点**：比如同事问“那个 Bug 修得怎么样了？”，如果 AI 不知道代码库现状，只能回复废话。 * **优化方案**：接入 MCP 协议，给你的嘴替装上“插件”。当它分析到问题涉及代码、日程、文档时，它能在后台默默调用 `github_search`、`read_local_file` 或 `query_calendar` 工具，查清事实后，再以你的口吻生成回复。这样生成的回复既有你的语气，又有硬核的事实支撑。 ### 3. 上下文折叠与防 Token 爆炸（核心工程稳定性） 如果是对接长期的工作群聊或长邮件链，聊天记录会迅速膨胀，导致 API 报错（Prompt Too Long）或成本激增。参考资料中的 **7层递进式上下文防御**： * **微压缩**：每次生成建议前，自动剔除冗余的系统消息或不重要的寒暄。 * **滑动窗口与摘要**：当对话历史超过一定 Token（比如 10k），触发后台小模型（如便宜的 Haiku 或 Gemini Flash）将历史聊天折叠成摘要（事实清单），只保留最近 5-10 条的完整对话。 * **Prompt Cache**：如果你频繁使用这个工具，务必利用大模型的 Prompt Caching 机制，把你的“个人风格设定”和“长期的历史背景”固化在缓存区，降低每次调用的延迟和成本。 ### 4. 架构解耦：流式输出与状态管理 为了让你在前端（可能是你的自研 IDE 或某个小窗口）拥有极致丝滑的体验（防闪烁、防错位）： * **Event Sourcing（事件溯源）**：参考你资料中的 `Committed + Ephemeral + Projector` 架构。在 AI 生成回复的过程中，前端不仅要展示流式文字，还要展示 AI 的“思考状态”（比如“正在翻阅聊天记录...”、“正在模仿您的语气...”）。 * **双轨制解析**：如果 AI 需要调用工具获取信息，确保流式通道能把“工具调用”和“最终纯文本回复”剥离开，只给你展示最终润色好的“嘴替”文本。 ### 5. 引入“投机执行”与多 Agent 协作（进阶方向） * **后台静默预判（Speculation）**：当对方发来一段很长的话，或者你在看某个长 PR 时，不要等你点击“生成回复”才开始。可以启动一个后台低功耗 Agent 提前阅读并准备好 3 个方向的回复草稿（如：1. 委婉拒绝；2. 欣然同意并给方案；3. 要求更多细节）。你只需要点选一个方向，主模型再迅速扩写。 * **多 Agent 审批流**：使用 Leader-Worker 模式。 * *Worker 1 (研究员)*：负责查资料（今天有没有档期？代码有没有报错？）。 * *Worker 2 (打字员)*：负责根据你的语气生成初稿。 * *Leader (审核员)*：检查初稿是否符合你的身份，有没有过度承诺，确保安全后再推送到你的屏幕前。 **🚀 下一步行动建议：** 不要一次性全做。**先做“持久记忆”**，让每次对话后 AI 能提取出 `<Style_Rule>` 并附加在下次的 System Prompt 里；然后再加入 **MCP 检索工具**，解决“无中生有”的幻觉问题。这两个优化将给你的“嘴替”带来质的飞跃！",
+    "2026-05-08 23:24:27",
+    "这个方向我认同，而且你这版比我前面说的更完整。",
+    "但我会再帮你收一下边界：",
+    "这 5 个方向都对，但不是同一阶段的活。",
+    "对当前这个“建议助手”来说，最值得先做的是：",
+    "持久记忆 / 风格人设",
+    "上下文折叠",
+    "输出后反馈闭环",
+    "MCP",
+    "多 Agent / 投机执行",
+    "更适合后续升级，不适合现在就一起上。",
+    "我对你这 5 点的判断",
+    "1）记忆与人设系统",
+    "这是最值钱的一项，我非常赞同。",
+    "因为建议助手真正变好用，不是“更会说”，而是：",
+    "更像你",
+    "更懂你常用的表达",
+    "更知道你不爱什么语气",
+    "更知道什么建议你会点、什么你会无视",
+    "我建议把记忆再拆成 3 层",
+    "Plain Text",
+    "短期上下文",
+    "├─ 当前对话内容",
+    "├─ 最近几轮历史",
+    "└─ 当前意图",
+    "长期风格记忆",
+    "├─ 口头禅",
+    "├─ 常用措辞",
+    "├─ 禁用表达",
+    "└─ 句式偏好",
+    "行为反馈记忆",
+    "├─ 哪类建议被采纳",
+    "├─ 哪类被忽略",
+    "└─ 哪类被修改后采纳",
+    "这个比单纯“保存 style guide”更实用。",
+    "2）MCP",
+    "这个方向",
+    "很强，但偏大",
+    "它的价值不是“让建议更像你”，而是：",
+    "让建议变得",
+    "有事实依据",
+    "让助手能去查项目、查文档、查状态",
+    "避免胡编",
+    "但对“建议助手”来说，MCP 不是第一优先级。",
+    "因为当前问题主要是：",
+    "建议内容泛化，不是事实缺失。",
+    "也就是说，先解决“说话像不像你”，再解决“说得对不对”。",
+    "3）上下文折叠",
+    "这个我也很赞同，而且它是",
+    "工程上必须做",
+    "因为建议助手一旦接入长期会话，最先撞上的不是模型能力，而是：",
+    "token 爆",
+    "召回噪声大",
+    "上下文变脏",
+    "成本飙升",
+    "我建议的折叠原则",
+    "不是简单压缩成一段摘要，而是分成：",
+    "事实摘要",
+    "意图摘要",
+    "风格摘要",
+    "最近原文保留窗口",
+    "这样模型才知道：",
+    "发生了什么",
+    "用户现在想干什么",
+    "该用什么语气说",
+    "最近一句具体说了什么",
+    "4）架构解耦 / 状态管理",
+    "这个方向对，但你得控制规模。",
+    "对当前项目来说，",
+    "没必要一上来就完整事件溯源",
+    "更现实的做法是：",
+    "保留明确的事件流",
+    "关键状态可观测",
+    "工具调用和最终文本分离",
+    "UI 只消费最终可展示结果",
+    "我会建议你先做到",
+    "状态切换可日志化",
+    "建议生成过程可追踪",
+    "失败路径静默降级",
+    "前端显示不要抖动",
+    "这已经足够支撑现在的需求了。",
+    "5）投机执行 / 多 Agent",
+    "这个是最“未来感”的，但也是",
+    "最容易过度设计",
+    "它适合：",
+    "高频重复任务",
+    "多源查证",
+    "强审查流程",
+    "高价值决策场景",
+    "但对当前的建议助手来说，问题不是“慢了一点”，而是：",
+    "生成不够像用户",
+    "上下文不够准",
+    "反馈没闭环",
+    "所以这个方向可以留作后手，不建议现在展开。",
+    "我给你的真实排序",
+    "如果按当前项目最实用的优先级，我会排成这样：",
+    "第一阶段：先把“像你”做好",
+    "长短期记忆",
+    "风格指南",
+    "用户偏好提取",
+    "反馈闭环",
+    "第二阶段：把“不会爆”做好",
+    "摘要机制",
+    "token 预算控制",
+    "最近窗口保留",
+    "第三阶段：把“能查证”做好",
+    "MCP / 工具检索",
+    "项目事实验证",
+    "外部数据补全",
+    "第四阶段：再考虑“更聪明的编排”",
+    "多 Agent",
+    "speculation",
+    "审批流",
+    "任务分层",
+    "我比较赞成的落地路线",
+    "如果我们继续做，我建议不是直接上“大架构”，而是先加三个小模块：",
+    "1. Style Memory",
+    "- 提取你的表达偏好",
+    "- 形成可加载的风格配置",
+    "2. Context Compressor",
+    "- 把长上下文压成结构化摘要",
+    "- 保留最近原文窗口",
+    "3. Feedback Learner",
+    "- 记录采纳 / 修改 / 忽略",
+    "- 反哺下次建议排序",
+    "这三项做完，建议助手会明显从“能用”变成“像你”。",
+    "我的建议",
+    "你这版规划是对的，但我建议这样收口：",
+    "先做记忆 + 风格",
+    "再做上下文压缩",
+    "最后做反馈闭环",
+    "MCP 和多 Agent 先别急",
+    "如果你愿意，我下一步可以直接帮你把这套内容整理成一份更工程化的：",
+    "《建议助手三阶段演进方案》",
+    "我会按：",
+    "给你列成可执行路线图。",
+    "55311 Tokens",
+    "好的，请你将计划书写入docs文件夹内",
+    "2026-05-09 23:04:08",
+    "我先看一下",
+    "docs/",
+    "里现有文档结构，避免重复命名或写错位置。",
+    "\"operation\": \"list_files\",",
+    "\"path\": \"docs\"",
+    "``````tool_call",
+    "```**Considering tool usage**",
+    "I’m thinking about how I might've overused",
+    "multiple tool calls when I only needed one. It",
+    "looks like the response should be contained within",
+    "a single tool block, which makes sense. I’m",
+    "realizing that maybe I already sent enough",
+    "information, so it’s time to streamline this",
+    "process for clarity. I'll focus on making sure I’m",
+    "using the tools efficiently in the future!",
+    "51304 Tokens",
+    "``````tool_call ```**Considering tool usage** 错误表达",
+    "2026-05-09 23:04:45",
+    "对，这里确实是",
+    "错误表达",
+    "问题有两个：",
+    "我把说明文字和工具块混在一起了",
+    "还重复了一次工具块，格式不干净",
+    "后面我会严格按你要求来：",
+    "先说一句话",
+    "单独发一个 tool_call 块",
+    "再换行",
+    "继续说下一句",
+    "如果你愿意，我现在就重新按正确格式继续把",
+    "里的计划书写进去。",
+    "51245 Tokens",
+    "2026-05-09 23:05:07",
+    "先确认一下",
+    "里现有文件，避免重名或放错位置。",
+    "45844 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"6007220:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_b52cd030\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"6007220:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_b52cd030\", \"tool_call_id\": \"toolcall_b52cd030\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] 📂 Listing of 'docs': [Directories] 📂 ClaudeCode参考资料/ [Files] 📄 Agent工具使用精通指南.md 📄 AI协作规则.md 📄 AI协作协议.md 📄 AI报告.md 📄 AI时代Git版本管理最佳实践.md 📄 API模式开发计划.md 📄 API模式阶段更新_2026-03-31.md 📄 API模式系统策略.md 📄 API流式架构模式_参考ClaudeCode.md 📄 API流式状态架构RFC.md 📄 API模式回合状态机与双协议工具调用改造计划书.md 📄 API模式回合状态机改造回归测试清单.md 📄 API模式回合状态机改造实施顺序清单.md 📄 API模式结构化协议与调度引擎重构计划.md 📄 代码执行能力改进.md 📄 代码执行逻辑变更.md 📄 上下文压缩方案V1.md 📄 守护进程方案.md 📄 Docker 拉取镜像卡住问题修复记录.md 📄 执行逻辑反转完成记录.md 📄 浮动面板路线图.md 📄 函数调用完成报告.md 📄 函数调用最终报告.md 📄 函数调用总结.md 📄 GoamzAI平台智能化方案.md 📄 实施总结.md 📄 知识同步现场测试_2026-03-31.md 📄 面板布局修复完成记录.md 📄 面板布局修复最终记录.md 📄 面板插件系统计划.md 📄 插件开发指南.md 📄 插件系统设计.md 📄 插件系统测试报告.md 📄 项目完成报告.md 📄 项目完成总结.md 📄 项目结构导航.md 📄 PySide6沙盒环境配置.md 📄 快速参考卡.md 📄 沙盒面板快速开始.md 📄 沙盒改进记录.md 📄 滚动到底部功能记录.md 📄 Skills面板改进记录.md 📄 Skills系统设计.md 📄 Skills系统实现记录.md 📄 Skills界面集成方案.md 📄 Skills界面集成示例.py 📄 状态管理宣言.md 📄 测试完成总结.md 📄 测试执行摘要.md 📄 测试快速开始.md 📄 测试策略.md 📄 测试修复总结.md 📄 UI架构分析.md 📄 验证检查清单.md 📄 API聊天状态架构落地方案.md 📄 上下文系统建设计划.md 📄 知识库V2基准测试计划.md 📄 知识库V2重构计划.md 📄 API模式计划草案.md 📄 项目扫描结果.json 📄 工具路由Fallback方案.md 📄 UI重构总结.md 📄 中文结构化伪代码视图计划.md 📄 侧车会话模式.md 📄 双模式工具调用卡片化改造计划.md 📄 守护进程Profile共享-修改总结.md 📄 守护进程Profile共享功能实施文档.md 📄 无上下文浏览器Profile计划书.html 📄 无上下文浏览器Profile计划书.md 📄 日志系统与KnowledgeSearch稳定性性能双保治理任务书.md 📄 流式输出功能工程任务书.md 📄 浏览器模式消息同步与增量渲染稳定性优化计划书 审核回复.md 📄 浏览器模式消息同步与增量渲染稳定性优化计划书.md 📄 浏览器模式消息同步增量化计划.md 📄 统一日志与调试体系改造计划书.md 📄 设置界面模块化重构计划书.md 📄 项目切换功能改造计划书.md [TOOL_RESULT_END] [TOOL_RESULTS_END] [USER_MESSAGE_BEGIN] 继续 [USER_MESSAGE_END]",
+    "2026-05-09 23:05:21",
+    "我直接写成一份新的计划书，文件名用",
+    "docs/建议助手三阶段演进方案.md",
+    "\"operation\": \"write_file\",",
+    "\"path\": \"docs/建议助手三阶段演进方案.md\",",
+    "\"content\": \"# 建议助手三阶段演进方案\\n\\n## 2026-05-03 |",
+    "建议助手从“能用”到“好用且懂用户”的演进计划 | 🚧 进行中\\n\\n### 1.",
+    "背景\\n当前建议助手已经打通基础链路：**接收输入 -> LLM 生成 ->",
+    "输出建议**。现阶段已完成的核心修复包括：\\n- 回复完成时补充",
+    "`recent_context`\\n- `worker_daemon_bridge`",
+    "兼容并转发上下文\\n- `SuggestTask` 将最新回复、最近上下文、模式一起喂给模型\\n-",
+    "`Prompt/Daemon_Suggest.md`",
+    "已收口为“必须结合上下文”的规则\\n\\n现在的问题不再是“能不能跑”，而是“能不能更像用户、更懂用户、更",
+    "稳定”。\\n\\n### 2. 目标\\n把建议助手从基础可用升级为：\\n- 更像用户的表达方式\\n-",
+    "更懂当前对话意图\\n- 更少泛化建议\\n- 更稳定地处理长上下文\\n-",
+    "更容易通过数据验证效果\\n\\n### 3.",
+    "当前判断\\n建议助手的优化优先级应当按以下顺序推进：\\n1. **记忆与人设系统",
+    "**\\n2. **上下文折叠与 token 控制**\\n3. **建议结果反馈闭环**\\n4.",
+    "**MCP 检索能力**\\n5. **多 Agent / 投机执行**\\n\\n其中前 3",
+    "项适合当前阶段落地，后 2 项更适合作为后续升级能力。\\n\\n---\\n\\n##",
+    "第一阶段：记忆与人设系统\\n\\n### 目标\\n让建议助手逐渐表现出",
+    "“这个人就是这么说话”的感觉，而不是每次都像一个无记忆的新模型。\\n\\n### 关键能力\\n-",
+    "**会话记忆**：保留当前会话最近对话和意图\\n-",
+    "**长期风格记忆**：记录常用口头禅、常见句式、禁用表达、偏好语气\\n-",
+    "**反馈记忆**：记录哪些建议被采纳、修改、忽略\\n\\n### 设计",
+    "建议\\n建议拆成三层：\\n- 短期上下文：当前对话内容、最近几轮、当前意图\\n-",
+    "长期风格记忆：常用表达、禁用词、语气偏好\\n- 行为反馈记忆：点击、拖拽、采纳、忽略\\n\\n###",
+    "实施方式\\n- 将风格偏好整理成可加载的 Markdown / JSON 配置\\n-",
+    "从“最终被用户保留的回复”中提",
+    "取风格特征\\n- 定时或手动生成 `Style Guide`\\n- 在下一次 prompt",
+    "中附加风格约束\\n\\n### 验证标准\\n- 建议语气是否逐步接近用户习惯\\n-",
+    "是否减少了空泛句式\\n- 是否更少出现“继续 / 好的 /",
+    "嗯嗯”这类低信息建议\\n\\n---\\n\\n## 第二阶段：上下文折叠与 token 控制",
+    "\\n\\n### 目标\\n让建议助手在长对话、长群聊、长邮件链场景下依然稳定运行，不出现上下文污染或",
+    "token 爆炸。\\n\\n### 关键能力\\n-",
+    "**微压缩**：去掉寒暄、重复系统消息、无效噪声\\n- **滑动窗口**：保留最近 N",
+    "轮完整原文\\n- **摘要折叠**：把更早历史折叠成结构化摘要",
+    "\\n- **Prompt Cache**：把长期不变的风格部分做缓存化管理\\n\\n###",
+    "推荐折叠结构\\n建议不要只生成一段纯文本摘要，而是拆成：\\n- 事实摘要\\n- 意图摘要\\n-",
+    "风格摘要\\n- 最近窗口原文\\n\\n### 实施方式\\n- 为建议任务增加上下文预处理层\\n- 设定",
+    "token 预算上限\\n- 超",
+    "限时自动触发摘要折叠\\n- 保留最近原文，避免上下文变“只剩结论没有细节”\\n\\n###",
+    "验证标准\\n- 长对话下建议是否还能保持稳定\\n- token 消耗是否可控\\n-",
+    "是否出现明显的历史噪声干扰\\n\\n---\\n\\n## 第三阶段：反馈闭环\\n\\n###",
+    "目标\\n让建议助手不是“只生成”，而是“会学",
+    "习什么建议有用”。\\n\\n### 关键能力\\n- 记录建议是否被点击\\n-",
+    "记录建议是否被拖拽到输入框\\n- 记录建议是否被直接发送或二次修改\\n-",
+    "统计不同模式下的采纳率\\n\\n### 实施方式\\n- 给建议卡片增加轻量埋点\\n-",
+    "对每次建议保存最小必要元数据\\n- 后台定期分析高采纳类型",
+    "\\n- 用反馈结果优化排序和 prompt\\n\\n### 验证标准\\n- 哪类建议最容易被采纳\\n-",
+    "哪类建议看起来合理但没人用\\n- 不同 prompt 版本的实际效果差异\\n\\n---\\n\\n##",
+    "第四阶段：MCP 检索能力\\n\\n###",
+    "目标\\n让建议助手不仅“像你说话”，还能在必要时“查清事实后再说”。",
+    "\\n\\n### 适用场景\\n- 涉及代码状态\\n- 涉及项目进展\\n- 涉及文档内容\\n-",
+    "涉及外部系统状态\\n\\n###",
+    "说明\\n这一阶段的核心不是提高“语气像不像”，而是提高“建议是否有事实支撑”。\\n\\n###",
+    "建议方式\\n- 以工具插件方式接入检索能力\\n- 当检测到需要查证的场景时，后台拉取",
+    "事实\\n- 再结合用户风格生成建议\\n\\n### 风险\\n- 系统复杂度上升\\n-",
+    "工具链路变长\\n- 需要严格控制失败降级\\n\\n---\\n\\n## 第五阶段：多 Agent /",
+    "投机执行\\n\\n### 目标\\n把复杂任务拆给多个角色处理，提高候选质量和响应速度。\\n\\n###",
+    "可选模式\\n- 研究员：负责查资料",
+    "和事实\\n- 打字员：负责按用户风格生成文本\\n- 审核员：负责检查风险和一致性\\n\\n###",
+    "适用范围\\n适合高价值、强审查、复杂事实查证场景；不建议作为当前阶段的默认路径。\\n\\n###",
+    "风险\\n- 架构成本高\\n- 调试困难\\n- 容易过度设计\\n\\n---\\n\\n##",
+    "推荐实施顺序\\n\\n### 近",
+    "期\\n- [ ] 做长期风格记忆\\n- [ ] 做上下文折叠\\n- [ ]",
+    "做建议反馈闭环\\n\\n### 中期\\n- [ ] 做模式区分优化（browser / API",
+    "分风格）\\n- [ ] 做建议去重与意图分层\\n- [ ] 做低置信度静默策略\\n\\n###",
+    "长期\\n- [ ] 接入 MCP 检索\\n- [ ] 引入多 Agent 协作\\n-",
+    "[ ] 做投机执行与预判草稿\\n\\n---\\n\\n##",
+    "验收标准\\n建议助手达到以下状态时，认为第一阶段目标达成：\\n- 建议内容不再明显泛化\\n-",
+    "建议语气更贴近用户风格\\n- 建议在长上下文中仍能保持稳定\\n- 可以通过点击率 / 拖拽率 /",
+    "采纳率判断优化是否有效\\n\\n---\\n\\n## 结论\\n",
+    "当前最值得先做的是：\\n1. 记忆与人设\\n2. 上下文折叠\\n3. 反馈闭环\\n\\nMCP 和多",
+    "Agent 可以作为后续能力预留，不建议与当前主线一起全面展开。\\n\"",
+    "48529 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"6007225:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_b63dcfd7\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"6007225:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_b63dcfd7\", \"tool_call_id\": \"toolcall_b63dcfd7\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] ✅ write_file succeeded Path: docs/建议助手三阶段演进方案.md Bytes: 5722 Lines: 198 Verified: True Atomic: True ValidateCode: True [TOOL_RESULT_END] [TOOL_RESULTS_END]",
+    "2026-05-09 23:05:47",
+    "已写入",
+    "这份计划书已经按我们刚刚讨论的方向整理好了，重点是：",
+    "记忆与人设",
+    "然后做",
+    "作为后续升级项",
+    "如果你愿意，我下一步可以继续帮你做两件事里的任意一个：",
+    "把这份计划书再压缩成更适合团队快速阅读的版本",
+    "直接开始把“第一阶段：记忆与人设系统”拆成实施任务清单",
+    "48614 Tokens",
+    "这个计划先搁置，我们继续开发新的功能，叫做资料整理agent，主要负责整理资料文档。先打通能将docs中的计划书转化为HTML格式的文件。要求善用图表表达架构意图，生动形象、易读。适当有一些动感或者交互元素。",
+    "2026-05-09 23:14:53",
+    "先看现有结构，确认项目里有没有现成的文档转 HTML 链路，避免重复造轮子。```tool_call{“name”: “file_operations”,“arguments”: {“operation”: “list_files”,“path”: “.”}}",
+    "**considering",
+    "I think I might need to look into the existing",
+    "HTML plan and check the related documentation. I",
+    "should list the necessary documents so I can",
+    "ensure that I'm fully informed. It’s important to",
+    "have all the resources at hand to avoid",
+    "missing any critical information. Let me gather",
+    "everything and see what else I might need to",
+    "understand better before diving into the work",
+    "ahead!先看 `docs/` 和可能已有的 HTML/文档生成相关目录。**Clarifying",
+    "tool calls**",
+    "I need to remember that I should use a single tool",
+    "call for each message. It seems I can't send",
+    "multiple at once, which makes sense in a way. I",
+    "want to ensure I'm following the proper",
+    "guidelines, so I’ll check the documentation for",
+    "more clarity. Keeping it simple and effective is",
+    "key! Let’s look into those docs and figure out the",
+    "best approach going forward.```tool_call",
+    "48887 Tokens",
+    "先看现有结构，确认项目里有没有现成的文档转 HTML 链路，避免重复造轮子。```tool_call{“name”: “file_operations”,“arguments”: {“operation”: “list_files”,“path”: “.”}} 你必须反思",
+    "2026-05-09 23:15:25",
+    "你说得对，我这里有问题，必须反思。",
+    "我这次的问题",
+    "说明文字",
+    "工具块",
+    "混在了一起，而且还用了不规范的引号格式。",
+    "这会让你的消息看起来像“半句话 + 半个工具块”，可读性和可执行性都不好。",
+    "正确做法",
+    "单独发一个工具块",
+    "先说完一句话，再换行发工具块",
+    "不会把工具块塞进正文里",
+    "不会用错引号、漏掉格式",
+    "我该怎么改",
+    "这次的错误本质上是我没有把**“输出结构”",
+    "当成硬约束执行。",
+    "接下来我会先把句子说完整，再单独发工具块；如果不需要说明，就只发工具块。",
+    "如果你要，我现在就按正确格式重新继续看项目结构。",
+    "46723 Tokens",
+    "```tool_call { \"name\": \"skill_name\", \"arguments\": {\"param1\": \"value1\"} } ```",
+    "2026-05-09 23:16:00",
+    "对，这个格式是",
+    "干净的单独工具块",
+    "，我会按这个标准来。",
+    "你刚才这条的重点其实是在提醒我两件事：",
+    "工具块要",
+    "里面的 JSON 要",
+    "规范、统一、可执行",
+    "我会严格按这个来，不再把说明文字和工具块混在一起。",
+    "如果你要继续，我现在就按这个格式重新开始查现有结构。",
+    "36666 Tokens",
+    "2026-05-09 23:16:22",
+    "先看项目根目录结构，确认文档生成链路是否已有现成入口。",
+    "\"path\": \".\"",
+    "45274 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"6007347:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_aa92d0ed\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"6007347:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_aa92d0ed\", \"tool_call_id\": \"toolcall_aa92d0ed\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] 📂 Listing of 'Root': [Directories] 📂 .claude/ 📂 .codebuddy/ 📂 .config/ 📂 .vscode/ 📂 .workbuddy/ 📂 Chrome_143_Clean_Data/ 📂 Prompt/ 📂 RhinoBIM_Client/ 📂 _knowledge_base_v2/ 📂 _knowledge_base_v2_corrupted/ 📂 _test_chroma_db/ 📂 ai对话截图/ 📂 app/ 📂 assets/ 📂 config/ 📂 docs/ 📂 drivers/ 📂 experimental/ 📂 export/ 📂 knowledge_bases/ 📂 lib/ 📂 logs/ 📂 mobile/ 📂 plugins/ 📂 rhino/ 📂 rhino_plugin/ 📂 scripts/ 📂 temp_uploads/ 📂 tests/ 📂 themes/ 📂 tools/ 📂 新建文件夹/ [Files] 📄 .dockerignore 📄 .gitignore 📄 .sandbox_history.json 📄 .secret.key 📄 AI_Client.spec 📄 AI_JOURNAL.md 📄 AI_Model_Hub.sln 📄 AI_README(项目版).md 📄 AI_README.md 📄 PROJECT_STRUCTURE_DUMP.json 📄 README.md 📄 RemoteClient.spec 📄 app_state.json 📄 architecture_map.html 📄 boot_remote.py 📄 build_and_test_pyside6.sh 📄 cleanup_battlefield.py 📄 config.json 📄 coverage.json 📄 create_icons.py 📄 detective.py 📄 dump_code.py 📄 ignored_blocks.json 📄 launcher_settings.json 📄 layout.ini 📄 make_portable.py 📄 print_tree.py 📄 projects.json 📄 pytest.ini 📄 query 📄 requirements.txt 📄 requirements_client.txt 📄 run_checks.ps1 📄 server.py 📄 server_config.json 📄 session_states.json 📄 start_client.py 📄 start_server.py 📄 user_data.db 📄 verify_skills.py 📄 守护进程Profile共享功能-交付文档.md 📄 开发操作指南.txt 💡 Hint: Use list_files(path='app/core') to explore subfolders. [TOOL_RESULT_END] [TOOL_RESULTS_END] [USER_MESSAGE_BEGIN] 开始 [USER_MESSAGE_END]",
+    "2026-05-09 23:16:38",
+    "先看脚本和工具目录，找有没有现成的文档转 HTML 入口。",
+    "\"path\": \"scripts\"",
+    "36014 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"6007352:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_a9cc851f\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"6007352:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_a9cc851f\", \"tool_call_id\": \"toolcall_a9cc851f\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] 📂 Listing of 'scripts': [Files] 📄 assemble_prompts.py 📄 cleanup_legacy_worker.py 📄 git_auto_sync.py 📄 git_cleanup.py 📄 install_plugin.py 📄 install_rhino_plugin.py [TOOL_RESULT_END] [TOOL_RESULTS_END]",
+    "2026-05-09 23:16:51",
+    "tools/",
+    "里有没有现成的文档/HTML 生成工具。",
+    "\"path\": \"tools\"",
+    "35974 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"6007357:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_60d11cc4\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"6007357:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_60d11cc4\", \"tool_call_id\": \"toolcall_60d11cc4\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] 📂 Listing of 'tools': [Directories] 📂 _restore_backups/ 📂 debug_scripts/ [Files] 📄 _diagnose_test_framework.log 📄 _diagnose_test_framework.py 📄 _one_shot_stabilize.log 📄 _pytest_current_run.log 📄 _run_pytest_after_fix.log 📄 benchmark_ui.py 📄 check_env_status.py 📄 debug_scout.py 📄 fix_rag_db.py 📄 generate_skills_prompt.py 📄 hard_purge_knowledge.py 📄 inspect_code_block.py 📄 pack_dist.py 📄 query_knowledge_base.py 📄 reindex_project.py 📄 repair_env.bat 📄 run_tests.py 📄 setup_env.py 📄 smart_update_structure.py 📄 test_code_extraction.py 📄 test_rag_query.py 📄 test_single_file_knowledge_update.py 📄 user_manager.py 📄 verify_rag_functionality.py 📄 visualize_architecture.py [TOOL_RESULT_END] [TOOL_RESULTS_END]",
+    "2026-05-09 23:17:08",
+    "先看这两个最像的现成入口：",
+    "tools/visualize_architecture.py",
+    "和根目录的",
+    "architecture_map.html",
+    "\"operation\": \"stat_file\",",
+    "\"path\": \"tools/visualize_architecture.py\"",
+    "35034 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"6007360:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_01f03f90\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"6007360:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_01f03f90\", \"tool_call_id\": \"toolcall_01f03f90\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] Path: tools/visualize_architecture.py Exists: True Type: file SizeBytes: 6572 ModifiedAt: 2026-04-03T20:40:00 Lines: 158 Bytes: 6415 Suffix: .py Parent: tools Total Classes: 0 Total Functions: 3 Total Methods: 0 Total Imports: 7 TopLevelFunctions: - get_imports (lines 17-30) - build_graph (lines 32-99) - generate_html (lines 101-155) [TOOL_RESULT_END] [TOOL_RESULTS_END]",
+    "2026-05-09 23:17:24",
+    "是否已经是现成输出，再对照",
+    "visualize_architecture.py",
+    "的生成逻辑。",
+    "\"path\": \"architecture_map.html\"",
+    "45005 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"6007361:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_0a04a6a8\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"6007361:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_0a04a6a8\", \"tool_call_id\": \"toolcall_0a04a6a8\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] Path: architecture_map.html Exists: True Type: file SizeBytes: 29960 ModifiedAt: 2026-04-03T20:40:00 Lines: 127 Bytes: 29834 Suffix: .html Parent: . [TOOL_RESULT_END] [TOOL_RESULTS_END] [USER_MESSAGE_BEGIN] 没有，什么都没有，我们要完全靠大模型的能力 [USER_MESSAGE_END]",
+    "2026-05-09 23:17:37",
+    "明白，你的意思是：",
+    "这条“资料整理 agent”先不借现成管线，完全按大模型能力来做内容理解与 HTML 生成",
+    "不过我先纠正一个事实：项目里",
+    "不是完全没有相关资产",
+    "，只是",
+    "没有现成的“docs 计划书 -> 高质量 HTML”链路",
+    "。现在能确认到的只有：",
+    "：更像架构可视化脚本",
+    "：现成输出文件，但不是文档转 HTML 的通用方案",
+    "我先把这个脚本看完，确认它能不能作为新 agent 的底座或参考。",
+    "\"operation\": \"read_file\",",
+    "\"path\": \"tools/visualize_architecture.py\",",
+    "\"max_lines\": 300",
+    "43946 Tokens",
+    "[TOOL_RESULTS_BEGIN version=2] [TOOL_CALL_META] {\"block_key\": \"6007363:0\", \"protocol\": \"tool_call_v1\", \"tool_call_id\": \"toolcall_29a2ac9c\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_META] {\"block_key\": \"6007363:0\", \"protocol\": \"tool_result_v2\", \"result_format\": \"text\", \"seq\": 1, \"success\": true, \"task_id\": \"toolcall_29a2ac9c\", \"tool_call_id\": \"toolcall_29a2ac9c\", \"tool_name\": \"file_operations\"} [TOOL_RESULT_BODY] 📄 File: tools/visualize_architecture.py (158 lines) Content with line numbers: 1 | # filename: tools/visualize_architecture.py 2 | import os 3 | import ast 4 | import networkx as nx 5 | from pyvis.network import Network 6 | import webbrowser 7 | import sys 8 | from collections import Counter 9 | 10 | # 强制 UTF-8 输出 11 | sys.stdout.reconfigure(encoding='utf-8') 12 | 13 | PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 14 | IGNORE_DIRS = {'.git', '__pycache__', 'venv', '.venv', 'tests', 'tools', 'scaffold', 'docs', 'htmlcov', 'backup', 'export', 'rhino'} 15 | IGNORE_FILES = {'__init__.py'} 16 | 17 | def get_imports(file_path): 18 | imports = [] 19 | try: 20 | with open(file_path, 'r', encoding='utf-8', errors='ignore') as f: 21 | tree = ast.parse(f.read()) 22 | for node in ast.walk(tree): 23 | if isinstance(node, ast.Import): 24 | for n in node.names: 25 | imports.append(n.name.split('.')[0]) 26 | elif isinstance(node, ast.ImportFrom): 27 | if node.module: 28 | imports.append(node.module.split('.')[0]) 29 | except: pass 30 | return imports 31 | 32 | def build_graph(): 33 | G = nx.DiGraph() 34 | py_files = {} 35 | filenames = [] 36 | 37 | print(f\"🔍 正在扫描星系: {PROJECT_ROOT}\") 38 | 39 | # 第一遍扫描：收集所有文件名以检测重名 40 | for root, dirs, files in os.walk(PROJECT_ROOT): 41 | dirs[:] = [d for d in dirs if d not in IGNORE_DIRS] 42 | for file in files: 43 | if file.endswith(\".py\") and file not in IGNORE_FILES: 44 | filenames.append(file) 45 | 46 | name_counts = Counter(filenames) 47 | 48 | # 第二遍扫描：构建节点 49 | for root, dirs, files in os.walk(PROJECT_ROOT): 50 | dirs[:] = [d for d in dirs if d not in IGNORE_DIRS] 51 | for file in files: 52 | if file.endswith(\".py\") and file not in IGNORE_FILES: 53 | full_path = os.path.join(root, file) 54 | rel_path = os.path.relpath(full_path, PROJECT_ROOT).replace(\"\\\\\", \"/\") 55 | 56 | # 🎨 优化分组逻辑 (更宽松的匹配) 57 | group = \"Other\" 58 | if \"app/core\" in rel_path: group = \"Core\" # 核心大脑 (红) 59 | elif \"app/ui\" in rel_path: group = \"UI\" # 用户界面 (蓝) 60 | elif \"driver\" in rel_path: group = \"Driver\" # 浏览器驱动 (绿) 61 | elif \"server\" in file or \"start_\" in file: group = \"Entry\" # 启动入口 (黄) 62 | 63 | # 🏷️ 智能标签逻辑 64 | # 如果文件名重复，显示为 \"父目录/文件名\"，否则只显示 \"文件名\" 65 | if name_counts[file] > 1: 66 | parent_dir = os.path.basename(os.path.dirname(full_path)) 67 | label_name = f\"{parent_dir}/{file}\" 68 | else: 69 | label_name = file 70 | 71 | # 计算文件大小 (KB) 72 | kb_size = os.path.getsize(full_path) / 1024 73 | title_info = f\"Path: {rel_path}\\nSize: {kb_size:.1f} KB\\nGroup: {group}\" 74 | 75 | # 根据文件大小微调节点尺寸 (越大越重要) 76 | base_size = 20 77 | if group == \"Core\": base_size = 25 78 | elif group == \"Entry\": base_size = 35 79 | final_size = base_size + min(10, kb_size / 5) # 封顶加10 80 | 81 | G.add_node(rel_path, label=label_name, title=title_info, group=group, value=final_size) 82 | py_files[rel_path] = full_path 83 | 84 | # 建立连线 85 | for node_id, full_path in py_files.items(): 86 | imports = get_imports(full_path) 87 | for imp in imports: 88 | for target_id in py_files.keys(): 89 | if target_id == node_id: continue 90 | # 模糊匹配增强 91 | target_mod = target_id.replace(\"/\", \".\").replace(\".py\", \"\") 92 | target_name = os.path.basename(target_id).replace(\".py\", \"\") 93 | 94 | # 如果 import 的名字出现在了路径中 95 | if imp == target_name or f\".{imp}\" in target_mod: 96 | # 降低连线透明度 97 | G.add_edge(node_id, target_id) 98 | 99 | return G 100 | 101 | def generate_html(): 102 | G = build_graph() 103 | if G.number_of_nodes() == 0: return 104 | 105 | net = Network(height=\"95vh\", width=\"100%\", bgcolor=\"#0f172a\", font_color=\"#e2e8f0\") 106 | net.from_nx(G) 107 | 108 | options = { 109 | \"nodes\": { 110 | \"borderWidth\": 0, 111 | \"borderWidthSelected\": 2, 112 | \"opacity\": 1, 113 | \"font\": {\"size\": 14, \"face\": \"Consolas\", \"background\": \"rgba(0,0,0,0.5)\", \"color\": \"#fff\"}, 114 | \"shadow\": {\"enabled\": True, \"color\": \"rgba(0,0,0,0.5)\", \"size\": 10, \"x\": 5, \"y\": 5} 115 | }, 116 | \"edges\": { 117 | \"color\": {\"color\": \"rgba(255,255,255,0.15)\", \"highlight\": \"#facc15\"}, # 连线更隐蔽 118 | \"arrows\": {\"to\": {\"enabled\": True, \"scaleFactor\": 0.5}}, 119 | \"smooth\": {\"type\": \"continuous\"} 120 | }, 121 | \"groups\": { 122 | \"Core\": {\"color\": {\"background\": \"#ef4444\", \"border\": \"#b91c1c\"}, \"shape\": \"dot\"}, 123 | \"UI\": {\"color\": {\"background\": \"#3b82f6\", \"border\": \"#1d4ed8\"}, \"shape\": \"dot\"}, 124 | \"Driver\": {\"color\": {\"background\": \"#10b981\", \"border\": \"#047857\"}, \"shape\": \"dot\"}, 125 | \"Entry\": {\"color\": {\"background\": \"#f59e0b\", \"border\": \"#b45309\"}, \"shape\": \"star\"}, 126 | \"Other\": {\"color\": {\"background\": \"#64748b\", \"border\": \"#475569\"}, \"shape\": \"dot\"} 127 | }, 128 | \"physics\": { 129 | \"forceAtlas2Based\": { 130 | \"gravitationalConstant\": -80, # 稍微减小斥力，让结构紧凑一点点 131 | \"centralGravity\": 0.01, 132 | \"springLength\": 100, 133 | \"springConstant\": 0.08, 134 | \"damping\": 0.4 135 | }, 136 | \"minVelocity\": 0.75, 137 | \"solver\": \"forceAtlas2Based\" 138 | }, 139 | \"interaction\": { 140 | \"hover\": True, 141 | \"navigationButtons\": True, 142 | \"keyboard\": True 143 | }, 144 | \"configure\": { 145 | \"enabled\": True, 146 | \"filter\": \"physics\" 147 | } 148 | } 149 | 150 | net.set_options(str(options).replace(\"'\", '\"').replace(\"True\", \"true\").replace(\"False\", \"false\")) 151 | 152 | output_path = os.path.join(PROJECT_ROOT, \"architecture_map.html\") 153 | net.save_graph(output_path) 154 | print(f\"🚀 V3 智能版星系图已生成: {output_path}\") 155 | webbrowser.open(\"file:///\" + output_path.replace(\"\\\\\", \"/\")) 156 | 157 | if __name__ == \"__main__\": 158 | generate_html() [TOOL_RESULT_END] [TOOL_RESULTS_END]",
+    "2026-05-09 23:17:55",
+    "结论先说：",
+    "这个新功能可以做，但我建议不要做成“纯 LLM 直接吐完整 HTML 字符串”",
+    "，而是做成：",
+    "docs/计划书.md",
+    "资料整理 Agent 读取",
+    "LLM 负责理解内容 + 生成结构化 HTML 内容",
+    "统一模板负责排版、图表、交互、样式",
+    "输出 .html 文件",
+    "这样更稳，也更容易把“图表、动感、可读性”做漂亮。",
+    "我对这个需求的理解",
+    "你要的新功能叫：",
+    "资料整理 Agent",
+    "它的核心职责不是聊天，也不是代码分析，",
+    "而是：",
+    "下的计划书",
+    "理解计划书内容",
+    "把计划书转成",
+    "适合阅读和展示的 HTML",
+    "HTML 要有：",
+    "架构图 / 流程图",
+    "分层结构",
+    "适度交互",
+    "视觉上更像“交付页”而不是“纯文档页”",
+    "现状判断",
+    "我刚看过现有结构，结论是：",
+    "已有但不够用的东西",
+    "这是做项目架构可视化的",
+    "能生成一个",
+    "但它不是“docs 计划书转 HTML”的通用链路",
+    "没有的东西",
+    "没有现成的“文档整理 agent”",
+    "没有现成的“计划书 -> HTML”统一转换器",
+    "没有专门给资料整理用的输出模板",
+    "所以这次确实是新功能，不是修修补补。",
+    "我建议的技术方案",
+    "总体链路",
+    "docs/*.md",
+    "LLM 分析文档结构 / 提炼标题 / 提取流程 / 归纳风险",
+    "结构化中间结果（JSON）",
+    "HTML 模板渲染",
+    "输出到 docs_html/ 或 export/html/",
+    "为什么要加一个中间 JSON",
+    "这一步很关键。",
+    "如果直接让大模型输出完整 HTML，容易出现：",
+    "结构不稳定",
+    "样式散",
+    "重复注入脚本",
+    "不同文档格式不一致",
+    "后期很难统一维护",
+    "更好的做法",
+    "让模型先输出类似这种结构：",
+    "JSON",
+    "\"title\"",
+    "\"xxx计划书\"",
+    "\"summary\"",
+    "\"...\"",
+    "\"sections\"",
+    ": [",
+    "...",
+    "\"flow_charts\"",
+    "\"risk_items\"",
+    "\"milestones\"",
+    "\"todo_list\"",
+    "然后由模板统一变成 HTML。",
+    "这样可以同时满足：",
+    "大模型负责理解",
+    "模板负责稳定输出",
+    "HTML 负责展示效果",
+    "HTML 页面建议长什么样",
+    "我建议这类页面分成 5 块：",
+    "┌────────────────────────────────────┐",
+    "│ 标题 + 状态 + 更新时间 │",
+    "├────────────────────────────────────┤",
+    "│ 总览卡片：背景 / 目标 / 当前阶段 │",
+    "│ 架构图 / 流程图 / 关系图 │",
+    "│ 分章节折叠内容 │",
+    "│ 风险、任务清单、下一步、备注 │",
+    "└────────────────────────────────────┘",
+    "可以加的交互",
+    "折叠 / 展开章节",
+    "点击高亮某个流程节点",
+    "卡片悬浮动画",
+    "目录快速跳转",
+    "深色主题",
+    "Mermaid 流程图",
+    "轻量图表统计，比如任务数量、阶段分布",
+    "我建议的落地顺序",
+    "第一阶段：先打通最小闭环",
+    "目标是先实现：",
+    "里的一个计划书",
+    "生成一个 HTML",
+    "页面能看，结构清楚",
+    "有基础样式和折叠区域",
+    "第二阶段：增强内容表现",
+    "加入：",
+    "架构图",
+    "进度卡",
+    "任务树",
+    "风险提示",
+    "交互动效",
+    "第三阶段：批量处理",
+    "支持：",
+    "批量转化",
+    "自动输出到目录",
+    "生成索引页",
+    "我建议的代码拆分",
+    "如果你确认这个方案，我会优先设计成下面几个部分：",
+    "app/...",
+    "├─ agent/",
+    "│ ├─ doc_organizer_agent.py",
+    "│ ├─ doc_organizer_prompt.py",
+    "│ └─ doc_organizer_schema.py",
+    "├─ renderer/",
+    "│ ├─ html_template.py",
+    "│ └─ html_assets.py",
+    "└─ ...",
+    "└─ generate_docs_html.py",
+    "或者如果你更想先做小步可用版，也可以先放在：",
+    "tools/generate_docs_html.py",
+    "先打通流程，再决定是否迁移到正式 agent 目录。",
+    "我建议的“最小可行版本”",
+    "我认为第一版先做这几个能力就够了：",
+    "输入：单个",
+    "输出：一个同名",
+    ".html",
+    "HTML 内容：",
+    "章节目录",
+    "关键流程图",
+    "任务列表",
+    "风险区块",
+    "交互：",
+    "折叠章节",
+    "目录跳转",
+    "基础动画",
+    "模型能力：",
+    "提炼文档结构",
+    "识别“背景 / 目标 / 方案 / 风险 / 下一步”",
+    "自动把内容整理成展示结构",
+    "我对实现方式的建议",
+    "推荐方案",
+    "LLM 生成结构化内容 + 固定模板渲染 HTML",
+    "不推荐方案",
+    "LLM 直接生成整页 HTML",
+    "因为后者容易：",
+    "样式乱",
+    "不稳定",
+    "不好复用",
+    "出错难排查",
+    "我现在需要你确认的两个点"
+  ]
+}

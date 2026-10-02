@@ -148,6 +148,7 @@ class ThemeManager(QObject):
                 background-color: {c('BG_PRIMARY')};
                 color: {c('TEXT_PRIMARY')} !important;
                 font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+                font-size: 12px;
             }}
             QScrollBar:vertical {{
                 border: none;
@@ -169,7 +170,7 @@ class ThemeManager(QObject):
                 color: {c('TEXT_PRIMARY')} !important;
                 border: 1px solid {c('BORDER')};
                 border-radius: 6px;
-                padding: 5px;
+                padding: 4px;
                 selection-background-color: {c('ACCENT_PRIMARY')};
             }}
             QLineEdit:focus, QTextEdit:focus {{
@@ -185,7 +186,7 @@ class ThemeManager(QObject):
                 outline: none;
             }}
             QListWidget::item {{
-                padding: 8px;
+                padding: 5px;
                 border-bottom: 1px solid {c('BG_PRIMARY')};
             }}
             QListWidget::item:selected {{
@@ -201,8 +202,8 @@ class ThemeManager(QObject):
                 border: none;
                 border-radius: 8px;
                 color: {c('TEXT_SECONDARY')};
-                padding: 5px;
-                font-size: 11px;
+                padding: 3px;
+                font-size: 10px;
                 font-weight: bold;
             }}
             QToolButton#SidebarBtn:hover {{
@@ -217,7 +218,7 @@ class ThemeManager(QObject):
                 background-color: {c('BG_TERTIARY')};
                 border: 1px solid {c('BORDER')};
                 border-radius: 5px;
-                padding: 6px 12px;
+                padding: 4px 9px;
                 color: {c('TEXT_PRIMARY')} !important;
             }}
             QPushButton:hover {{
@@ -229,10 +230,10 @@ class ThemeManager(QObject):
             QMenu {{
                 background-color: {c('BG_SECONDARY')};
                 border: 1px solid {c('BORDER')};
-                padding: 5px;
+                padding: 3px;
             }}
             QMenu::item {{
-                padding: 5px 20px;
+                padding: 4px 16px;
                 color: {c('TEXT_PRIMARY')} !important;
             }}
             QMenu::item:selected {{
@@ -246,7 +247,7 @@ class ThemeManager(QObject):
             QDockWidget::title {{
                 background: {c('BG_SECONDARY')};
                 color: {c('TEXT_PRIMARY')} !important;
-                padding: 6px;
+                padding: 4px;
                 border: 1px solid {c('BORDER')};
                 font-weight: bold;
             }}
@@ -268,9 +269,9 @@ class ThemeManager(QObject):
                 border-bottom: none;
                 border-top-left-radius: 4px;
                 border-top-right-radius: 4px;
-                padding: 6px 12px;
+                padding: 4px 10px;
                 margin-right: 2px;
-                min-width: 80px;
+                min-width: 64px;
             }}
             QTabBar::tab:selected {{
                 background-color: {c('BG_PRIMARY')};
@@ -300,7 +301,7 @@ class ThemeManager(QObject):
                 color: {c('TEXT_SECONDARY')};
                 border: none;
                 border-radius: 4px;
-                font-size: 18px;
+                font-size: 14px;
                 font-weight: bold;
             }}
             QPushButton#titleBarButton:hover {{

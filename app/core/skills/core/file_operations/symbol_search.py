@@ -43,7 +43,7 @@ def _search_python_symbols(path: str, text: str, output_format: str) -> str | di
     }
     
     try:
-        tree = ast.parse(text)
+        tree = ast.parse(text, filename=path)
     except Exception as e:
         result["error"] = f"Failed to parse Python file: {str(e)}"
         if output_format == "json":

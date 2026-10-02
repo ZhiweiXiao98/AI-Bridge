@@ -21,7 +21,13 @@ class ContextScanner:
         self.ignore_dirs = {
             '.git', '__pycache__', 'venv', '.venv', 'htmlcov', 'export', 
             'update_cache', 'backup', 'dist', 'bin', 'obj', '.idea', '.vscode',
-            'temp_uploads', 'chrome_user_data'
+            'temp_uploads', 'chrome_user_data',
+            # Generated/runtime dependency trees can contain thousands of
+            # third-party files. Scanning them during idle UI refresh makes the
+            # client sluggish and can surface warnings from vendored tests.
+            'build', 'site-packages', '_docker_env', 'knowledge_bases',
+            '_knowledge_base_v2', '_knowledge_base_v2_corrupted',
+            'Chrome_143_Clean_Data', 'node_modules',
         }
         self.target_exts = ('.py', '.md', '.json', '.cs', '.xml', '.ini', '.qss', '.txt')
 
@@ -103,7 +109,7 @@ class ContextScanner:
     def _analyze_python_ast(self, content, rel_path, info, dep_graph, rev_dep_graph):
         """解析 Python AST 提取结构和引用"""
         try:
-            tree = ast.parse(content)
+            tree = ast.parse(content, filename=rel_path)
             
             # 1. 提取 Docstring
             raw_doc = ast.get_docstring(tree)

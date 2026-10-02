@@ -8,7 +8,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.driver.interaction import InteractionManager, STATE_EXPANDED, STATE_COLLAPSED, LUCIDE_EXPANDED, LUCIDE_COLLAPSED
-from app.core.app_constants import UPSTREAM_AI_URL
 
 class TestInteractionManager:
     
@@ -84,19 +83,19 @@ class TestInteractionManager:
 
     def test_open_conversation_url_waits_for_chat_surface(self, manager, mock_driver):
         """配置了网页对话 URL 时，应先进入该对话再清空或发送。"""
-        mock_driver.current_url = f"{UPSTREAM_AI_URL}/chat#old"
+        mock_driver.current_url = "https://ai8.rcouyi.com/chat#old"
         mock_driver.current_window_handle = "handle-1"
         mock_driver.find_elements.side_effect = [[], [MagicMock()]]
 
-        ok, info = manager.open_conversation_url(f"{UPSTREAM_AI_URL}/chat#550028", timeout=1)
+        ok, info = manager.open_conversation_url("https://ai8.rcouyi.com/chat#550028", timeout=1)
 
         assert ok is True
-        mock_driver.get.assert_called_once_with(f"{UPSTREAM_AI_URL}/chat#550028")
-        assert info["conversation_url"] == f"{UPSTREAM_AI_URL}/chat#550028"
+        mock_driver.get.assert_called_once_with("https://ai8.rcouyi.com/chat#550028")
+        assert info["conversation_url"] == "https://ai8.rcouyi.com/chat#550028"
 
     def test_open_conversation_target_by_name_clicks_sidebar_item(self, manager, mock_driver):
         """浏览器 Profile 常规入口按网页左侧对话名称切换。"""
-        mock_driver.current_url = f"{UPSTREAM_AI_URL}/chat#old"
+        mock_driver.current_url = "https://ai8.rcouyi.com/chat#old"
         mock_driver.execute_script.side_effect = [
             True,
             "目标对话\n65\n刚刚",

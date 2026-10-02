@@ -12,7 +12,7 @@ import threading
 import datetime
 import time
 import shutil
-from app.core.app_constants import CHROME_PORT, SERVER_PORT, RESTART_EXIT_CODE, UPDATE_EXIT_CODE, UPSTREAM_AI_URL, LOCAL_SERVER_HOST
+from app.core.app_constants import CHROME_PORT, SERVER_PORT, RESTART_EXIT_CODE, UPDATE_EXIT_CODE
 from app.core.logging import get_logger
 
 logger = get_logger("start_server", side="core")
@@ -20,6 +20,7 @@ logger = get_logger("start_server", side="core")
 SERVER_SCRIPT = "server.py"
 CLIENT_SCRIPT = "boot_remote.py"
 CONFIG_FILE = "server_config.json"
+VALID_STARTUP_MODES = {"browser", "api"}
 RESTART_CODE = RESTART_EXIT_CODE
 UPDATE_CODE = UPDATE_EXIT_CODE
 MAGIC_CMD_RESTART = "::MAGIC_CMD_RESTART_SERVER::"
@@ -348,6 +349,7 @@ class ServerLauncher:
         self.root.minsize(700, 400)
 
         self.chrome_path = ""
+        self.startup_mode = "browser"
         self.proc_server = None
         self.proc_client = None
         self.load_settings()
@@ -372,6 +374,28 @@ class ServerLauncher:
         btn_frame = tk.Frame(root, bg="#2D2D2D")
         btn_frame.pack(fill="x", padx=0, pady=0)
 
+        mode_frame = tk.Frame(root, bg="#252526")
+        mode_frame.pack(fill="x", padx=0, pady=0)
+        tk.Label(mode_frame, text="启动模式:", bg="#252526", fg="#CCCCCC", font=("Arial", 9)).pack(
+            side="left", padx=(15, 6), pady=6
+        )
+        self.mode_var = tk.StringVar(value=self.startup_mode)
+        for mode_value, label in (("api", "🤖 API 模式"), ("browser", "🌐 浏览器模式")):
+            rb = tk.Radiobutton(
+                mode_frame,
+                text=label,
+                variable=self.mode_var,
+                value=mode_value,
+                command=self.on_mode_change,
+                bg="#252526",
+                fg="#CCCCCC",
+                selectcolor="#1E1E1E",
+                activebackground="#252526",
+                activeforeground="#FFFFFF",
+                font=("Arial", 9),
+            )
+            rb.pack(side="left", padx=8, pady=6)
+
         btn_defs = [
             ("1. 启动 Chrome", "#4CAF50", self.launch_chrome),
             ("2. 启动 Server", "#FF9800", self.toggle_server),
@@ -389,7 +413,7 @@ class ServerLauncher:
         self.log_panel = SmartLogPanel(root, bg="#1E1E1E")
         self.log_panel.pack(fill="both", expand=True, padx=0, pady=0)
 
-        self.log("Server Launcher 就绪 (v6.0 Smart Log)。", "SYSTEM")
+        self.log(f"Server Launcher 就绪 (v6.1 Smart Log，启动模式: {self.startup_mode})。", "SYSTEM")
 
     def log(self, text, source="SERVER"):
         self.log_panel.append_line(text, source)
@@ -397,21 +421,45 @@ class ServerLauncher:
     def load_settings(self):
         if os.path.exists(CONFIG_FILE):
             try:
-                with open(CONFIG_FILE, "r") as f:
-                    self.chrome_path = json.load(f).get("chrome_path", "")
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self.chrome_path = data.get("chrome_path", "")
+                    mode = str(data.get("startup_mode", "browser")).lower()
+                    self.startup_mode = mode if mode in VALID_STARTUP_MODES else "browser"
             except Exception as e:
                 logger.warning(e)
 
+    def save_settings(self):
+        data = {}
+        if os.path.exists(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f) or {}
+            except Exception as e:
+                logger.warning(e)
+        data["chrome_path"] = self.chrome_path
+        data["startup_mode"] = self.startup_mode
+        try:
+            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.warning(e)
+
+    def on_mode_change(self):
+        mode = str(self.mode_var.get() or "browser").lower()
+        self.startup_mode = mode if mode in VALID_STARTUP_MODES else "browser"
+        self.save_settings()
+        self.log(f"启动模式已切换为: {'API' if self.startup_mode == 'api' else '浏览器'}", "SYSTEM")
+
     def launch_chrome(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if sock.connect_ex((LOCAL_SERVER_HOST, CHROME_PORT)) == 0:
+        if sock.connect_ex(('127.0.0.1', CHROME_PORT)) == 0:
             self.log("提示: Chrome 已在运行", "SYSTEM")
             return
         if not self.chrome_path or not os.path.exists(self.chrome_path):
             self.chrome_path = filedialog.askopenfilename(filetypes=[("Exe", "*.exe")])
             if self.chrome_path:
-                with open(CONFIG_FILE, "w") as f:
-                    json.dump({"chrome_path": self.chrome_path}, f)
+                self.save_settings()
         if self.chrome_path:
             user_data = os.path.abspath("Chrome_143_Clean_Data")
             cmd = (
@@ -420,7 +468,7 @@ class ServerLauncher:
                 f'--user-data-dir="{user_data}" '
                 f'--disable-backgrounding-occluded-windows '
                 f'--disable-features=CalculateNativeWinOcclusion '
-                f'"{UPSTREAM_AI_URL}/chat"'
+                f'"https://ai8.rcouyi.com/chat"'
             )
             os.system(cmd)
             self.log("Chrome 服务已启动", "SYSTEM")
@@ -478,11 +526,11 @@ class ServerLauncher:
         try:
             from app.core.config import ConfigManager
             config = ConfigManager.load()
-            if config.get("server_ip") != LOCAL_SERVER_HOST:
-                config["server_ip"] = LOCAL_SERVER_HOST
+            if config.get("server_ip") != "127.0.0.1":
+                config["server_ip"] = "127.0.0.1"
                 config["server_port"] = SERVER_PORT
                 ConfigManager.save(config)
-                self.log(f"已配置 IDE 连接本地 ({LOCAL_SERVER_HOST})", "SYSTEM")
+                self.log("已配置 IDE 连接本地 (127.0.0.1)", "SYSTEM")
         except Exception as e:
             logger.warning(e)
 
@@ -557,8 +605,11 @@ class ServerLauncher:
 
         try:
             cmd = [sys.executable, "-u", script]
+            if ptype == "server":
+                cmd.extend(["--mode", self.startup_mode])
             if ptype == "client":
                 cmd.append("--admin")
+                cmd.extend(["--mode", self.startup_mode])
                 if extra_args:
                     cmd.extend(extra_args)
 

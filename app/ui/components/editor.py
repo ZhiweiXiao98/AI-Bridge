@@ -2,7 +2,7 @@
 import re
 from PySide6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout, QLabel, QWidget,
                                QPushButton, QPlainTextEdit, QApplication,
-                               QMessageBox)
+                               QMessageBox, QSizePolicy)
 from PySide6.QtCore import Qt, QSize, Signal, QRect, QTimer
 from PySide6.QtGui import (QColor, QTextCharFormat, QFont, QSyntaxHighlighter, 
                            QTextCursor, QPainter)
@@ -76,6 +76,8 @@ class LineNumberArea(QWidget):
 class CodeEditor(QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.setReadOnly(True)
         self.highlighter = PythonHighlighter(self.document())
         
@@ -172,6 +174,8 @@ class CodeBox(QFrame):
 
     def __init__(self, content, filename="code", language="Code", is_ignored=False, is_placeholder=False):
         super().__init__()
+        self.setMinimumWidth(0)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.content = content
         self.language = language
         self.is_ignored_state = is_ignored # 初始化状态
@@ -184,7 +188,7 @@ class CodeBox(QFrame):
         else:
             self.filename = filename
             
-        self.is_expanded = True
+        self.is_expanded = bool(self.is_placeholder)
         self.init_ui()
         
         theme_manager.theme_changed.connect(self.apply_theme)
@@ -209,17 +213,20 @@ class CodeBox(QFrame):
         layout.setSpacing(0)
         
         self.header = QFrame()
+        self.header.setMinimumWidth(0)
+        self.header.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         h_layout = QHBoxLayout(self.header)
-        h_layout.setContentsMargins(10, 5, 10, 5)
+        h_layout.setContentsMargins(6, 4, 6, 4)
+        h_layout.setSpacing(4)
         
         display_name = self._build_display_name()
         
-        self.toggle_btn = QPushButton(f"▼ {display_name}")
+        self.toggle_btn = QPushButton(f"{'▼' if self.is_expanded else '▶'} {display_name}")
+        self.toggle_btn.setMinimumWidth(60)
+        self.toggle_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.toggle_btn.clicked.connect(self.toggle_view)
-        h_layout.addWidget(self.toggle_btn)
-        
-        h_layout.addStretch()
+        h_layout.addWidget(self.toggle_btn, 1)
         
         self.discard_btn = None
         self.remote_btn = None
@@ -227,26 +234,30 @@ class CodeBox(QFrame):
         self.copy_btn = None
 
         if not self.is_placeholder:
-            btn_text = "♻️ 撤销" if self.is_ignored_state else "🗑️"
+            btn_text = "撤销" if self.is_ignored_state else "删除"
             self.discard_btn = QPushButton(btn_text)
+            self.discard_btn.setMaximumWidth(42)
             self.discard_btn.setToolTip("拉黑/取消拉黑：防止此版本代码再次被识别为更新")
             self.discard_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.discard_btn.clicked.connect(self.on_discard_toggle)
             h_layout.addWidget(self.discard_btn)
 
-            self.remote_btn = QPushButton("🔧")
+            self.remote_btn = QPushButton("远程")
+            self.remote_btn.setMaximumWidth(42)
             self.remote_btn.setToolTip("远程点穴")
             self.remote_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.remote_btn.clicked.connect(lambda: self.request_remote_toggle.emit())
             h_layout.addWidget(self.remote_btn)
 
-            self.apply_btn = QPushButton("⚡ 应用")
+            self.apply_btn = QPushButton("应用")
+            self.apply_btn.setMaximumWidth(42)
             self.apply_btn.setToolTip("应用代码")
             self.apply_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.apply_btn.clicked.connect(self.quick_apply)
             h_layout.addWidget(self.apply_btn)
 
-            self.copy_btn = QPushButton("📋 复制")
+            self.copy_btn = QPushButton("复制")
+            self.copy_btn.setMaximumWidth(42)
             self.copy_btn.setToolTip("复制")
             self.copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.copy_btn.clicked.connect(self.copy_to_clipboard)
@@ -255,23 +266,40 @@ class CodeBox(QFrame):
         layout.addWidget(self.header)
         
         self.editor = CodeEditor()
+        self.editor.setMinimumWidth(0)
+        self.editor.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.editor.setPlainText(self.content)
         
-        doc_height = self.editor.document().size().height()
+        # 综合估算高度：行数、字符数、文档渲染高度取最大
         line_count = self.content.count('\n') + 1
-        height = min(400, max(60, line_count * 21 + 20))
+        char_count = len(self.content)
+        by_lines = line_count * 22 + 20
+        # 假设平均每行 80 字符（考虑换行显示）
+        by_chars = max(1, (char_count // 80) + 1) * 22 + 20
+        doc_height = self.editor.document().size().height() + 20
+        height = min(1200, max(100, max(by_lines, by_chars, int(doc_height))))
         self.editor.setFixedHeight(int(height))
         
         layout.addWidget(self.editor)
+        self.editor.setVisible(self.is_expanded)
 
 
     def _build_display_name(self):
-        base = f"💻 {self.language}"
+        base = self.language
         if self.is_placeholder:
             dots = '.' * ((self._loading_dots % 3) + 1)
             return f"{base} · 生成中{dots}"
         if self.filename and self.filename != "code":
-            base += f" | 📄 {self.filename}"
+            base += f" | {self.filename}"
+        line_count = max(1, self.content.count('\n') + 1)
+        char_count = len(self.content)
+        first_line = next((line.strip() for line in self.content.splitlines() if line.strip()), '')
+        if len(first_line) > 56:
+            first_line = first_line[:53].rstrip() + '...'
+        summary = f"{line_count} 行 · {char_count} 字符"
+        if first_line:
+            summary += f" · {first_line}"
+        base += f" | {summary}"
         return base
 
     def _refresh_toggle_title(self):
@@ -299,11 +327,11 @@ class CodeBox(QFrame):
         
         if self.discard_btn is not None:
             discard_color = p.TEXT_SUCCESS if self.is_ignored_state else p.TEXT_DANGER
-            self.discard_btn.setStyleSheet(f"border: none; color: {discard_color}; font-size: 14px; margin-right: 10px; font-weight: bold;")
+            self.discard_btn.setStyleSheet(f"border: none; color: {discard_color}; font-size: 11px; margin-right: 4px; font-weight: bold;")
         if self.remote_btn is not None:
-            self.remote_btn.setStyleSheet(f"border: none; color: {p.BTN_WARNING}; font-weight: bold; font-size: 14px; margin-right: 10px;")
+            self.remote_btn.setStyleSheet(f"border: none; color: {p.BTN_WARNING}; font-weight: bold; font-size: 11px; margin-right: 4px;")
         if self.apply_btn is not None:
-            self.apply_btn.setStyleSheet(f"border: none; color: {p.TEXT_SUCCESS}; font-weight: bold; font-size: 11px; margin-right: 10px;")
+            self.apply_btn.setStyleSheet(f"border: none; color: {p.TEXT_SUCCESS}; font-weight: bold; font-size: 11px; margin-right: 4px;")
         if self.copy_btn is not None:
             self.copy_btn.setStyleSheet(f"border: none; color: {p.TEXT_SECONDARY}; font-size: 11px;")
         
@@ -312,7 +340,7 @@ class CodeBox(QFrame):
     def copy_to_clipboard(self):
         QApplication.clipboard().setText(self.content)
         if self.copy_btn is not None:
-            self.copy_btn.setText(f"✅ 已复制")
+            self.copy_btn.setText("已复制")
         QApplication.processEvents()
 
     def toggle_view(self):
@@ -337,13 +365,13 @@ class CodeBox(QFrame):
             self.request_discard.emit(self.filename, self.content)
             
             # 即时 UI 反馈
-            self.discard_btn.setText("♻️ 撤销")
-            self.discard_btn.setStyleSheet(f"border: none; color: {p.TEXT_SUCCESS}; font-size: 11px; margin-right: 10px; font-weight: bold;")
+            self.discard_btn.setText("撤销")
+            self.discard_btn.setStyleSheet(f"border: none; color: {p.TEXT_SUCCESS}; font-size: 11px; margin-right: 4px; font-weight: bold;")
         else:
             # 状态翻转：执行撤销
             self.is_ignored_state = False
             self.request_undiscard.emit(self.filename, self.content)
             
             # 即时 UI 反馈
-            self.discard_btn.setText("🗑️")
-            self.discard_btn.setStyleSheet(f"border: none; color: {p.TEXT_DANGER}; font-size: 14px; margin-right: 10px;")
+            self.discard_btn.setText("删除")
+            self.discard_btn.setStyleSheet(f"border: none; color: {p.TEXT_DANGER}; font-size: 11px; margin-right: 4px;")

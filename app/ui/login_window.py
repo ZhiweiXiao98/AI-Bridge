@@ -5,8 +5,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QLineEdit,
 from PySide6.QtCore import Qt, Signal, QSettings
 from PySide6.QtGui import QFont, QPixmap
 from app.ui.theme import Theme, Palette, theme_manager
-from app.ui.pages.console_page import UIHelper
-from app.core.app_constants import LOCAL_SERVER_HOST, SERVER_PORT
+from app.ui.pages.console_page import UIHelper # 复用弹窗样式
 
 class LoginWindow(QWidget):
     login_success = Signal(object) 
@@ -39,8 +38,8 @@ class LoginWindow(QWidget):
         self.form_layout.setSpacing(15)
 
         self.server_ip = QLineEdit()
-        self.server_ip.setPlaceholderText(f"服务器地址 (例如 {LOCAL_SERVER_HOST})")
-        self.server_ip.setText(self.settings.value("last_ip", LOCAL_SERVER_HOST))
+        self.server_ip.setPlaceholderText("服务器地址 (例如 127.0.0.1)")
+        self.server_ip.setText(self.settings.value("last_ip", "127.0.0.1"))
         
         self.username = QLineEdit()
         self.username.setPlaceholderText("账号")
@@ -121,7 +120,7 @@ class LoginWindow(QWidget):
         
         try:
             if not ip.startswith("http"):
-                if ":" not in ip: target_url = f"http://{ip}:{SERVER_PORT}/api/login"
+                if ":" not in ip: target_url = f"http://{ip}:8765/api/login"
                 else: target_url = f"http://{ip}/api/login"
             else: target_url = f"{ip}/api/login"
 

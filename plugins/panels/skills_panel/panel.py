@@ -3,7 +3,7 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QFrame, QPushButton, QScrollArea, QLineEdit,
-    QComboBox, QGraphicsOpacityEffect, QDialog, QTextEdit, QApplication
+    QComboBox, QGraphicsOpacityEffect, QDialog, QTextEdit, QApplication, QTabWidget
 )
 from PySide6.QtCore import Qt, Signal, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QFont
@@ -442,22 +442,42 @@ class SkillsPanelWidget(DockablePanel):
         self.rpc_request.emit('generate_prompt', {})
     
     def display_system_prompt(self, prompt_data):
-        """显示系统提示词对话框"""
+        """显示系统提示词对话框（摘要 / 全量 两个 tab）"""
         dialog = QDialog(self)
         dialog.setWindowTitle("系统提示词")
         dialog.resize(800, 600)
-        
-        # 应用主题色
+
         p = theme_manager.get_palette()
         dialog.setStyleSheet(f"""
             QDialog {{
                 background-color: {p.BG_PRIMARY};
             }}
+            QTabWidget::pane {{
+                border: 1px solid {p.BORDER};
+                background-color: {p.BG_PRIMARY};
+            }}
+            QTabBar::tab {{
+                background-color: {p.BG_SECONDARY};
+                color: {p.TEXT_SECONDARY};
+                border: 1px solid {p.BORDER};
+                border-bottom: none;
+                border-radius: 4px 4px 0 0;
+                padding: 5px 16px;
+                font-size: 12px;
+                font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+            }}
+            QTabBar::tab:selected {{
+                background-color: {p.BG_PRIMARY};
+                color: {p.TEXT_PRIMARY};
+                border-bottom: 1px solid {p.BG_PRIMARY};
+            }}
+            QTabBar::tab:hover {{
+                background-color: {p.BG_TERTIARY};
+            }}
             QTextEdit {{
                 background-color: {p.BG_SECONDARY};
                 color: {p.TEXT_PRIMARY};
-                border: 1px solid {p.BORDER};
-                border-radius: 4px;
+                border: none;
                 font-family: "Consolas", "Monaco", monospace;
                 font-size: 11px;
             }}
@@ -474,27 +494,44 @@ class SkillsPanelWidget(DockablePanel):
                 background-color: {p.ACCENT_SECONDARY};
             }}
         """)
-        
+
         layout = QVBoxLayout(dialog)
-        
-        text_edit = QTextEdit()
-        text_edit.setReadOnly(True)
-        text_edit.setPlainText(prompt_data.get('content', ''))
-        layout.addWidget(text_edit)
-        
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(8)
+
+        # 两个 tab：摘要 / 全量
+        tab_widget = QTabWidget()
+
+        summary_edit = QTextEdit()
+        summary_edit.setReadOnly(True)
+        summary_edit.setPlainText(prompt_data.get('summary', prompt_data.get('content', '')))
+        tab_widget.addTab(summary_edit, "摘要")
+
+        full_edit = QTextEdit()
+        full_edit.setReadOnly(True)
+        full_edit.setPlainText(prompt_data.get('content', ''))
+        tab_widget.addTab(full_edit, "全量")
+
+        layout.addWidget(tab_widget)
+
+        # 底部按钮：复制当前 tab 的内容
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
-        
-        btn_copy = QPushButton("📋 复制")
-        btn_copy.clicked.connect(lambda: QApplication.clipboard().setText(text_edit.toPlainText()))
+
+        btn_copy = QPushButton("📋 复制当前")
+        def _copy_current():
+            current = tab_widget.currentWidget()
+            if isinstance(current, QTextEdit):
+                QApplication.clipboard().setText(current.toPlainText())
+        btn_copy.clicked.connect(_copy_current)
         btn_layout.addWidget(btn_copy)
-        
+
         btn_close = QPushButton("关闭")
         btn_close.clicked.connect(dialog.close)
         btn_layout.addWidget(btn_close)
-        
+
         layout.addLayout(btn_layout)
-        
+
         dialog.exec()
     
     def apply_theme(self):

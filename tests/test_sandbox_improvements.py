@@ -2,8 +2,12 @@
 """
 测试沙盒优化功能
 """
+import pytest
 from app.core.docker_manager import DockerManager
 import time
+
+pytestmark = [pytest.mark.docker, pytest.mark.slow]
+
 
 def test_basic_execution():
     """测试基本执行"""

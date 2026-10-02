@@ -22,7 +22,7 @@ def replace_in_file(path: str, old_text: str, new_text: str, count: int = 1, ato
     p = Path(path)
     if not p.exists():
         return error_result('replace_in_file', path, 'File not found', output_format=output_format)
-    text = p.read_text(encoding='utf-8', errors='replace')
+    text = p.read_text(encoding='utf-8-sig', errors='replace')
     occurrences = text.count(old_text)
     if occurrences <= 0:
         return error_result('replace_in_file', path, 'Target text not found', output_format=output_format, Replacements=0)
@@ -44,7 +44,7 @@ def insert_after(path: str, anchor_text: str, content: str, occurrence: int = 1,
     p = Path(path)
     if not p.exists():
         return error_result('insert_after', path, 'File not found', output_format=output_format)
-    text = p.read_text(encoding='utf-8', errors='replace')
+    text = p.read_text(encoding='utf-8-sig', errors='replace')
     positions = find_anchor_positions(text, anchor_text)
     if not positions:
         return error_result('insert_after', path, 'Anchor not found', output_format=output_format, Anchor=anchor_text)
@@ -86,7 +86,7 @@ def insert_after(path: str, anchor_text: str, content: str, occurrence: int = 1,
         return error_result('insert_after', path, 'syntax validation failed', output_format=output_format, Anchor=anchor_text, Occurrence=occurrence, TotalMatches=len(positions), ValidateCode=validate_code, **details)
 
     try:
-        actual_content = p.read_text(encoding='utf-8')
+        actual_content = p.read_text(encoding='utf-8-sig')
         if actual_content != updated:
             logger.error(f"[Debug][InsertAfter] Post insert content mismatch detected on {path}")
             logger.debug(f"[Debug][InsertAfter] Actual content length {len(actual_content)}, expected {len(updated)}")
@@ -109,7 +109,7 @@ def insert_before(path: str, anchor_text: str, content: str, occurrence: int = 1
     p = Path(path)
     if not p.exists():
         return error_result('insert_before', path, 'File not found', output_format=output_format)
-    text = p.read_text(encoding='utf-8', errors='replace')
+    text = p.read_text(encoding='utf-8-sig', errors='replace')
     positions = find_anchor_positions(text, anchor_text)
     if not positions:
         return error_result('insert_before', path, 'Anchor not found', output_format=output_format, Anchor=anchor_text)
@@ -154,7 +154,7 @@ def insert_before(path: str, anchor_text: str, content: str, occurrence: int = 1
     
     # 写入后读取文件对比
     try:
-        actual_content = p.read_text(encoding='utf-8')
+        actual_content = p.read_text(encoding='utf-8-sig')
         if actual_content != updated:
             logger.error(f"[Debug][InsertBefore] Post insert content mismatch detected on {path}")
             logger.debug(f"[Debug][InsertBefore] Actual content length {len(actual_content)}, expected {len(updated)}")

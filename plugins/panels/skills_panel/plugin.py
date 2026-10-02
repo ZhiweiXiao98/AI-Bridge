@@ -190,9 +190,14 @@ class SkillsPanelPlugin(BasePanelPlugin):
                 if hasattr(self.worker, 'skills_generate_prompt'):
                     self.worker.skills_generate_prompt()
             else:
-                prompt = self.skills_manager.generate_system_prompt()
+                # 同时生成全量和摘要，面板按 tab 展示
+                full_prompt = self.skills_manager.generate_system_prompt()
+                summary_prompt = self.skills_manager.generate_system_prompt(summary_only=True)
                 if self.panel_instance:
-                    self.panel_instance.display_system_prompt({'content': prompt})
+                    self.panel_instance.display_system_prompt({
+                        'content': full_prompt,
+                        'summary': summary_prompt,
+                    })
         
         else:
             logger.warning(f"未知的 Skills RPC 方法: {method}")
@@ -223,7 +228,11 @@ class SkillsPanelPlugin(BasePanelPlugin):
         """处理系统提示词信号"""
         if data.get('target_client_id') == 'Host':
             if self.panel_instance:
-                self.panel_instance.display_system_prompt(data['prompt'])
+                prompt = data.get('prompt', {})
+                # 兼容旧版（prompt 是字符串）和新版（prompt 是 dict）
+                if isinstance(prompt, str):
+                    prompt = {'content': prompt}
+                self.panel_instance.display_system_prompt(prompt)
     
     def on_panel_closed(self, panel):
         """面板关闭时"""

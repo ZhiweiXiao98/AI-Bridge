@@ -71,7 +71,8 @@ class UpdateService:
 
     def process_updates(self, paths, logger_func, ota_callback):
         changes = self.mgr.scan()
-        cache_root = "update_cache"
+        project_root = ProjectContext.get().get_project_root()
+        cache_root = os.path.join(project_root, "update_cache")
         if not os.path.exists(cache_root): os.makedirs(cache_root)
         
         staged_count = 0
@@ -89,7 +90,7 @@ class UpdateService:
             
             # [Validation] 语法检查
             if normalized_rel.endswith(".py"):
-                valid, err = self.file_service.validate_python_code(content)
+                valid, err = self.file_service.validate_python_code(content, normalized_rel)
                 if not valid:
                     print(f"❌ [UpdateService] 残缺拦截: {normalized_rel} -> {err}")
                     logger_func(f"⚠️ 跳过残缺文件: {os.path.basename(normalized_rel)}")

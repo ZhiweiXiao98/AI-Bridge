@@ -14,14 +14,13 @@ from .interaction import InteractionManager
 from .parser import DOMParser
 from .config import SELECTORS, SCRIPTS
 from .browser_incremental import IncrementalExtractor
-from app.core.app_constants import CHROME_PORT
 from app.core.logging import get_logger
 
 logger = get_logger("app.core.driver", side="worker")
 
 
 class ChromeConnector:
-    def __init__(self, port=CHROME_PORT):
+    def __init__(self, port=9527):
         self.conn = ConnectionManager(port)
         self.parser = DOMParser()  # 复用 UI 的解析核心
         self.interact = None

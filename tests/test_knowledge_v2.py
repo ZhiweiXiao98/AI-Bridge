@@ -451,6 +451,7 @@ class TestPerformance:
 
 # ========== 量化基准报告 ==========
 
+@pytest.mark.benchmark
 class TestBenchmarkReport:
     """运行: pytest tests/test_knowledge_v2.py::TestBenchmarkReport -s"""
 

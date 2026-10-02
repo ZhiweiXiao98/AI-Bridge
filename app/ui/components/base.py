@@ -7,7 +7,6 @@ from PySide6.QtWidgets import (QLabel, QDialog, QVBoxLayout, QHBoxLayout,
 from PySide6.QtCore import Qt, Signal, QThread, QPoint, QRectF, QUrl
 from PySide6.QtGui import QImage, QPixmap, QAction, QPainter, QColor, QCursor, QIcon
 from app.core.config import ConfigManager
-from app.core.app_constants import LOCAL_SERVER_HOST, SERVER_PORT
 
 class ImageLoader(QThread):
     loaded = Signal(QPixmap)
@@ -23,8 +22,8 @@ class ImageLoader(QThread):
             # 处理 served:// 伪协议
             if self.url.startswith("served://"):
                 filename = self.url.replace("served://", "")
-                host = self.config.get("server_ip", LOCAL_SERVER_HOST)
-                port = self.config.get("server_port", SERVER_PORT)
+                host = self.config.get("server_ip", "127.0.0.1")
+                port = self.config.get("server_port", 8765)
                 final_url = f"http://{host}:{port}/images/{filename}"
             
             # [Fix] 再次检查协议，防止 requests 处理非 HTTP 链接

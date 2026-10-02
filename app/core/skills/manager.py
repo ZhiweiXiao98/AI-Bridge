@@ -126,6 +126,14 @@ class SkillsManager:
                     self.skill_instances[skill_name] = skill_class(knowledge_engine=self.knowledge_engine)
                 elif skill_name == "file_operations":
                     self.skill_instances[skill_name] = skill_class()
+                elif skill_name == "git_operations":
+                    # 传入项目根路径，优先从 ProjectContext 获取
+                    try:
+                        from app.core.project_context import ProjectContext
+                        repo_path = ProjectContext.get().get_project_root()
+                    except Exception:
+                        repo_path = None
+                    self.skill_instances[skill_name] = skill_class(repo_path=repo_path)
                 else:
                     self.skill_instances[skill_name] = skill_class()
             else:
@@ -280,53 +288,94 @@ class SkillsManager:
         return tools
 
 
-    def _format_skill_section(self, skill_data: dict) -> str:
-        """格式化单个 Skill 的描述"""
+    def _format_skill_section(self, skill_data: dict, summary_only: bool = False) -> str:
+        """格式化单个 Skill 的描述。
+
+        summary_only=True 时只输出 summary 字段（用于浏览器模式精简提示词）。
+        summary_only=False 时输出完整 content（默认行为）。
+        """
         metadata = skill_data.get('metadata', {})
         content = skill_data.get('content', '')
-        
+
         section = f"### {metadata.get('display_name', 'Unknown')}\n\n"
         section += f"**Name**: {metadata.get('name', 'unknown')}\n"
         section += f"**Category**: {metadata.get('category', 'unknown')}\n"
         section += f"**Scenario**: {metadata.get('scenario', 'N/A')}\n\n"
-        section += content + "\n\n---\n\n"
-        
+
+        if summary_only:
+            summary = str(metadata.get('summary', '') or metadata.get('description', '') or '').strip()
+            if summary:
+                section += summary + "\n\n"
+        else:
+            section += content + "\n\n"
+
+        section += "---\n\n"
         return section
-    def generate_system_prompt(self) -> str:
-        """生成系统提示词"""
+
+    def get_skill_detail(self, skill_name: str) -> Optional[str]:
+        """获取指定 Skill 的完整文档内容（SKILL.md 正文）。
+
+        供 AI 按需查询，避免系统提示词全量加载浪费 token。
+        返回完整正文字符串，找不到时返回 None。
+        """
+        skill_data = self.get_skill(skill_name)
+        if not skill_data:
+            return None
+        metadata = skill_data.get('metadata', {})
+        content = skill_data.get('content', '')
+        header = f"# {metadata.get('display_name', skill_name)}\n\n"
+        header += f"**Name**: {metadata.get('name', skill_name)}\n"
+        header += f"**Category**: {metadata.get('category', 'unknown')}\n"
+        header += f"**Scenario**: {metadata.get('scenario', 'N/A')}\n\n"
+        return header + content
+
+    def generate_system_prompt(self, tool_protocol: str = "markdown_fallback", summary_only: bool = True) -> str:
+        """生成系统提示词。
+
+        summary_only=True：每个 skill 只输出摘要，适合节省 token。
+                           AI 可通过 get_skill_detail 按需查看完整文档。
+        summary_only=False：输出完整文档。
+        """
+        tool_protocol = str(tool_protocol or "markdown_fallback").strip()
         prompt = "# Available Skills\n\n"
         prompt += "You have access to the following skills. Use them when appropriate.\n\n"
-        
-        # Function Calling 使用说明
+
         prompt += "## How to Use Skills\n\n"
-        prompt += "To use a skill, output a tool call in the following format:\n\n"
-        prompt += "```tool_call\n"
-        prompt += "{\n"
-        prompt += '  "name": "skill_name",\n'
-        prompt += '  "arguments": {"param1": "value1"}\n'
-        prompt += "}\n"
-        prompt += "```\n\n"
-        prompt += "**Important:** Use exact skill names and provide all required parameters.\n\n"
+        if tool_protocol == "native_tools":
+            prompt += "Use native API tool calls whenever tools are available.\n"
+            prompt += "Do not write Markdown tool_call blocks unless native tool calling is unavailable or the runtime explicitly asks for fallback text tool calls.\n"
+            prompt += "**Important:** Use exact skill names and provide all required parameters through the native tool-call arguments.\n\n"
+        else:
+            prompt += "To use a skill, output a tool call in the following format:\n\n"
+            prompt += "```tool_call\n"
+            prompt += "{\n"
+            prompt += '  "name": "skill_name",\n'
+            prompt += '  "arguments": {"param1": "value1"}\n'
+            prompt += "}\n"
+            prompt += "```\n\n"
+            prompt += "**Important:** Use exact skill names and provide all required parameters.\n\n"
+
+        if summary_only:
+            prompt += "**提示**：以下为摘要版文档（节省 token）。如需某个 skill 的完整参数说明，"
+            prompt += "调用 `get_skill_detail(skill_name=\"skill名称\")` 获取全量文档。\n\n"
+
         prompt += "## Available Skills\n\n"
-        
-        # Core Skills
+
         if self.core_skills:
             prompt += "## Core Skills (Always Available)\n\n"
             for skill_data in self.core_skills.values():
-                prompt += self._format_skill_section(skill_data)
-        
-        # Extended Skills
+                prompt += self._format_skill_section(skill_data, summary_only=summary_only)
+
         if self.extended_skills:
             prompt += "## Extended Skills\n\n"
             for skill_data in self.extended_skills.values():
-                prompt += self._format_skill_section(skill_data)
-        
-        # External Skills
+                prompt += self._format_skill_section(skill_data, summary_only=summary_only)
+
         if self.external_skills:
             prompt += "## External Skills\n\n"
             for skill_data in self.external_skills.values():
-                prompt += self._format_skill_section(skill_data)
-        
+                prompt += self._format_skill_section(skill_data, summary_only=summary_only)
+
         return prompt
 
     

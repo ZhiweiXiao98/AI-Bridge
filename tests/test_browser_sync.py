@@ -320,6 +320,50 @@ class TestDOMNormalizer(unittest.TestCase):
         self.assertEqual(r1[0].content_hash, r2[0].content_hash)
         self.assertEqual(r2[0].rev, 1)
 
+    def test_incremental_unchanged_active_tail_reports_no_changes(self):
+        """尾部 active 消息会被重算，但内容不变时不应进入 changed_ids。"""
+        n = DOMNormalizer()
+        raw = [
+            {
+                "id": f"m{i}",
+                "role": "AI" if i % 2 else "User",
+                "segments": [{"type": "text", "content": f"message {i}"}],
+                "raw_len": 50 + i,
+            }
+            for i in range(6)
+        ]
+
+        _, first_changed, _ = n.normalize_messages(raw)
+        _, second_changed, second_removed = n.normalize_messages(raw)
+
+        self.assertEqual(len(first_changed), 6)
+        self.assertEqual(second_changed, [])
+        self.assertEqual(second_removed, [])
+
+    def test_incremental_changed_active_tail_reports_only_changed_message(self):
+        """active tail 中只有真实内容变化的消息才进入 changed_ids。"""
+        n = DOMNormalizer()
+        raw = [
+            {
+                "id": f"m{i}",
+                "role": "AI" if i % 2 else "User",
+                "segments": [{"type": "text", "content": f"message {i}"}],
+                "raw_len": 50 + i,
+            }
+            for i in range(6)
+        ]
+        n.normalize_messages(raw)
+
+        changed_raw = [dict(m) for m in raw]
+        changed_raw[-1] = {
+            **changed_raw[-1],
+            "segments": [{"type": "text", "content": "message 5 updated"}],
+        }
+        _, changed_ids, removed_ids = n.normalize_messages(changed_raw)
+
+        self.assertEqual(changed_ids, ["m5:AI"])
+        self.assertEqual(removed_ids, [])
+
     def test_fallback_id_stability(self):
         """场景5: 无 DOM ID 消息，fallback ID 跨轮次稳定。"""
         n = DOMNormalizer()
@@ -435,6 +479,47 @@ class TestDOMNormalizer(unittest.TestCase):
 
         self.assertNotEqual(m1.id, m2.id)
 
+    def test_incremental_keeps_current_derived_tool_feedback_messages(self):
+        n = DOMNormalizer()
+        raw = [
+            {"id": "ai1", "role": "AI", "segments": [
+                {"type": "code", "content": '{"name":"run","arguments":{}}', "language": "tool_call"},
+            ], "raw_len": 100},
+            {"id": "u1", "role": "User", "segments": [
+                {"type": "tool_result", "content": "done"},
+                {"type": "user_message", "content": "follow-up"},
+            ], "raw_len": 50},
+        ]
+
+        first, _, _ = n.normalize_messages(raw, conversation_id="c1")
+        self.assertTrue(any(m.id.startswith("msg_user_") for m in first))
+
+        second, _, removed = n.normalize_messages(raw, conversation_id="c1")
+        derived_ids = {
+            m.id for m in second
+            if m.id.startswith("msg_user_") or m.id.startswith("msg_fb_tool_")
+        }
+
+        self.assertTrue(derived_ids)
+        self.assertTrue(derived_ids.isdisjoint(set(removed)))
+
+    def test_incremental_keeps_current_fallback_tool_messages(self):
+        n = DOMNormalizer()
+        raw = [
+            {"id": "u1", "role": "User", "segments": [
+                {"type": "tool_result", "content": "orphan", "tool_call_id": "tc_missing"},
+            ], "raw_len": 50},
+        ]
+
+        first, _, _ = n.normalize_messages(raw, conversation_id="c1")
+        self.assertTrue(any(m.id.startswith("msg_fb_tool_") for m in first))
+
+        second, _, removed = n.normalize_messages(raw, conversation_id="c1")
+        fallback_ids = {m.id for m in second if m.id.startswith("msg_fb_tool_")}
+
+        self.assertTrue(fallback_ids)
+        self.assertTrue(fallback_ids.isdisjoint(set(removed)))
+
     def test_tool_feedback_sequence_fallback_ignores_plain_code_blocks(self):
         n = DOMNormalizer()
         raw = [
@@ -473,6 +558,28 @@ class TestDOMNormalizer(unittest.TestCase):
         self.assertEqual(tool_seg.language, "tool_call")
         self.assertIn("_bound_results", tool_seg.extra)
         self.assertEqual(tool_seg.extra["_bound_results"][0]["content"], "ok")
+
+    def test_tool_feedback_binding_is_idempotent_across_incremental_passes(self):
+        n = DOMNormalizer()
+        raw = [
+            {"id": "ai1", "role": "AI", "segments": [
+                {"type": "code", "content": '{"name":"run","arguments":{}}', "language": "tool_call", "tool_call_id": "tc1"},
+            ], "raw_len": 100},
+            {"id": "u1", "role": "User", "segments": [
+                {"type": "tool_result", "content": "ok", "tool_call_id": "tc1"},
+            ], "raw_len": 50},
+        ]
+
+        first, first_changed, _ = n.normalize_messages(raw, conversation_id="c1")
+        second, second_changed, second_removed = n.normalize_messages(raw, conversation_id="c1")
+        first_ai = next(m for m in first if m.id == "ai1:AI")
+        second_ai = next(m for m in second if m.id == "ai1:AI")
+
+        self.assertIn("ai1:AI", first_changed)
+        self.assertEqual(second_changed, [])
+        self.assertEqual(second_removed, [])
+        self.assertEqual(first_ai.rev, second_ai.rev)
+        self.assertEqual(len(second_ai.segments[0].extra["_bound_results"]), 1)
 
 
 class TestToolSegmentParser(unittest.TestCase):
@@ -653,6 +760,21 @@ class TestChatProjectionReducer(unittest.TestCase):
         self.assertEqual(change["updated"], [])
         self.assertEqual(r.state.last_seq, 1)
 
+    def test_initial_incremental_requests_resync_without_partial_state(self):
+        r = ChatProjectionReducer()
+        resync_called = []
+        r.set_resync_callback(lambda: resync_called.append(True))
+
+        msgs = self._make_enriched([
+            {"id": "m1", "role": "User", "segments": [{"type": "text", "content": "hi"}], "raw_len": 50},
+        ], seq=16, event="message.upsert")
+        change = r.apply_messages(msgs)
+
+        self.assertEqual(change["type"], "resync_needed")
+        self.assertTrue(resync_called)
+        self.assertEqual(r.state.last_seq, 0)
+        self.assertEqual(r.get_ordered_messages(), [])
+
     def test_incremental_add(self):
         r = ChatProjectionReducer()
         msgs1 = self._make_enriched([
@@ -788,6 +910,94 @@ class TestChatProjectionReducer(unittest.TestCase):
         self.assertEqual(len(ordered), 2)
         self.assertEqual(ordered[0]["id"], "m2:AI")
         self.assertEqual(ordered[1]["id"], "m1:User")
+
+    def test_snapshot_preserves_input_order_when_ordinals_tie(self):
+        r = ChatProjectionReducer()
+        msgs = [
+            {
+                "id": "api-msg-1", "role": "User", "ordinal": 0, "index": 0,
+                "content_hash": "h1", "rev": 1, "segments": [],
+                "_seq": 1, "_event": "conversation.snapshot",
+            },
+            {
+                "id": "api-msg-2", "role": "AI", "ordinal": 0, "index": 0,
+                "content_hash": "h2", "rev": 1, "segments": [],
+                "_seq": 1, "_event": "conversation.snapshot",
+            },
+            {
+                "id": "api-msg-3", "role": "User", "ordinal": 0, "index": 0,
+                "content_hash": "h3", "rev": 1, "segments": [],
+                "_seq": 1, "_event": "conversation.snapshot",
+            },
+        ]
+        r.apply_messages(msgs)
+        self.assertEqual(
+            [m["id"] for m in r.get_ordered_messages()],
+            ["api-msg-1", "api-msg-2", "api-msg-3"],
+        )
+
+    def test_reorder_only_snapshot_is_reported(self):
+        r = ChatProjectionReducer()
+        r.apply_messages([
+            {
+                "id": "api-msg-1", "role": "User", "ordinal": 0, "index": 0,
+                "content_hash": "h1", "rev": 1, "segments": [],
+                "_seq": 1, "_event": "conversation.snapshot",
+            },
+            {
+                "id": "api-msg-2", "role": "AI", "ordinal": 0, "index": 0,
+                "content_hash": "h2", "rev": 1, "segments": [],
+                "_seq": 1, "_event": "conversation.snapshot",
+            },
+        ])
+
+        change = r.apply_messages([
+            {
+                "id": "api-msg-2", "role": "AI", "ordinal": 0, "index": 0,
+                "content_hash": "h2", "rev": 1, "segments": [],
+                "_seq": 2, "_event": "conversation.snapshot",
+            },
+            {
+                "id": "api-msg-1", "role": "User", "ordinal": 0, "index": 0,
+                "content_hash": "h1", "rev": 1, "segments": [],
+                "_seq": 2, "_event": "conversation.snapshot",
+            },
+        ])
+
+        self.assertEqual(change["added"], [])
+        self.assertEqual(change["updated"], [])
+        self.assertTrue(change["reordered"])
+        self.assertEqual(
+            [m["id"] for m in r.get_ordered_messages()],
+            ["api-msg-2", "api-msg-1"],
+        )
+
+    def test_unmarked_full_messages_replace_previous_projection(self):
+        r = ChatProjectionReducer()
+        r.apply_messages([
+            {
+                "id": "local_0", "role": "User", "ordinal": 0, "index": 0,
+                "content_hash": "local", "rev": 1, "segments": [],
+            },
+        ])
+
+        change = r.apply_messages([
+            {
+                "id": "api-msg-1", "role": "User", "ordinal": 0, "index": 0,
+                "content_hash": "h1", "rev": 1, "segments": [],
+            },
+            {
+                "id": "api-msg-2", "role": "AI", "ordinal": 1, "index": 1,
+                "content_hash": "h2", "rev": 1, "segments": [],
+            },
+        ])
+
+        self.assertEqual(change["type"], "snapshot")
+        self.assertEqual(change["removed"], ["local_0"])
+        self.assertEqual(
+            [m["id"] for m in r.get_ordered_messages()],
+            ["api-msg-1", "api-msg-2"],
+        )
 
     def test_empty_messages(self):
         r = ChatProjectionReducer()

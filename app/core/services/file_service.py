@@ -45,30 +45,44 @@ class FileService:
         """
         try:
             # 1. 解析绝对路径
-            abs_path = os.path.abspath(os.path.join(self.project_root, path))
+            project_root = os.path.abspath(self.project_root)
+            abs_path = self.resolve_path(path)
             
             # 2. 检查公共前缀 (防止穿越)
-            return os.path.commonpath([self.project_root, abs_path]) == self.project_root
+            return os.path.commonpath([project_root, abs_path]) == project_root
         except Exception:
             return False
 
+    def resolve_path(self, path: str) -> str:
+        if os.path.isabs(path):
+            return os.path.abspath(path)
+        return os.path.abspath(os.path.join(self.project_root, path))
+
+    def _resolve_project_config_path(self, config_key: str, default: str) -> str:
+        configured = self.config.get(config_key, default)
+        if os.path.isabs(configured):
+            return os.path.abspath(configured)
+        return os.path.abspath(os.path.join(self.project_root, configured))
+
     def _ensure_dirs(self):
-        code_dir = self.config.get("export_code_path", "export/code")
-        img_dir = self.config.get("export_image_path", "export/images")
+        code_dir = self._resolve_project_config_path("export_code_path", "export/code")
+        img_dir = self._resolve_project_config_path("export_image_path", "export/images")
         os.makedirs(code_dir, exist_ok=True)
         os.makedirs(img_dir, exist_ok=True)
         return code_dir, img_dir
 
     def _load_ignored_blocks(self):
-        if os.path.exists(IGNORED_BLOCKS_FILE):
+        ignored_blocks_path = self.resolve_path(IGNORED_BLOCKS_FILE)
+        if os.path.exists(ignored_blocks_path):
             try:
-                with open(IGNORED_BLOCKS_FILE, 'r', encoding='utf-8') as f:
+                with open(ignored_blocks_path, 'r', encoding='utf-8') as f:
                     self.ignored_content_hashes = set(json.load(f))
             except: pass
 
     def _save_ignored_blocks(self):
         try:
-            with open(IGNORED_BLOCKS_FILE, 'w', encoding='utf-8') as f:
+            ignored_blocks_path = self.resolve_path(IGNORED_BLOCKS_FILE)
+            with open(ignored_blocks_path, 'w', encoding='utf-8') as f:
                 json.dump(list(self.ignored_content_hashes), f)
         except Exception as e:
             print(f"❌ Failed to save ignore list: {e}")
@@ -146,9 +160,9 @@ class FileService:
                         except: pass
         return messages
 
-    def validate_python_code(self, content):
+    def validate_python_code(self, content, filename="<file-service-validation>"):
         try:
-            ast.parse(content)
+            ast.parse(content, filename=filename)
             return True, None
         except SyntaxError as e:
             return False, f"SyntaxError: line {e.lineno}"
@@ -210,7 +224,7 @@ class FileService:
             return True, "Journal Updated"
 
         if name.endswith(".py"):
-            is_valid, err = self.validate_python_code(content)
+            is_valid, err = self.validate_python_code(content, name)
             if not is_valid:
                 # [Mod] 报警抑制：仅在第一次遇到此错误时打印，之后静默
                 print(f"⚠️ [FileService] 拦截到残缺代码 {name}: {err} (Added to suppression list)")

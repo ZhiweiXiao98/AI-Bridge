@@ -10,7 +10,7 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 from app.core.config import ConfigManager
-from app.core.app_constants import APP_ROOT, LOCAL_SERVER_HOST
+from app.core.app_constants import APP_ROOT
 
 
 class ConnectionManager:
@@ -34,7 +34,7 @@ class ConnectionManager:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(1.0)
         try:
-            return s.connect_ex((LOCAL_SERVER_HOST, self.port)) == 0
+            return s.connect_ex(("127.0.0.1", self.port)) == 0
         except Exception:
             return False
         finally:
@@ -147,7 +147,7 @@ class ConnectionManager:
         print(f"✅ [ConnectionManager] 端口 {self.port} 是通的，正在初始化 WebDriver...")
 
         options = webdriver.ChromeOptions()
-        options.add_experimental_option("debuggerAddress", f"{LOCAL_SERVER_HOST}:{self.port}")
+        options.add_experimental_option("debuggerAddress", f"127.0.0.1:{self.port}")
 
         ok, service, service_msg = self._build_service()
         if not ok or service is None:

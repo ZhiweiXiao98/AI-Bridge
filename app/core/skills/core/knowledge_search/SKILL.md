@@ -8,6 +8,11 @@ version: 1.0.0
 author: System
 dangerous: false
 enabled: true
+summary: >
+  在项目代码库中进行语义搜索，快速定位相关代码和功能实现。基于历史索引，非实时工具。
+  适用场景：查找功能实现位置、理解模块间关系、定位错误处理逻辑、探索未知代码结构。
+  注意：不能用此工具验证代码改动是否已生效，验证请用 file_operations 读取文件确认。
+  调用格式：tool_call { "name": "knowledge_search", "arguments": { "query": "搜索描述" } }
 ---
 
 # 知识检索

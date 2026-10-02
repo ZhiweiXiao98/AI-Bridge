@@ -1,0 +1,10 @@
+E:\BaiduSyncdisk\AI_Model_Hub\RhinoBIM_Client\obj\Debug\net48\RhinoBIM.csproj.AssemblyReference.cache
+E:\BaiduSyncdisk\AI_Model_Hub\RhinoBIM_Client\obj\Debug\net48\RhinoBIM.GeneratedMSBuildEditorConfig.editorconfig
+E:\BaiduSyncdisk\AI_Model_Hub\RhinoBIM_Client\obj\Debug\net48\RhinoBIM.AssemblyInfoInputs.cache
+E:\BaiduSyncdisk\AI_Model_Hub\RhinoBIM_Client\obj\Debug\net48\RhinoBIM.AssemblyInfo.cs
+E:\BaiduSyncdisk\AI_Model_Hub\RhinoBIM_Client\obj\Debug\net48\RhinoBIM.csproj.CoreCompileInputs.cache
+E:\BaiduSyncdisk\AI_Model_Hub\RhinoBIM_Client\obj\Debug\net48\RhinoBIM.sourcelink.json
+E:\BaiduSyncdisk\AI_Model_Hub\RhinoBIM_Client\bin\Debug\net48\RhinoBIM.dll
+E:\BaiduSyncdisk\AI_Model_Hub\RhinoBIM_Client\bin\Debug\net48\RhinoBIM.pdb
+E:\BaiduSyncdisk\AI_Model_Hub\RhinoBIM_Client\obj\Debug\net48\RhinoBIM.dll
+E:\BaiduSyncdisk\AI_Model_Hub\RhinoBIM_Client\obj\Debug\net48\RhinoBIM.pdb

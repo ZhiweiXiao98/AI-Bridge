@@ -9,6 +9,7 @@ from PySide6.QtGui import QColor, QBrush, QCursor
 from app.ui.components.dockable_panel import DockablePanel
 from app.ui.theme import theme_manager
 from app.core.config import ConfigManager
+from app.core.project_paths import project_config_path
 import os
 
 class CodeReviewPanel(DockablePanel):
@@ -252,7 +253,7 @@ class CodeReviewPanel(DockablePanel):
         if path:
             try:
                 cfg = ConfigManager.load()
-                staging_dir = cfg.get("export_code_path", "export/code")
+                staging_dir = project_config_path(cfg, "export_code_path", "export/code")
                 full_path = os.path.join(staging_dir, path)
                 if os.path.exists(full_path):
                     os.remove(full_path)

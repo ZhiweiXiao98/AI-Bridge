@@ -1,17 +1,18 @@
 {
     "version": 1,
-    "active_profile": "default",
+    "active_profile": "google",
     "profiles": {
         "default": {
-            "name": "Default (OpenAI Compatible)",
+            "name": "Default",
             "provider": "openai_compatible",
-            "api_key": "YOUR_API_KEY_HERE",
+            "api_key": "请替换为你的_API_Key",
             "base_url": "https://api.openai.com/v1",
-            "model": "gpt-4o",
+            "model": "ouyi-openclaw",
             "temperature": 0.7,
             "max_output_tokens": 4096,
             "timeout": 60,
             "proxy_url": "",
+            "system_prompt_role": "system",
             "supports_stream": true,
             "supports_tools": false,
             "supports_reasoning": false,
@@ -20,16 +21,55 @@
                 "effort": "medium"
             }
         },
-        "gemini": {
-            "name": "Google Gemini",
+        "ouyi-openclaw": {
+            "name": "ouyi-openclaw",
+            "provider": "openai_compatible",
+            "api_key": "请替换为你的_API_Key",
+            "base_url": "https://api.rcouyi.com/v1",
+            "model": "ouyi-openclaw",
+            "temperature": 1.0,
+            "max_output_tokens": 63488,
+            "timeout": 60,
+            "proxy_url": "",
+            "system_prompt_role": "developer",
+            "supports_stream": true,
+            "supports_tools": false,
+            "supports_reasoning": false,
+            "reasoning": {
+                "enabled": false,
+                "effort": "high"
+            }
+        },
+        "测试profile": {
+            "name": "测试profile",
+            "provider": "openai_compatible",
+            "api_key": "请替换为你的_API_Key",
+            "base_url": "https://api.rcouyi.com",
+            "model": "ouyi-openclaw",
+            "temperature": 0.9,
+            "max_output_tokens": 12288,
+            "timeout": 60,
+            "proxy_url": "",
+            "system_prompt_role": "developer",
+            "supports_stream": true,
+            "supports_tools": false,
+            "supports_reasoning": false,
+            "reasoning": {
+                "enabled": false,
+                "effort": "high"
+            }
+        },
+        "google": {
+            "name": "google",
             "provider": "gemini",
-            "api_key": "YOUR_GEMINI_API_KEY_HERE",
+            "api_key": "请替换为你的_Google_AI_Studio_Gemini_API_Key",
             "base_url": "",
             "model": "gemini-2.5-flash",
             "temperature": 0.7,
             "max_output_tokens": 8192,
             "timeout": 60,
             "proxy_url": "",
+            "system_prompt_role": "system",
             "supports_stream": true,
             "supports_tools": false,
             "supports_reasoning": false,
@@ -38,31 +78,31 @@
                 "effort": "low"
             }
         },
-        "deepseek": {
-            "name": "DeepSeek",
-            "provider": "openai_compatible",
-            "api_key": "YOUR_DEEPSEEK_API_KEY_HERE",
-            "base_url": "https://api.deepseek.com/v1",
-            "model": "deepseek-chat",
-            "temperature": 0.7,
+        "xiaomi-mimo": {
+            "name": "Xiaomi MiMo",
+            "provider": "mimo",
+            "api_key": "请替换为你的_MiMo_API_Key",
+            "base_url": "https://api.xiaomimimo.com/v1",
+            "model": "mimo-v2.5-pro",
+            "temperature": 1.0,
             "max_output_tokens": 4096,
             "timeout": 60,
             "proxy_url": "",
+            "system_prompt_role": "system",
             "supports_stream": true,
             "supports_tools": false,
-            "supports_reasoning": false,
+            "supports_reasoning": true,
             "reasoning": {
-                "enabled": false,
-                "effort": "medium"
+                "enabled": true,
+                "effort": "high"
             }
         }
     },
-    "fallback_chains": {},
     "fallback_chain": [],
     "conversation_defaults": {
         "context": {
-            "max_window_tokens": 128000,
-            "system_budget": 8000,
+            "max_window_tokens": 200000,
+            "system_budget": 22000,
             "long_term_budget": 4000,
             "working_budget": 2000,
             "short_term_budget": 80000,
@@ -72,7 +112,8 @@
         "system": {
             "user_prompt": "",
             "inject_skills_prompt": true,
-            "inject_system_policy": false
+            "inject_system_policy": false,
+            "inject_ai_readme": false
         }
     },
     "agent": {

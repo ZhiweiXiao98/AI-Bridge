@@ -21,7 +21,7 @@ LUCIDE_EXPANDED = "lucide-minimize-2"   # 展开状态 → 含 "退出全屏" �
 LUCIDE_COLLAPSED = "lucide-maximize-2"  # 收缩状态 → 含 "展开" 按钮
 LUCIDE_COPY = "lucide-copy"             # 复制按钮
 
-# WebAI message-level toolbar icons (not code-block toolbar).
+# GoAmzAI message-level toolbar icons (not code-block toolbar).
 MSG_COPY_PATH = "M216 40v128h-48V88H88V40Z"
 MSG_REGENERATE_PATH = "M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4"
 MSG_DELETE_PATH = "M864 256H736v-80c0-35.3"
@@ -441,7 +441,7 @@ class InteractionManager:
 
     def click_ai_message_action(self, action, message_id=None, confirm_delete=False, timeout=5):
         """
-        Click a WebAI message-level toolbar action.
+        Click a GoAmzAI message-level toolbar action.
 
         action: "copy", "regenerate", or "delete".
         message_id: target data-message-id; defaults to latest AI message.

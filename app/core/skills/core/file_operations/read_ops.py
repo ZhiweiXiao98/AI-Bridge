@@ -17,7 +17,7 @@ def _format_numbered_lines(lines: list[str], start_line: int = 1) -> str:
     return chr(10).join(numbered)
 
 
-def _count_python_symbols(text: str) -> dict:
+def _count_python_symbols(text: str, filename: str = "<file-ops-read>") -> dict:
     result = {
         "classes": [],
         "functions": [],
@@ -28,7 +28,7 @@ def _count_python_symbols(text: str) -> dict:
         "total_imports": 0,
     }
     try:
-        tree = ast.parse(text)
+        tree = ast.parse(text, filename=filename)
     except Exception:
         return result
 
@@ -139,14 +139,14 @@ def _count_markdown_headings(text: str) -> dict:
 def _safe_structure_overview(path: str, text: str) -> dict:
     suffix = Path(path).suffix.lower()
     if suffix == ".py":
-        return _count_python_symbols(text)
+        return _count_python_symbols(text, path)
     if suffix == ".md":
         return _count_markdown_headings(text)
     return {}
 
 
 def read_file(path: str, max_lines: int = 1000) -> str:
-    with open(path, 'r', encoding='utf-8', errors='replace') as f:
+    with open(path, 'r', encoding='utf-8-sig', errors='replace') as f:
         content = f.read()
     lines = content.splitlines()
     total_lines = len(lines)
@@ -169,7 +169,7 @@ def read_lines(path: str, start_line: int = 1, end_line: int = 1) -> str:
     if end_line < start_line:
         return f"❌ Error: end_line 必须 >= start_line"
 
-    with open(path, 'r', encoding='utf-8', errors='replace') as f:
+    with open(path, 'r', encoding='utf-8-sig', errors='replace') as f:
         content = f.read()
 
     lines = content.splitlines()
@@ -232,14 +232,14 @@ def _safe_structure_overview(path: str, text: str) -> dict:
     suffix = Path(path).suffix.lower()
     
     if suffix == '.py':
-        return _extract_python_structure(text)
+        return _extract_python_structure(text, path)
     elif suffix == '.md':
         return _extract_markdown_structure(text)
     else:
         return {}
 
 
-def _extract_python_structure(text: str) -> dict:
+def _extract_python_structure(text: str, filename: str = "<file-ops-read>") -> dict:
     """
     提取 Python 文件的结构信息。
     """
@@ -254,7 +254,7 @@ def _extract_python_structure(text: str) -> dict:
     }
     
     try:
-        tree = ast.parse(text)
+        tree = ast.parse(text, filename=filename)
     except Exception:
         return result
     
@@ -331,7 +331,7 @@ def stat_file(path: str, output_format: str = 'text'):
     }
 
     if os.path.isfile(path):
-        text = Path(path).read_text(encoding='utf-8', errors='replace')
+        text = Path(path).read_text(encoding='utf-8-sig', errors='replace')
         info.update(summarize_text(text))
         info['Suffix'] = Path(path).suffix.lower()
         info['Parent'] = str(Path(path).parent)
@@ -433,7 +433,7 @@ def stat_file(path: str, output_format: str = 'text'):
 
 
 def read_file_tail(path: str, max_lines: int = 100) -> str:
-    with open(path, 'r', encoding='utf-8', errors='replace') as f:
+    with open(path, 'r', encoding='utf-8-sig', errors='replace') as f:
         content = f.read()
     lines = content.splitlines()
     total_lines = len(lines)

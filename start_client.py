@@ -9,11 +9,14 @@ import os
 import shutil
 import datetime
 import time
+import json
 from app.core.logging import get_logger
 
 logger = get_logger("start_client", side="core")
 
 REMOTE_SCRIPT = "boot_remote.py"
+CONFIG_FILE = "launcher_settings.json"
+VALID_STARTUP_MODES = {"browser", "api"}
 RESTART_CODE = 42
 UPDATE_CODE = 101
 
@@ -326,6 +329,8 @@ class ClientLauncher:
 
         self.proc = None
         self.is_updating = False
+        self.startup_mode = "browser"
+        self.load_settings()
 
         header = tk.Frame(root, bg="#252526")
         header.pack(fill="x", padx=0, pady=0)
@@ -340,6 +345,28 @@ class ClientLauncher:
         btn_frame = tk.Frame(root, bg="#2D2D2D")
         btn_frame.pack(fill="x", padx=0, pady=0)
 
+        mode_frame = tk.Frame(root, bg="#252526")
+        mode_frame.pack(fill="x", padx=0, pady=0)
+        tk.Label(mode_frame, text="启动模式:", bg="#252526", fg="#CCCCCC", font=("Arial", 9)).pack(
+            side="left", padx=(15, 6), pady=6
+        )
+        self.mode_var = tk.StringVar(value=self.startup_mode)
+        for mode_value, label in (("api", "🤖 API 模式"), ("browser", "🌐 浏览器模式")):
+            rb = tk.Radiobutton(
+                mode_frame,
+                text=label,
+                variable=self.mode_var,
+                value=mode_value,
+                command=self.on_mode_change,
+                bg="#252526",
+                fg="#CCCCCC",
+                selectcolor="#1E1E1E",
+                activebackground="#252526",
+                activeforeground="#FFFFFF",
+                font=("Arial", 9),
+            )
+            rb.pack(side="left", padx=8, pady=6)
+
         self.btn_run = tk.Button(btn_frame, text="🚀 连接云端", bg="#2196F3", fg="white",
                                   font=("Arial", 10, "bold"), command=self.run_client,
                                   relief="flat", padx=10, pady=4, activebackground="#2196F3")
@@ -348,12 +375,44 @@ class ClientLauncher:
         self.log_panel = SmartLogPanel(root, bg="#1E1E1E")
         self.log_panel.pack(fill="both", expand=True, padx=0, pady=0)
 
-        self.log("客户端启动器就绪 (v4.0 Smart Log)。")
+        self.log(f"客户端启动器就绪 (v4.1 Smart Log，启动模式: {self.startup_mode})。")
 
         self.root.after(1000, self.run_client)
 
     def log(self, text):
         self.log_panel.append_line(text)
+
+    def load_settings(self):
+        if not os.path.exists(CONFIG_FILE):
+            return
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            mode = str(data.get("startup_mode", "browser")).lower()
+            self.startup_mode = mode if mode in VALID_STARTUP_MODES else "browser"
+        except Exception as e:
+            logger.warning(e)
+
+    def save_settings(self):
+        data = {}
+        if os.path.exists(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f) or {}
+            except Exception as e:
+                logger.warning(e)
+        data["startup_mode"] = self.startup_mode
+        try:
+            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.warning(e)
+
+    def on_mode_change(self):
+        mode = str(self.mode_var.get() or "browser").lower()
+        self.startup_mode = mode if mode in VALID_STARTUP_MODES else "browser"
+        self.save_settings()
+        self.log(f"启动模式已切换为: {'API' if self.startup_mode == 'api' else '浏览器'}")
 
     def run_client(self):
         if self.proc and self.proc.poll() is None:
@@ -372,7 +431,7 @@ class ClientLauncher:
             return
 
         try:
-            cmd = [sys.executable, "-u", REMOTE_SCRIPT]
+            cmd = [sys.executable, "-u", REMOTE_SCRIPT, "--mode", self.startup_mode]
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 

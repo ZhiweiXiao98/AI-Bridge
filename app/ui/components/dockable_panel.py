@@ -26,7 +26,7 @@ class DockablePanel(QDockWidget):
         self.was_floating = False
         self.drag_position = None
         
-        self.setMinimumWidth(250)
+        self.setMinimumWidth(100)
         self.resize(300, 400)
         
         self.setAllowedAreas(
@@ -57,8 +57,8 @@ class DockablePanel(QDockWidget):
         title_widget = QWidget()
         title_widget.setObjectName("titleBar")
         title_layout = QHBoxLayout(title_widget)
-        title_layout.setContentsMargins(12, 8, 12, 8)
-        title_layout.setSpacing(8)
+        title_layout.setContentsMargins(8, 5, 8, 5)
+        title_layout.setSpacing(6)
         
         drag_handle = QLabel("⋮⋮")
         drag_handle.setStyleSheet("color: #6B7280; font-size: 14px;")
@@ -66,7 +66,7 @@ class DockablePanel(QDockWidget):
         
         self.title_label = QLabel(self.panel_title)
         title_font = QFont()
-        title_font.setPixelSize(12)
+        title_font.setPixelSize(11)
         title_font.setBold(True)
         self.title_label.setFont(title_font)
         title_layout.addWidget(self.title_label)
@@ -75,7 +75,7 @@ class DockablePanel(QDockWidget):
         
         self.minimize_btn = QPushButton("−")
         self.minimize_btn.setObjectName("titleBarButton")
-        self.minimize_btn.setFixedSize(24, 24)
+        self.minimize_btn.setFixedSize(28, 28)
         self.minimize_btn.setToolTip("最小化到图标栏")
         self.minimize_btn.clicked.connect(self.on_minimize_clicked)
         title_layout.addWidget(self.minimize_btn)
@@ -83,7 +83,7 @@ class DockablePanel(QDockWidget):
         # 关闭/隐藏按钮
         self.close_btn = QPushButton("×")
         self.close_btn.setObjectName("titleBarButton")
-        self.close_btn.setFixedSize(24, 24)
+        self.close_btn.setFixedSize(28, 28)
         self.close_btn.setToolTip("隐藏面板")
         self.close_btn.clicked.connect(self.on_close_clicked)
         title_layout.addWidget(self.close_btn)
@@ -102,7 +102,7 @@ class DockablePanel(QDockWidget):
         # 最小化按钮
         self.simple_minimize_btn = QPushButton("−")
         self.simple_minimize_btn.setObjectName("titleBarButton")
-        self.simple_minimize_btn.setFixedSize(20, 20)
+        self.simple_minimize_btn.setFixedSize(28, 28)
         self.simple_minimize_btn.setToolTip("最小化到图标栏")
         self.simple_minimize_btn.clicked.connect(self.on_minimize_clicked)
         simple_layout.addWidget(self.simple_minimize_btn)
@@ -110,7 +110,7 @@ class DockablePanel(QDockWidget):
         # 关闭按钮
         self.simple_close_btn = QPushButton("×")
         self.simple_close_btn.setObjectName("titleBarButton")
-        self.simple_close_btn.setFixedSize(20, 20)
+        self.simple_close_btn.setFixedSize(28, 28)
         self.simple_close_btn.setToolTip("隐藏面板")
         self.simple_close_btn.clicked.connect(self.on_close_clicked)
         simple_layout.addWidget(self.simple_close_btn)
@@ -142,7 +142,7 @@ class DockablePanel(QDockWidget):
         self.setWidget(container)
         
         # 设置 widget 的外边距，创造卡片感
-        container.setContentsMargins(4, 4, 4, 4)
+        container.setContentsMargins(2, 2, 2, 2)
     
     def on_minimize_clicked(self):
         self.minimize_requested.emit(self.panel_id)
@@ -263,7 +263,7 @@ class DockablePanel(QDockWidget):
                 color: {p.TEXT_SECONDARY};
                 border: none;
                 border-radius: 4px;
-                font-size: 16px;
+                font-size: 13px;
                 font-weight: bold;
             }}
             QPushButton:hover {{
@@ -278,7 +278,7 @@ class DockablePanel(QDockWidget):
                 color: {p.TEXT_PRIMARY};
                 border: none;
                 padding: 4px;
-                font-size: 16px;
+                font-size: 20px;
                 font-weight: bold;
             }}
             QPushButton#titleBarButton:hover {{

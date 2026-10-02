@@ -87,9 +87,23 @@ class ProjectMenu(QObject):
         logger.info("[项目菜单] 请求切换到: %s", path)
         ok = self._ctx.switch_to(path)
         if ok:
-            logger.info("[项目菜单] 切换成功: %s", path)
+            logger.info("[项目菜单] 本地切换成功: %s", path)
+            # C/S 分离：本地 ProjectContext 切换只影响客户端进程，
+            # 必须通过 RPC 通知服务端进程同步切换（服务端才是工具实际运行处）
+            self._notify_server_switch(path)
         else:
             logger.warning("[项目菜单] 切换失败: %s", path)
+
+    def _notify_server_switch(self, path: str):
+        worker = getattr(self._main_window, 'worker', None)
+        if worker and hasattr(worker, 'switch_project'):
+            try:
+                worker.switch_project(path)
+                logger.info("[项目菜单] 已通知服务端切换项目: %s", path)
+            except Exception as e:
+                logger.warning("[项目菜单] 通知服务端切换失败: %s", e)
+        else:
+            logger.warning("[项目菜单] worker 不可用或无 switch_project 方法，服务端未同步切换")
 
     def _validate_path(self, path: str) -> bool:
         import os

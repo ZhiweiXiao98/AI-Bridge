@@ -1,0 +1,23 @@
+<!-- filename: RhinoBIM_Client/RhinoBIM.csproj -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyTitle>RhinoBIM</AssemblyTitle>
+    <Product>AI Bridge Client</Product>
+    <Version>1.0.0</Version>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 核心依赖：Rhino 8 开发包 & Eto UI 库 -->
+    <PackageReference Include="RhinoCommon" Version="8.*" IncludeAssets="compile;build" />
+    <PackageReference Include="Eto.Forms" Version="2.7.*" />
+  </ItemGroup>
+
+  <!-- 编译完成后，自动将 .dll 重命名为 .rhp (Rhino 插件格式) -->
+  <Target Name="RenameToRhp" AfterTargets="Build">
+    <Move SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFiles="$(OutputPath)$(AssemblyName).rhp" />
+  </Target>
+
+</Project>

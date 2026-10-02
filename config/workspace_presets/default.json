@@ -1,9 +1,144 @@
 {
   "name": "default",
-  "description": "显示所有面板的默认布局",
+  "description": "纯净模式 - 所有面板默认隐藏",
   "layout": {
-    "name": "默认",
-    "description": "显示所有面板的默认布局",
-    "panels": {}
+    "panels": {
+      "task_schedule": {
+        "visible": false,
+        "floating": false,
+        "area": 2,
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 300,
+          "height": 400
+        },
+        "state": "docked"
+      },
+      "code_review": {
+        "visible": false,
+        "floating": false,
+        "area": 2,
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 300,
+          "height": 400
+        },
+        "state": "docked"
+      },
+      "git_control": {
+        "visible": false,
+        "floating": false,
+        "area": 2,
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 300,
+          "height": 400
+        },
+        "state": "docked"
+      },
+      "runtime_log": {
+        "visible": false,
+        "floating": false,
+        "area": 2,
+        "geometry": {
+          "x": 1240,
+          "y": 22,
+          "width": 617,
+          "height": 701
+        },
+        "state": "docked"
+      },
+      "embedded_browser": {
+        "visible": false,
+        "floating": false,
+        "area": 2,
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 425,
+          "height": 400
+        },
+        "state": "docked"
+      },
+      "sandbox_monitor": {
+        "visible": false,
+        "floating": false,
+        "area": 2,
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 461,
+          "height": 405
+        },
+        "state": "docked"
+      },
+      "context_workspace": {
+        "visible": false,
+        "floating": false,
+        "area": 2,
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 501,
+          "height": 400
+        },
+        "state": "docked"
+      },
+      "plugin_manager": {
+        "visible": false,
+        "floating": false,
+        "area": 2,
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 300,
+          "height": 400
+        },
+        "state": "docked"
+      },
+      "doc_organizer": {
+        "visible": false,
+        "floating": false,
+        "area": 2,
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 300,
+          "height": 400
+        },
+        "state": "docked"
+      },
+      "example_panel": {
+        "visible": false,
+        "floating": true,
+        "area": null,
+        "geometry": {
+          "x": -941,
+          "y": 428,
+          "width": 446,
+          "height": 552
+        },
+        "state": "floating"
+      },
+      "skills_panel": {
+        "visible": false,
+        "floating": false,
+        "area": 2,
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 450,
+          "height": 400
+        },
+        "state": "docked"
+      }
+    },
+    "icon_bar": {
+      "visible": true,
+      "icons": []
+    }
   }
 }

@@ -8,6 +8,15 @@ version: 2.2.1
 author: System
 dangerous: false
 enabled: true
+summary: >
+  读写、编辑、列出项目目录内的文件。支持读取（read_file/read_lines/read_file_tail）、
+  写入（write_file/append_file）、精准编辑（replace_in_file/replace_lines/replace_between/
+  replace_section）、插入（insert_after/insert_before/insert_at_line）、
+  删除（delete_lines/delete_text/delete_between/remove_section）、
+  查询（list_files/file_exists/stat_file/search_symbols）。
+  大文件先用 stat_file 获取结构，再用 search_symbols 定位，最后 read_lines 局部读取。
+  写入前必须完整理解上下文，写入后验证 Verified 字段。
+  调用格式：tool_call { "name": "file_operations", "arguments": { "operation": "操作名", ...参数 } }
 ---
 
 # 文件操作

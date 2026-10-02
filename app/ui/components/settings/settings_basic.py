@@ -5,7 +5,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal
 
-from app.core.app_constants import CHROME_PORT
 from app.core.config import ConfigManager
 from app.ui.theme import Theme, theme_manager, get_available_themes, THEME_DIR
 from app.ui.components.theme_editor import ThemeEditorDialog
@@ -162,13 +161,13 @@ class SettingsBasicSection(QFrame):
 
     def load_from_config(self, config):
         self.config = config or {}
-        self.port_edit.setText(str(self.config.get("chrome_port", CHROME_PORT)))
+        self.port_edit.setText(str(self.config.get("chrome_port", 9527)))
         self.fix_limit_spin.setValue(self.config.get("fix_limit", 5))
         self.auto_export_toggle.setChecked(self.config.get("auto_export", True))
         self.code_path_edit.setText(self.config.get("export_code_path", ""))
         self.img_path_edit.setText(self.config.get("export_image_path", ""))
-        self.chat_load_turns_spin.setValue(int(self.config.get("chat_message_load_turns", 20)))
-        self.chat_load_step_turns_spin.setValue(int(self.config.get("chat_message_load_step_turns", 10)))
+        self.chat_load_turns_spin.setValue(int(self.config.get("chat_message_load_turns", 200)))
+        self.chat_load_step_turns_spin.setValue(int(self.config.get("chat_message_load_step_turns", 50)))
 
         theme_name = self.config.get("theme", "Dark")
         idx = self.theme_combo.findText(theme_name)
