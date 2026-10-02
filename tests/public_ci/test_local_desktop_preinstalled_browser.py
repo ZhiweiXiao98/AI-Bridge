@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import unittest
 import zipfile
@@ -15,6 +16,27 @@ from local_build import digest
 
 
 class PreinstalledBrowserTests(unittest.TestCase):
+    def test_query_only_uses_selected_system_powershell_modules_without_mutating_parent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            metadata = self.metadata(root)
+            metadata['ok'] = True
+            powershell = root / 'System32/WindowsPowerShell/v1.0/powershell.exe'
+            powershell.parent.mkdir(parents=True)
+            powershell.write_bytes(b'unit-test-placeholder')
+            with patch.dict(os.environ, {'SYSTEMROOT': str(root), 'PSModulePath': 'foreign PS7 modules'}, clear=True), \
+                    patch.object(installed, 'runner_identity', return_value={'origin': 'github-hosted-runner'}), \
+                    patch.object(installed.subprocess, 'run', return_value=subprocess.CompletedProcess(
+                        [], 0, json.dumps(metadata), '')) as execute:
+                installed.read_preinstalled_chrome()
+                self.assertEqual(os.environ['PSModulePath'], 'foreign PS7 modules')
+                self.assertEqual(execute.call_args.kwargs['env']['PSModulePath'], str(powershell.parent / 'Modules'))
+                self.assertEqual(execute.call_args.args[0][0], str(powershell))
+            self.assertIn("[IO.Path]::Combine($PSHOME, 'Modules\\Microsoft.PowerShell.Security\\Microsoft.PowerShell.Security.psd1')", installed._CHROME_QUERY)
+            self.assertLess(installed._CHROME_QUERY.index('Import-Module'), installed._CHROME_QUERY.index('Get-AuthenticodeSignature'))
+            failure = json.loads(installed.query_failure_diagnostic({'stage': 'signature_module'}, ''))
+            self.assertEqual(failure['stage'], 'signature_module')
+
     def test_query_failure_diagnostic_is_fixed_and_private_values_are_dropped(self):
         result = json.loads(installed.query_failure_diagnostic(
             {'stage': 'signature', 'error_kind': 'RuntimeException', 'signature_status': 'NotTrusted',

@@ -32,6 +32,8 @@ $registryFound = $true
 $stage = 'chrome_file'
 $item = Get-Item -LiteralPath $chrome
 $fileFound = $true
+$stage = 'signature_module'
+Import-Module -Name ([IO.Path]::Combine($PSHOME, 'Modules\Microsoft.PowerShell.Security\Microsoft.PowerShell.Security.psd1')) -ErrorAction Stop
 $stage = 'signature'
 $signature = Get-AuthenticodeSignature -LiteralPath $item.FullName
 $signatureState = [string]$signature.Status
@@ -91,7 +93,7 @@ def validate_chrome_metadata(metadata: dict) -> tuple[Path, dict]:
 def query_failure_diagnostic(metadata, stderr: str) -> str:
     """只回显固定状态及严格布尔；丢弃 PowerShell 异常正文、路径和证书详情。"""
     metadata = metadata if isinstance(metadata, dict) else {}
-    stages = {'registry', 'chrome_file', 'signature', 'publisher', 'metadata'}
+    stages = {'registry', 'chrome_file', 'signature_module', 'signature', 'publisher', 'metadata'}
     kinds = {'RuntimeException', 'ItemNotFoundException', 'DriveNotFoundException', 'ParameterBindingException',
              'CommandNotFoundException', 'SecurityException', 'IOException'}
     statuses = {'Valid', 'NotSigned', 'UnknownError', 'NotTrusted', 'HashMismatch',
@@ -119,8 +121,13 @@ def read_preinstalled_chrome() -> tuple[Path, dict]:
     powershell = system_root / 'System32/WindowsPowerShell/v1.0/powershell.exe'
     if not system_root.is_absolute() or not powershell.is_file():
         raise RuntimeError('未找到 Windows 自带的只读签名查询工具')
+    # pwsh 经 Python 启动 Windows PowerShell 时会错误继承 PS7 模块目录。
+    # 只限制本次子进程，签名模块仍通过已选 System32 主程序的 $PSHOME 显式导入。
+    # https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_psmodulepath
+    environment = {key: value for key, value in os.environ.items() if key.upper() != 'PSMODULEPATH'}
+    environment['PSModulePath'] = str(powershell.parent / 'Modules')
     result = subprocess.run([str(powershell), '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', _CHROME_QUERY],
-                            capture_output=True, encoding='utf-8-sig', timeout=40, check=False)
+                            capture_output=True, encoding='utf-8-sig', timeout=40, check=False, env=environment)
     try:
         metadata = json.loads(result.stdout)
     except (ValueError, TypeError):
