@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 import traceback
@@ -173,7 +174,9 @@ class WorkerApiModeBridge:
 
         except Exception as e:
             self.safe_emit_status(f"❌ API 初始化失败: {e}")
-            self.mode = "browser"
+            # 本地应用初始化失败不能偷偷尝试连接网页账号。
+            if os.environ.get("AI_BRIDGE_LOCAL_MODE") != "1":
+                self.mode = "browser"
 
     def api_probe_tool_support(self, **kwargs):
         """Probe native API tool-call support for the active API profile."""
@@ -281,6 +284,9 @@ class WorkerApiModeBridge:
         """API模式主循环"""
         self._init_api_source()
         if not self.api_source:
+            if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+                self.safe_emit_status("❌ 本地 API 源不可用，请检查模型配置后重启；未连接浏览器")
+                return
             self.safe_emit_status("❌ API源不可用，回退到浏览器模式")
             self.mode = "browser"
             self._run_browser_loop()

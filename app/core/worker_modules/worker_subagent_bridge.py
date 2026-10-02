@@ -17,6 +17,7 @@ class WorkerSubagentBridge(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._config = SubagentConfig.get()
+        self._closed = False
         logger.info(
             "[SubagentBridge] 初始化: enabled=%s suggest_enabled=%s api_key=%s provider=%s",
             self._config.enabled,
@@ -31,6 +32,8 @@ class WorkerSubagentBridge(QObject):
         logger.info("[SubagentBridge] Subagent 线程对象已创建: running=%s", self.subagent_thread.isRunning())
 
     def start(self):
+        if self._closed:
+            return
         logger.info(
             "[SubagentBridge] start 请求: enabled=%s suggest_enabled=%s running=%s",
             self._config.enabled,
@@ -46,11 +49,15 @@ class WorkerSubagentBridge(QObject):
         self.subagent_thread.start()
         logger.info("[SubagentBridge] 已启动: running=%s", self.subagent_thread.isRunning())
 
-    def stop(self):
+    def stop(self, timeout=3.0):
         logger.info("[SubagentBridge] stop 请求: running=%s", self.subagent_thread.isRunning())
         if self.subagent_thread.isRunning():
-            self.subagent_thread.stop()
-            logger.info("[SubagentBridge] 已停止")
+            return self.subagent_thread.stop(timeout=timeout)
+        return True
+
+    def shutdown(self, timeout=3.0):
+        self._closed = True
+        return self.stop(timeout=timeout)
 
     def reload(self):
         logger.info("[SubagentBridge] 热重载配置...")

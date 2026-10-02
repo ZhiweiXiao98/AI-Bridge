@@ -5,6 +5,8 @@ import hashlib
 import subprocess
 import sys
 
+from app.core.python_runtime import ensure_project_write_allowed
+
 class SelfUpdateManager:
     def __init__(self, project_root=None, staging_dir=None):
         from app.core.config import ConfigManager
@@ -136,6 +138,7 @@ class SelfUpdateManager:
 
     def apply(self, rel_paths=None):
         """应用更新：将文件从暂存区复制到项目目录，并根据需要触发编译"""
+        ensure_project_write_allowed(self.project_root)
         changes = self.scan()
         count = 0
         csharp_updated = False # 标记是否更新了 C# 代码
@@ -146,6 +149,8 @@ class SelfUpdateManager:
             
             if change['status'] == "same":
                 continue
+
+            ensure_project_write_allowed(self.project_root, change['target_path'])
 
             # 标记 C# 变更
             if "RhinoBIM_Client" in change['rel_path'] and change['rel_path'].endswith(".cs"):

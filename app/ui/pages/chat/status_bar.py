@@ -19,6 +19,7 @@ from app.core.model_capabilities import (
     resolve_model_capability,
 )
 from app.core.project_context import ProjectContext
+from app.core.python_runtime import resolve_project_python, python_subprocess_environment
 from app.core.logging import get_logger
 from app.ui.theme import Theme, theme_manager
 
@@ -238,7 +239,8 @@ class _SandboxMixin:
             """跑一次 python --version 拿版本号，失败返回空串。"""
             try:
                 out = subprocess.check_output(
-                    [path, '--version'], stderr=subprocess.STDOUT, timeout=3
+                    [path, '--version'], stderr=subprocess.STDOUT, timeout=3,
+                    env=python_subprocess_environment(),
                 ).decode().strip()
                 return out.split()[-1] if out else ''
             except Exception:
@@ -246,6 +248,10 @@ class _SandboxMixin:
 
         def add(name, path):
             if not path or path in seen_paths:
+                return
+            try:
+                path = resolve_project_python(root, path, purpose="检测 Python 环境")
+            except RuntimeError:
                 return
             seen_paths.add(path)
             ver = get_version(path)

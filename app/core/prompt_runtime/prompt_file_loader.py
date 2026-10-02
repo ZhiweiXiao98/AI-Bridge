@@ -19,6 +19,9 @@ LEGACY_SUBAGENT_PROMPT_PREFIX = 'Daemon_'
 def _load_prompt_file(filename: str) -> str:
     """读取 Prompt/ 下的指定 MD 文件，不存在或失败返回空字符串。"""
     path = PROMPT_DIR / filename
+    if not path.exists():
+        from app.core.local_paths import resource_path
+        path = resource_path('Prompt', filename)
     try:
         if not path.exists():
             logger.warning('Prompt 文件不存在: %s', path)

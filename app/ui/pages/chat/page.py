@@ -1094,6 +1094,12 @@ class ChatPage(QWidget):
         return snapshot
 
     def _render_api_messages_with_tool_status(self):
+        # Pi 工具往返会在同一流中多次发布历史快照。直到流结束，历史不得
+        # 删除 MessageAreaStreamManager 持有的临时气泡。
+        stream = getattr(self, "_api_stream_manager", None)
+        if stream is not None and getattr(stream, "_active_stream_id", None):
+            self._api_messages_pending_render = True
+            return
         visible, has_more = self.message_window_service.slice_messages('api', self._api_all_messages)
         enriched_visible = []
         status_snapshot = self._build_tool_status_snapshot()

@@ -10,6 +10,7 @@ import threading
 from app.core.logging import get_logger
 from app.core.project_context import ProjectContext
 from app.core.project_paths import project_config_path
+from app.core.python_runtime import resolve_project_python, python_subprocess_environment
 
 logger = get_logger("app.core.worker.code_workspace", side="worker")
 
@@ -110,16 +111,28 @@ class WorkerCodeWorkspaceBridge:
         worker = self.worker
         worker.safe_emit_status("⏳ 正在生成项目快照...")
         try:
+            root = ProjectContext.get().get_project_root()
+            script = os.path.join(root, "dump_code.py")
+            if not os.path.isfile(script):
+                worker.safe_emit_status("❌ 当前项目没有 dump_code.py，无法生成项目快照。")
+                return
+            python = resolve_project_python(
+                root, worker.config.get("sandbox_local_python", ""), purpose="生成项目快照"
+            )
             result = subprocess.run(
-                [sys.executable, "dump_code.py"],
+                [python, script],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
                 creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+                cwd=root,
+                env=python_subprocess_environment(),
+                timeout=120,
             )
             if result.returncode == 0:
-                if os.path.exists("FULL_PROJECT_CONTEXT.txt"):
-                    with open("FULL_PROJECT_CONTEXT.txt", "r", encoding="utf-8") as handle:
+                snapshot_path = os.path.join(root, "FULL_PROJECT_CONTEXT.txt")
+                if os.path.exists(snapshot_path):
+                    with open(snapshot_path, "r", encoding="utf-8") as handle:
                         content = handle.read()
                     worker.snapshot_ready_signal.emit(content)
                     worker.safe_emit_status("✅ 快照生成完毕")

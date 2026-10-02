@@ -18,6 +18,10 @@ class MessageAreaStreamManager(QObject):
 
     def begin_stream(self, stream_id: str, conversation_id: str = ""):
         logger.info(f"[MessageAreaStream] begin_stream | stream_id={stream_id}")
+        # 先完成前一份历史的分片渲染，防止其定时清理删除本次流式气泡。
+        flush = getattr(self._message_area, "flush_render", None)
+        if callable(flush):
+            flush()
         self._active_stream_id = stream_id
         self._show_typing_indicator()
         self._active_bubble = self._create_stream_bubble()

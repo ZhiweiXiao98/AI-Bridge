@@ -52,6 +52,26 @@ def approval(**changes):
     return {"conversation_id": "conv", "request_id": "req", "call_id": "call", "name": "write_file", "arguments": {"path": "file.txt"}, "project_root": "/project", **changes}
 
 
+def test_snapshot_during_active_stream_is_deferred_without_deleting_bubble(page):
+    page._api_stream_manager = SimpleNamespace(_active_stream_id="req")
+    page.message_window_service = SimpleNamespace(slice_messages=Mock())
+    page._render_api_messages_with_tool_status()
+    assert page._api_messages_pending_render
+    page.message_window_service.slice_messages.assert_not_called()
+
+
+def test_stream_start_flushes_old_history_before_inserting_transient(app):
+    from app.ui.pages.chat.message_area_stream import MessageAreaStreamManager
+    order = []
+    area = SimpleNamespace(flush_render=lambda: order.append("flush"))
+    manager = MessageAreaStreamManager(area)
+    manager._show_typing_indicator = lambda: order.append("indicator")
+    manager._create_stream_bubble = lambda: order.append("bubble")
+    manager.begin_stream("req")
+    assert order == ["flush", "indicator", "bubble"]
+    manager.reset_stream_ui()
+
+
 def round_state(state, **changes):
     return {"conversation_id": "conv", "request_id": "req", "state": state, **changes}
 

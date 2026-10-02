@@ -1,0 +1,209 @@
+"""完整安装包离线自检；仅显式 --local-smoke-test 启用，不调用外部模型。"""
+from __future__ import annotations
+
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import json
+from pathlib import Path
+import platform
+import threading
+import time
+
+
+def wait_for(app, predicate, message, timeout=30):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        app.processEvents()
+        if predicate():
+            return
+        time.sleep(0.02)
+    raise RuntimeError("本地自检超时：" + message)
+
+
+class FixtureProvider(ThreadingHTTPServer):
+    daemon_threads = True
+
+    def __init__(self):
+        super().__init__(("127.0.0.1", 0), FixtureHandler)
+        self.requests = []
+        self.thread = threading.Thread(target=self.serve_forever, daemon=True)
+        self.thread.start()
+
+    def close(self):
+        self.shutdown()
+        self.server_close()
+        self.thread.join(3)
+
+
+class FixtureHandler(BaseHTTPRequestHandler):
+    def log_message(self, *_):
+        pass
+
+    def do_POST(self):
+        if self.path != "/v1/chat/completions":
+            self.send_error(404)
+            return
+        size = int(self.headers.get("Content-Length", "0"))
+        if size > 2_000_000:
+            self.send_error(413)
+            return
+        request = json.loads(self.rfile.read(size))
+        messages = request.get("messages", [])
+        self.server.requests.append(messages)
+        user = next((str(m.get("content", "")) for m in reversed(messages) if m.get("role") == "user"), "")
+        last_user = max((i for i, m in enumerate(messages) if m.get("role") == "user"), default=-1)
+        has_tool_result = any(m.get("role") == "tool" for m in messages[last_user + 1:])
+        want_tool = any(x in user for x in ("读取", "拒绝", "取消")) and not has_tool_result
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        def emit(delta, finish=None):
+            packet = {"id": "local-selftest", "object": "chat.completion.chunk", "created": 1,
+                      "model": "local-fixture", "choices": [{"index": 0, "delta": delta, "finish_reason": finish}]}
+            self.wfile.write(("data: " + json.dumps(packet) + "\n\n").encode())
+            self.wfile.flush()
+        if want_tool:
+            args = ({"operation": "read_file", "path": "selftest.txt"} if "读取" in user else
+                    {"operation": "write_file", "path": "must-not-exist.txt", "content": "denied"})
+            emit({"role": "assistant", "tool_calls": [{"index": 0, "id": "selftest-call",
+                  "type": "function", "function": {"name": "file_operations", "arguments": json.dumps(args)}}]})
+            emit({}, "tool_calls")
+        else:
+            emit({"role": "assistant", "content": "本地模拟模型已完成，未连接外部服务"})
+            emit({}, "stop")
+        self.wfile.write(b"data: [DONE]\n\n")
+        self.wfile.flush()
+
+
+def run_selftest(app, window, worker, home: Path):
+    """真实 Pi SDK、真实文件工具、真实 Qt 审批对话框；模型响应由本机 HTTP fixture 提供。"""
+    from PySide6.QtCore import qVersion
+    from PySide6.QtWidgets import QMessageBox
+    from app.core.api_mode_config import APIModeConfigManager
+    from app.core.agent_runtime.registry import runtime_options
+    from app.core.project_context import ProjectContext
+    from app.core.conversation_store import ConversationStore
+    from app.core.local_paths import resource_root
+    from app.core.agent_runtime.paths import node_executable
+    import subprocess
+    import importlib
+
+    core_imports = ["chromadb", "fastembed", "onnxruntime", "docker", "selenium",
+                    "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets"]
+    for module in core_imports:
+        importlib.import_module(module)
+    if window.embedded_browser_panel.render_mode == "fallback":
+        raise RuntimeError("完整本地包的 Qt WebEngine 未能加载；不能用静默降级冒充通过")
+
+    if hasattr(worker, "_request_send"):
+        raise RuntimeError("自检错误地使用了远程 Worker")
+    pi = next(item for item in runtime_options() if item["id"] == "pi")
+    if not pi["available"]:
+        raise RuntimeError("Pi 不可用：" + pi["reason"])
+    skills = worker.agent.skills_manager
+    if not skills.get_skill_instance("file_operations"):
+        raise RuntimeError("完整文件工具未随应用加载")
+    if not window.plugin_loader.plugins:
+        raise RuntimeError("内置面板插件未随应用加载")
+    project = Path(ProjectContext.get().get_project_root())
+    (project / "selftest.txt").write_text("AI Bridge 本地文件工具自检\n", encoding="utf-8")
+    provider = FixtureProvider()
+    config = APIModeConfigManager.load()
+    original = json.loads(json.dumps(config))
+    profile = config["profiles"][config["active_profile"]]
+    profile.update(api_key="local-fixture-not-a-secret", model="local-fixture", provider="openai_compatible",
+                   base_url=f"http://127.0.0.1:{provider.server_port}/v1", supports_tools=True,
+                   tool_calling_mode="native_tools", tool_capability={"status": "supported", "protocol": "native_tools"})
+    APIModeConfigManager.save(config)
+    worker.api_source.reload_runtime_config()
+    page = window.chat_page
+    page.on_mode_switch("api")
+    if worker.mode != "api" or page.current_mode != "api" or page.session_tabs.currentIndex() != 1:
+        raise RuntimeError("本地核心与界面模式不一致")
+    terminals = []
+    worker.api_round_state_signal.connect(lambda payload: terminals.append(payload) if payload.get("state") in {"finalized", "failed", "cancelled"} else None)
+    try:
+        worker.api_new_conversation("完整本地自检", runtime="pi")
+        app.processEvents()
+        store = worker.api_source.conv_store
+        conversation = store.active_id
+        worker.api_send("本地自检读取")
+        wait_for(app, lambda: page._api_approval_dialog is not None, "等待真实工具审批界面")
+        if (project / "must-not-exist.txt").exists():
+            raise RuntimeError("审批前不应执行写入")
+        page._api_approval_dialog.button(QMessageBox.StandardButton.Yes).click()
+        wait_for(app, lambda: not worker.agent_runtime_bridge.is_running and terminals, "批准工具后完成对话")
+        if not terminals or terminals[-1]["state"] != "finalized":
+            raise RuntimeError("Pi 未完成真实工具往返：" + repr(terminals[-1:]))
+        history = store.get_display_messages(conversation)
+        if not any(m.get("role") == "tool" and "本地文件工具自检" in str(m) for m in history):
+            raise RuntimeError("Pi 工具结果没有进入会话历史")
+        session = store.get_runtime_session(conversation)["session_path"]
+        if not Path(session).is_file():
+            raise RuntimeError("Pi 未保存原生会话")
+
+        worker.api_send("本地自检恢复")
+        wait_for(app, lambda: not worker.agent_runtime_bridge.is_running and len(terminals) >= 2, "从原生会话继续")
+        if store.get_runtime_session(conversation)["session_path"] != session:
+            raise RuntimeError("续聊没有恢复同一原生会话")
+        if sum(m.get("role") == "user" for m in provider.requests[-1]) < 2:
+            raise RuntimeError("续聊未携带上轮历史")
+
+        worker.api_send("本地自检拒绝")
+        wait_for(app, lambda: page._api_approval_dialog is not None, "拒绝工具审批")
+        page._api_approval_dialog.button(QMessageBox.StandardButton.No).click()
+        wait_for(app, lambda: not worker.agent_runtime_bridge.is_running and len(terminals) >= 3, "拒绝后结束")
+        if (project / "must-not-exist.txt").exists():
+            raise RuntimeError("被拒绝的文件工具仍发生了写入")
+
+        worker.api_send("本地自检取消")
+        wait_for(app, lambda: page._api_approval_dialog is not None, "取消待批准请求")
+        page._stop_api_request()
+        wait_for(app, lambda: not worker.agent_runtime_bridge.is_running and len(terminals) >= 4, "取消请求与 Pi 退出")
+        if (project / "must-not-exist.txt").exists() or ProjectContext.get()._runtime_leases:
+            raise RuntimeError("取消后存在写入或未释放项目锁")
+        reopened = ConversationStore(str(store.storage_dir))
+        if not reopened.get_display_messages(conversation):
+            raise RuntimeError("重新打开会话存储失败")
+        report = {"mode": "local-worker", "remote_server_required": False,
+                  "provider": "仅本机模拟模型，未测试真实收费 API", "python": platform.python_version(),
+                  "qt": qVersion(), "node": subprocess.check_output([node_executable(), "--version"], text=True).strip(),
+                  "pi_version": "0.99.1", "resource_root": str(resource_root()),
+                  "skills": len(skills.skill_instances), "plugins": len(window.plugin_loader.plugins),
+                  "selftest_conversation_id": conversation, "selftest_session_path": session,
+                  "core_imports": core_imports, "embedding_model_not_downloaded": True,
+                  "checks": ["本地Worker与完整主窗口", "真实Pi SDK对话", "真实Qt工具批准", "真实文件工具结果",
+                             "原生会话保存及续聊", "工具拒绝不写文件", "工具取消不写文件", "项目锁释放", "历史重开"],
+                  "optional_external_services": {"docker": "未连接，不自动拉镜像", "chrome": "未连接", "rag_models": "未下载", "real_provider": "未调用"}}
+        worker.stop_worker()
+        if worker.isRunning() or worker.agent_runtime_bridge.is_running:
+            raise RuntimeError("退出后本地 Worker/Pi 仍在运行")
+        report["checks"].append("Worker与Pi清理完成")
+        return report
+    finally:
+        APIModeConfigManager.save(original)
+        provider.close()
+
+
+def run_resume_selftest(app, window, worker, home: Path):
+    """第二个真实应用进程只重开上一轮专用会话，不启动模型服务或发送请求。"""
+    from app.core.api_mode_config import APIModeConfigManager
+    previous = json.loads((home / "local-smoke.json").read_text(encoding="utf-8"))
+    if previous.get("provider") != "仅本机模拟模型，未测试真实收费 API":
+        raise RuntimeError("恢复自检证据不是本机模拟测试，已停止")
+    conversation = previous["selftest_conversation_id"]
+    session = previous["selftest_session_path"]
+    store = worker.api_source.conv_store
+    wait_for(app, lambda: conversation in window.chat_page._api_conversations_by_id, "应用重启后的会话列表")
+    if store.active_id != conversation or not store.get_display_messages(conversation):
+        raise RuntimeError("应用重启没有恢复先前会话")
+    if store.get_runtime_session(conversation).get("session_path") != session or not Path(session).is_file():
+        raise RuntimeError("应用重启后的 Pi 原生会话指针不匹配")
+    if any(profile.get("api_key") for profile in APIModeConfigManager.load().get("profiles", {}).values()):
+        raise RuntimeError("模拟配置未恢复为空密钥")
+    worker.stop_worker()
+    if worker.isRunning() or worker.agent_runtime_bridge.is_running:
+        raise RuntimeError("恢复自检结束后仍有任务运行")
+    return {"mode": "local-worker", "conversation_id": conversation,
+            "checks": ["应用重启后原会话可见", "应用重启后历史和Pi会话一致", "模拟模型配置已清除", "恢复自检退出完成"]}

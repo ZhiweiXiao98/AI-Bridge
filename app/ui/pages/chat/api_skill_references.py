@@ -13,6 +13,7 @@ from functools import lru_cache
 from typing import Callable, Iterable, Optional
 
 from app.core.app_constants import APP_ROOT
+from app.core.local_paths import resource_path
 from app.core.skills.loader import SkillLoader
 
 
@@ -36,7 +37,7 @@ class SkillReferenceResult:
 
 
 def _skill_dirs() -> list[str]:
-    root = os.path.join(APP_ROOT, "app", "core", "skills")
+    root = str(resource_path("app", "core", "skills"))
     return [
         os.path.join(root, "core"),
         os.path.join(root, "extended"),

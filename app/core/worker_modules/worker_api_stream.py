@@ -17,8 +17,11 @@ class WorkerStreamBridge(QObject):
         super().__init__(parent)
         self._handler: APIStreamHandler = None
         self._consumer = UpstreamConsumer(worker) if worker else None
+        self._closed = False
 
     def init_handler(self, api_source, tool_router=None):
+        if self._closed:
+            return
         self._handler = APIStreamHandler(api_source, tool_router=tool_router)
         self._target_client_id = None
         self._target_group = "admin"
@@ -91,6 +94,8 @@ class WorkerStreamBridge(QObject):
         self._consumer.emit_stream(self._payload_to_event(payload), extra=self._consumer_extra(payload))
 
     def start_stream(self, text: str, tool_router=None):
+        if self._closed:
+            return
         logger.info(f"[WorkerStreamBridge] start_stream 被调用 | text_len={len(text)}")
         print(f"[DBG][WorkerStreamBridge] start_stream handler={bool(self._handler)} text_len={len(text)}")
         if not self._handler:
@@ -111,6 +116,12 @@ class WorkerStreamBridge(QObject):
     def cancel_stream(self):
         if self._handler:
             self._handler.cancel()
+
+    def shutdown(self, timeout=3.0):
+        self._closed = True
+        if self._handler:
+            return self._handler.shutdown(timeout=timeout)
+        return True
 
     def _on_chunk(self, chunk: StreamChunk):
         payload = self._chunk_to_payload(chunk)

@@ -31,6 +31,8 @@ from PySide6.QtWidgets import (
 )
 
 from app.core.config import ConfigManager
+from app.core.project_context import ProjectContext
+from app.core.python_runtime import resolve_project_python, python_subprocess_environment
 from app.core.utils.error_reporter import ErrorReporter
 from app.core.utils.text_utils import is_test_log
 from app.core.app_constants import LOCAL_SERVER_HOST, SERVER_PORT
@@ -120,14 +122,13 @@ class TestRunnerThread(QThread):
     finished_signal = Signal(str)
 
     def run(self):
-        if getattr(sys, "frozen", False):
-            message = "Local pytest requires the source checkout and Python environment."
-            self.log_signal.emit(message)
-            self.finished_signal.emit(message)
-            return
-        cmd = [sys.executable, "-m", "pytest", "tests/", "-v"]
         full_log = []
         try:
+            root = ProjectContext.get().get_project_root()
+            python = resolve_project_python(
+                root, ConfigManager.load().get("sandbox_local_python", ""), purpose="运行 pytest"
+            )
+            cmd = [python, "-m", "pytest", "tests/", "-v"]
             creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
             process = subprocess.Popen(
                 cmd,
@@ -138,6 +139,8 @@ class TestRunnerThread(QThread):
                 errors="replace",
                 bufsize=1,
                 creationflags=creationflags,
+                cwd=root,
+                env=python_subprocess_environment(),
             )
 
             total_tests = 0
@@ -176,7 +179,7 @@ class TestRunnerThread(QThread):
             self.finished_signal.emit(full_text)
 
         except Exception as e:
-            msg = f"❌ Execution Error: {e}"
+            msg = f"❌ 测试启动失败: {e}"
             self.log_signal.emit(msg)
             self.finished_signal.emit(msg)
 

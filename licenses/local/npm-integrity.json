@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "purpose": "对原锁缺少 integrity 的七个 Pi 子包补充官方完整性记录；不改变版本或原锁。",
+  "verified_at_utc": "2026-10-02",
+  "packages": {
+    "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/chord": {
+      "name": "@earendil-works/chord",
+      "version": "0.99.1",
+      "registry_url": "https://registry.npmjs.org/@earendil-works/chord/0.99.1",
+      "url": "https://registry.npmjs.org/@earendil-works/chord/-/chord-0.99.1.tgz",
+      "integrity": "sha512-4xyn0IBzJ+Xu/iOGi2hjXJGAR61QEhEWZsIqTDqr+GmItdquYwBO5jYFnqGiBaTqlY12/EpM7QHoEKSHbyvOug=="
+    },
+    "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-agent-core": {
+      "name": "@earendil-works/pi-agent-core",
+      "version": "0.99.1",
+      "registry_url": "https://registry.npmjs.org/@earendil-works/pi-agent-core/0.99.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-agent-core/-/pi-agent-core-0.99.1.tgz",
+      "integrity": "sha512-zywvWnj5FujeuFI/x/CJHwwxhcLIQgjqseTA+bQgX4O8gJTcgjRd/I8SZnQDqJvxC9QcV12ujiGLviv6EgwcCg=="
+    },
+    "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai": {
+      "name": "@earendil-works/pi-ai",
+      "version": "0.99.1",
+      "registry_url": "https://registry.npmjs.org/@earendil-works/pi-ai/0.99.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-0.99.1.tgz",
+      "integrity": "sha512-4nV9JKc94iPX8bwdGPc2nTuVPKIPsffhnp3WoN9NYCNqbtoOF8LhYcIs/+Sn/alroqJK/5QRu6/Z6Ck+n0hyBA=="
+    },
+    "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-codemode": {
+      "name": "@earendil-works/pi-codemode",
+      "version": "0.99.1",
+      "registry_url": "https://registry.npmjs.org/@earendil-works/pi-codemode/0.99.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-codemode/-/pi-codemode-0.99.1.tgz",
+      "integrity": "sha512-oh8TMsBI3SWTN3xTQtX8u5n+BKhnVXcFagroWumfn6/WWfBnDYL/LmeQtjLb83WRTb9rcu+ZdK8rFa4vggvCJg=="
+    },
+    "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-mcp": {
+      "name": "@earendil-works/pi-mcp",
+      "version": "0.99.1",
+      "registry_url": "https://registry.npmjs.org/@earendil-works/pi-mcp/0.99.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-mcp/-/pi-mcp-0.99.1.tgz",
+      "integrity": "sha512-YCFGPkmDzLwQuIzwfbP6Vuk/g/ukKpZhwTpbcfzomuI1Fkiu6hHRkOGwAqsO3G8cTkZWkM8vmOkFJjStQNC4qA=="
+    },
+    "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-telemetry": {
+      "name": "@earendil-works/pi-telemetry",
+      "version": "0.99.1",
+      "registry_url": "https://registry.npmjs.org/@earendil-works/pi-telemetry/0.99.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-telemetry/-/pi-telemetry-0.99.1.tgz",
+      "integrity": "sha512-9PBPjGk+TXRtuMianpqBbHBpYpyKusESF6rwdmgD0WTZSTUQXhcKEO0hAINRLuSwy4V7yPvXV+EVV0ONY7mbpQ=="
+    },
+    "node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-tui": {
+      "name": "@earendil-works/pi-tui",
+      "version": "0.99.1",
+      "registry_url": "https://registry.npmjs.org/@earendil-works/pi-tui/0.99.1",
+      "url": "https://registry.npmjs.org/@earendil-works/pi-tui/-/pi-tui-0.99.1.tgz",
+      "integrity": "sha512-gZp0Guat96Fr1AuC/xqVz5B2lulZakp/PxD1lXx3lSgBdjiqmwYhJbcQ0HRrGAfy0WtMGn9b05RJr5qJf7oIuw=="
+    }
+  }
+}

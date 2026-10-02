@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 import os
 import sys
 import shutil
@@ -26,6 +27,13 @@ class ConnectionManager:
         """
         self.port = port
         self.driver = None
+        self._lifecycle_lock = threading.Lock()
+        self._closed = False
+        self._service = None
+        self._init_worker = None
+        self._owned_services = []
+        self._init_workers = []
+        self._shutdown_worker = None
 
     def is_port_open(self) -> bool:
         """
@@ -34,6 +42,8 @@ class ConnectionManager:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(1.0)
         try:
+            if self._closed:
+                return False
             return s.connect_ex((LOCAL_SERVER_HOST, self.port)) == 0
         except Exception:
             return False
@@ -46,6 +56,8 @@ class ConnectionManager:
         """
         print("🔧 [Selenium] WebDriver 初始化线程启动...")
         try:
+            if self._closed:
+                return
             socket.setdefaulttimeout(15)
             print(f"🔧 [Selenium] ChromeDriver Service Path: {service.path}")
             container["driver"] = webdriver.Chrome(service=service, options=options)
@@ -56,7 +68,39 @@ class ConnectionManager:
             container["error"] = e
         finally:
             socket.setdefaulttimeout(None)
+            if self._closed:
+                # This Service was created by this connection manager. Do not
+                # call driver.quit(): the attached Chrome belongs to the user.
+                service.stop()
             print("🔧 [Selenium] WebDriver 初始化线程结束。")
+
+    def shutdown(self, timeout=3.0):
+        deadline = time.monotonic() + max(0.0, timeout)
+        with self._lifecycle_lock:
+            self._closed = True
+            services = list(self._owned_services)
+            if self._service is not None and self._service not in services:
+                services.append(self._service)
+            if services and self._shutdown_worker is None:
+                def stop_services():
+                    for service in services:
+                        try:
+                            service.stop()
+                        except Exception:
+                            traceback.print_exc(file=sys.stderr)
+                self._shutdown_worker = threading.Thread(target=stop_services, daemon=True,
+                                                        name="chromedriver-cleanup")
+                self._shutdown_worker.start()
+            threads = [self._shutdown_worker, *self._init_workers]
+            if self._init_worker is not None and self._init_worker not in threads:
+                threads.append(self._init_worker)
+        for thread in threads:
+            if thread and thread is not threading.current_thread():
+                thread.join(timeout=max(0.0, deadline - time.monotonic()))
+        stopped = not any(thread and thread.is_alive() for thread in threads)
+        if stopped:
+            self.driver = None
+        return stopped
 
     def _candidate_driver_paths(self):
         """
@@ -138,6 +182,8 @@ class ConnectionManager:
         """
         尝试连接到 Chrome 浏览器并初始化 WebDriver。
         """
+        if self._closed:
+            return False, "浏览器连接正在关闭"
         print(f"🔌 [ConnectionManager] 正在尝试连接 Chrome 远程调试端口 {self.port}...")
 
         if not self.is_port_open():
@@ -156,10 +202,19 @@ class ConnectionManager:
         print(f"🔧 [ConnectionManager] {service_msg}")
 
         container = {}
-        t = threading.Thread(target=self._init_thread, args=(service, options, container))
-        t.daemon = True
-        t.start()
+        with self._lifecycle_lock:
+            if self._closed:
+                return False, "浏览器连接正在关闭"
+            self._service = service
+            self._owned_services.append(service)
+            t = threading.Thread(target=self._init_thread, args=(service, options, container), daemon=True)
+            self._init_worker = t
+            self._init_workers.append(t)
+            t.start()
         t.join(timeout=20)
+
+        if self._closed:
+            return False, "浏览器连接正在关闭"
 
         if t.is_alive():
             print("❌ [ConnectionManager] WebDriver 初始化严重超时！")

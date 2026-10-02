@@ -4,6 +4,7 @@ import shutil
 import time
 from app.core.self_update import SelfUpdateManager
 from app.core.project_context import ProjectContext
+from app.core.python_runtime import ensure_project_write_allowed, is_frozen_application
 
 MAGIC_CMD_RESTART_SERVER = "::MAGIC_CMD_RESTART_SERVER::"
 
@@ -58,11 +59,13 @@ class UpdateService:
     def apply_hot_patch(self, cache_dir):
         try:
             project_root = ProjectContext.get().get_project_root()
+            ensure_project_write_allowed(project_root)
             for root, dirs, files in os.walk(cache_dir):
                 for file in files:
                     src = os.path.join(root, file)
                     rel = os.path.relpath(src, cache_dir)
                     dest = os.path.join(project_root, rel)
+                    ensure_project_write_allowed(project_root, dest)
                     os.makedirs(os.path.dirname(dest), exist_ok=True)
                     shutil.copy2(src, dest)
             shutil.rmtree(cache_dir)
@@ -71,9 +74,19 @@ class UpdateService:
             return False, f"热补丁失败: {e}"
 
     def process_updates(self, paths, logger_func, ota_callback):
-        changes = self.mgr.scan()
         project_root = ProjectContext.get().get_project_root()
+        try:
+            ensure_project_write_allowed(project_root)
+        except RuntimeError as exc:
+            logger_func(f"❌ {exc}")
+            return False
+        changes = self.mgr.scan()
         cache_root = os.path.join(project_root, "update_cache")
+        try:
+            ensure_project_write_allowed(project_root, cache_root)
+        except RuntimeError as exc:
+            logger_func(f"❌ {exc}")
+            return False
         if not os.path.exists(cache_root): os.makedirs(cache_root)
 
         staged_count = 0
@@ -86,6 +99,13 @@ class UpdateService:
         for change in changes:
             normalized_rel = change['rel_path'].replace('\\', '/')
             if normalized_rel not in normalized_target_paths: continue
+
+            try:
+                ensure_project_write_allowed(project_root, os.path.join(project_root, normalized_rel))
+                ensure_project_write_allowed(cache_root, os.path.join(cache_root, normalized_rel))
+            except RuntimeError as exc:
+                logger_func(f"❌ 跳过 {normalized_rel}: {exc}")
+                continue
 
             with open(change['staging_path'], 'r', encoding='utf-8') as f: content = f.read()
 
@@ -131,6 +151,23 @@ class UpdateService:
 
             except Exception as e:
                 print(f"Failed to stage {change['rel_path']}: {e}")
+
+        if is_frozen_application() or os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+            # These are editable project files, not the frozen application's
+            # Python modules. There is no server supervisor to restart us.
+            if staged_count:
+                ok, message = self.apply_hot_patch(cache_root)
+                next_step = (
+                    "更新 AI-Bridge 应用请替换完整安装包。"
+                    if is_frozen_application() else "运行中模块的改动需重启后生效。"
+                )
+                logger_func(
+                    f"✅ 已应用 {staged_count} 个项目文件；{next_step}"
+                    if ok else f"❌ {message}"
+                )
+            else:
+                logger_func("⚠️ 当前项目无需更新")
+            return False
 
         if sync_data:
             logger_func(f"📡 [OTA] 广播 {len(sync_data)} 个文件...")

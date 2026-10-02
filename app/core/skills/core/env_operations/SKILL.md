@@ -70,6 +70,6 @@ env_operations(operation="install_package", package="httpx", version=">=0.28.0",
 
 ## 注意事项
 
-- 安装操作使用当前解释器（`sys.executable -m pip install`），确保装到正确的虚拟环境
+- 安装操作使用项目执行环境指定的 Python（`sandbox_local_python` 或 `AI_BRIDGE_PYTHON`）；打包应用自动识别项目 `.venv`，缺少外部 Python 时提示配置，绝不把应用程序本身作为 pip 运行。源码模式未配置时使用当前解释器。
 - `check_requirements` 只做对比，不自动安装，由 AI 决定后续动作
 - `install_package` 属于危险操作，未传 `confirm=True` 时只返回提示，不执行

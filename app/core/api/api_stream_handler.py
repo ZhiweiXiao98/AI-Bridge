@@ -16,6 +16,10 @@ class APIStreamHandler:
         self.state = APIStreamState()
         self._cancel_flag = False
         self._thread: Optional[threading.Thread] = None
+        self._lifecycle_lock = threading.Lock()
+        self._closed = False
+        self._loop = None
+        self._task = None
 
     @property
     def is_streaming(self) -> bool:
@@ -24,6 +28,21 @@ class APIStreamHandler:
     def cancel(self):
         """请求取消当前流式任务（软取消）。"""
         self._cancel_flag = True
+
+    def shutdown(self, timeout=3.0):
+        """Cancel the async request itself, including a provider stalled before its next chunk."""
+        with self._lifecycle_lock:
+            self._closed = True
+            self._cancel_flag = True
+            loop, task, thread = self._loop, self._task, self._thread
+        if loop and task:
+            try:
+                loop.call_soon_threadsafe(task.cancel)
+            except RuntimeError:
+                pass  # The loop has already finished.
+        if thread and thread is not threading.current_thread():
+            thread.join(timeout=max(0.0, timeout))
+        return not bool(thread and thread.is_alive())
 
     def _make_chunk(
         self,
@@ -67,6 +86,8 @@ class APIStreamHandler:
         return str(event or ""), "", "content"
 
     def start_stream(self, text: str, on_chunk: Optional[Callable[[StreamChunk], None]] = None, on_complete: Optional[Callable[[StreamChunk], None]] = None, on_error: Optional[Callable[[StreamChunk], None]] = None, tool_router=None):
+        if self._closed:
+            return
         logger.info(f"[APIStreamHandler] start_stream 被调用 | text_len={len(text)}")
         if self.state.is_streaming:
             logger.warning("[APIStreamHandler] 已有流式处理在进行中")
@@ -90,9 +111,18 @@ class APIStreamHandler:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
+                with self._lifecycle_lock:
+                    self._loop = loop
+                    self._task = loop.create_task(self._stream_loop(text, stream_id, conv_id, on_chunk, on_complete, on_error, tool_router or self.tool_router))
+                    if self._closed:
+                        self._task.cancel()
                 logger.info(f"[APIStreamHandler] 运行 _stream_loop | stream_id={stream_id}")
-                loop.run_until_complete(self._stream_loop(text, stream_id, conv_id, on_chunk, on_complete, on_error, tool_router or self.tool_router))
+                loop.run_until_complete(self._task)
                 logger.info(f"[APIStreamHandler] _stream_loop 完成 | stream_id={stream_id}")
+            except asyncio.CancelledError:
+                self.state.cancel()
+                if on_chunk:
+                    on_chunk(self._make_chunk(stream_id, StreamStatus.CANCELLED, conv_id))
             except Exception as e:
                 logger.error(f"[APIStreamHandler] 流式线程异�� | stream_id={stream_id} | error={e}", exc_info=True)
                 logger.error(f"Stream thread error: {e}")
@@ -100,12 +130,18 @@ class APIStreamHandler:
                 if on_error:
                     on_error(self._make_chunk(stream_id, StreamStatus.ERROR, conv_id, error_message=str(e)))
             finally:
+                with self._lifecycle_lock:
+                    self._loop = self._task = None
                 logger.info(f"[APIStreamHandler] 关闭事件循环 | stream_id={stream_id}")
                 loop.close()
 
-        self._thread = threading.Thread(target=_run, daemon=True)
-        logger.info(f"[APIStreamHandler] 启动流式线程 | stream_id={stream_id}")
-        self._thread.start()
+        with self._lifecycle_lock:
+            if self._closed:
+                self.state.cancel()
+                return
+            self._thread = threading.Thread(target=_run, daemon=True)
+            logger.info(f"[APIStreamHandler] 启动流式线程 | stream_id={stream_id}")
+            self._thread.start()
         logger.info(f"[APIStreamHandler] 流式线程已启动 | stream_id={stream_id}")
 
     async def _stream_loop(self, text: str, stream_id: str, conv_id: str, on_chunk: Optional[Callable], on_complete: Optional[Callable], on_error: Optional[Callable], tool_router=None):

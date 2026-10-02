@@ -4,17 +4,22 @@ from pathlib import Path
 import shutil
 import os
 import subprocess
+import sys
+
+from .paths import node_executable, runtime_root
 
 PI_VERSION = "0.99.1"
 
 
 def runtime_options():
-    root = Path(__file__).resolve().parents[3] / "runtime" / "pi"
+    root = runtime_root() / "pi"
     package = root / "node_modules" / "@earendil-works" / "pi-coding-agent" / "package.json"
     available = False
     reason = "Install the pinned Pi runtime with npm ci in runtime/pi; Node.js >=22.19.0 required"
+    if getattr(sys, "frozen", False):
+        reason = "内置 Pi 或 Node.js 运行时缺失或不兼容，请重新安装完整的本地客户端"
     try:
-        node = shutil.which("node")
+        node = node_executable()
         version = subprocess.run([node, "--version"], capture_output=True, text=True, timeout=3,
                                  env={k: os.environ[k] for k in ("PATH", "SYSTEMROOT", "WINDIR") if k in os.environ}) if node else None
         supported = bool(version and version.returncode == 0 and

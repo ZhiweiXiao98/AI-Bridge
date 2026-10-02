@@ -25,9 +25,11 @@ class ExecutionTimeout(Exception):
     pass
 
 @contextmanager
-def temp_code_file(code: str):
+def temp_code_file(code: str, directory=None):
     """临时代码文件上下文管理器，确保清理"""
     temp_filename = f".sandbox_exec_{uuid.uuid4().hex[:8]}.py"
+    if directory is not None:
+        temp_filename = os.path.join(directory, temp_filename)
     try:
         with open(temp_filename, "w", encoding="utf-8") as f:
             f.write(code)
@@ -48,6 +50,15 @@ class DockerManager:
         self.available = False
         self._container = None
         self._execution_lock = threading.Lock()
+        self._initialization_lock = threading.Lock()
+        self._local_desktop = os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1"
+        self._instance_id = uuid.uuid4().hex
+        self._container_name = (f"ai_bridge_local_{self._instance_id[:12]}"
+                                if self._local_desktop else self.CONTAINER_NAME)
+        self._owns_container = False
+        self._cleanup_thread = None
+        self._closed = False
+        self.initialization_error = ""
         self.history = ExecutionHistory()
         self.project_root = ProjectContext.get().get_project_root()
         # 从配置读取执行模式，默认 docker
@@ -55,7 +66,8 @@ class DockerManager:
         cfg = ConfigManager.load()
         self.exec_mode = cfg.get("sandbox_exec_mode", EXEC_MODE_DOCKER)
         self.local_python = cfg.get("sandbox_local_python", "")  # 空串 = 使用系统默认
-        self._init_docker()
+        if not self._local_desktop:
+            self._init_docker()
 
     @property
     def container(self):
@@ -66,31 +78,54 @@ class DockerManager:
         return self._container
 
     def _init_docker(self):
+        if self._closed:
+            return
         try:
-            self.client = docker.from_env()
+            self.client = docker.from_env(timeout=5) if self._local_desktop else docker.from_env()
             self.client.ping()
-            self.available = True
             logger.info(f"🐳 Docker Connected. Image: {self.image}")
 
             # 1. 确保镜像存在
             try:
                 self.client.images.get(self.image)
             except ImageNotFound:
+                if self._local_desktop:
+                    self.initialization_error = (
+                        f"缺少 Docker 沙盒镜像 {self.image}。请先在 Docker 中手动构建或获取此镜像后重试；"
+                        "客户端不会自动下载镜像，也不会切换为宿主机执行。"
+                    )
+                    self.available = False
+                    return
                 logger.info(f"⏳ Pulling image {self.image}...")
                 self.client.images.pull(self.image)
 
             # 2. 启动或获取长驻容器
             self._ensure_container_running()
+            self.available = True
+            self.initialization_error = ""
 
         except Exception as e:
             logger.warning(f"❌ Docker not available: {e}")
             self.available = False
+            self.initialization_error = (
+                "Docker 沙盒不可用，请安装并启动 Docker，准备沙盒镜像后重试。"
+                "不会自动切换为宿主机执行。"
+            )
 
     def _ensure_container_running(self):
         """确保有一个长驻容器在运行"""
+        if self._closed:
+            raise RuntimeError("Docker 管理器正在关闭")
         try:
             # 尝试获取现有容器
-            self._container = self.client.containers.get(self.CONTAINER_NAME)
+            self._container = self.client.containers.get(self._container_name)
+            if self._local_desktop:
+                labels = self._container.labels or {}
+                if (labels.get("ai-bridge.local-instance") != self._instance_id
+                        or labels.get("ai-bridge.project-root") != self.project_root):
+                    self._container = None
+                    raise RuntimeError("拒绝使用不属于此本地客户端和项目的 Docker 容器")
+                self._owns_container = True
             if self._container.status != 'running':
                 logger.info("🔄 Restarting stopped sandbox container...")
                 self._container.start()
@@ -100,21 +135,31 @@ class DockerManager:
             host_path = self.project_root
             volumes = {host_path: {'bind': '/workspace', 'mode': 'rw'}}
 
-            self._container = self.client.containers.run(
+            # SDK containers.run() implicitly pulls a missing image. Desktop
+            # mode must use create()+start() to keep downloads user-controlled.
+            create = self.client.containers.create if self._local_desktop else self.client.containers.run
+            self._container = create(
                 self.image,
-                name=self.CONTAINER_NAME,
+                name=self._container_name,
                 command="tail -f /dev/null",  # 让容器保持运行
                 volumes=volumes,
                 working_dir="/workspace",
                 detach=True,
                 mem_limit="1g",
-                network_mode="host",  # TODO: 改为 bridge 模式提高安全性
-                restart_policy={"Name": "always"}
+                network_mode="bridge" if self._local_desktop else "host",
+                restart_policy={"Name": "no" if self._local_desktop else "always"},
+                **({"labels": {"ai-bridge.local-instance": self._instance_id,
+                               "ai-bridge.project-root": self.project_root}} if self._local_desktop else {})
             )
+            self._owns_container = self._local_desktop
+            if self._local_desktop:
+                self._container.start()
             logger.info(f"✅ Sandbox Container Started: {self._container.short_id}")
 
     def force_cleanup(self):
         if not self._container:
+            return
+        if self._local_desktop and not self._owns_container:
             return
         try:
             self._container.stop(timeout=3)
@@ -124,6 +169,24 @@ class DockerManager:
             logger.warning(f"[Docker] 容器清理异常: {e}")
         finally:
             self._container = None
+            self._owns_container = False
+
+    def shutdown(self, timeout=3.0):
+        """Clean only this desktop instance's container; preserve server containers."""
+        if not self._local_desktop:
+            return True
+        self._closed = True
+        if self._cleanup_thread is None:
+            def cleanup():
+                with self._initialization_lock:
+                    self.force_cleanup()
+                    if self.client is not None:
+                        self.client.close()
+            self._cleanup_thread = threading.Thread(target=cleanup, daemon=True, name="docker-local-cleanup")
+            self._cleanup_thread.start()
+        if self._cleanup_thread is not threading.current_thread():
+            self._cleanup_thread.join(timeout=max(0.0, timeout))
+        return not self._cleanup_thread.is_alive()
 
     def on_about_to_switch(self, new_root: str, new_db_path: str):
         logger.info("[Docker] 项目切换前清理容器")
@@ -158,8 +221,12 @@ class DockerManager:
         使用 self.local_python 指定的解释器，空串则取 sys.executable。
         工作目录设为 project_root，保持与 Docker 模式一致。
         """
-        python_bin = self.local_python or sys.executable
-        with temp_code_file(code) as temp_filename:
+        from app.core.python_runtime import resolve_project_python, PythonRuntimeUnavailable, python_subprocess_environment
+        try:
+            python_bin = resolve_project_python(self.project_root, self.local_python, purpose="本地 Python 沙盒")
+        except PythonRuntimeUnavailable as error:
+            return 1, str(error)
+        with temp_code_file(code, directory=self.project_root if self._local_desktop else None) as temp_filename:
             abs_path = os.path.abspath(temp_filename)
             logger.info(f"💻 本地执行: {python_bin} {abs_path}")
             try:
@@ -169,6 +236,7 @@ class DockerManager:
                     text=True,
                     timeout=timeout,
                     cwd=self.project_root,
+                    env=python_subprocess_environment(),
                 )
                 output = result.stdout
                 if result.stderr:
@@ -198,6 +266,8 @@ class DockerManager:
         Returns:
             (exit_code, output) 元组
         """
+        if self._closed:
+            return -1, "客户端正在关闭，无法执行新的代码"
         # 本地模式：跳过 Docker，直接走 subprocess
         if self.exec_mode == EXEC_MODE_LOCAL:
             if not skip_validation:
@@ -209,8 +279,12 @@ class DockerManager:
             return self._execute_local(code, timeout)
 
         # Docker 模式
+        if self._local_desktop and not self.available:
+            with self._initialization_lock:
+                if not self.available:
+                    self._init_docker()
         if not self.available:
-            return -1, "Docker environment not available"
+            return -1, self.initialization_error or "Docker environment not available"
 
         # 🆕 代码静态检查
         if not skip_validation:
@@ -239,7 +313,7 @@ class DockerManager:
                     self._container.start()
 
                 # 🆕 使用上下文管理器管理临时文件
-                with temp_code_file(code) as temp_filename:
+                with temp_code_file(code, directory=self.project_root if self._local_desktop else None) as temp_filename:
                     logger.info(f"🚀 Executing inside container: {temp_filename}")
 
                     # 🆕 使用线程 + 超时控制
@@ -247,7 +321,7 @@ class DockerManager:
 
                     def execute_in_thread():
                         try:
-                            cmd = ["python", temp_filename]
+                            cmd = ["python", os.path.basename(temp_filename)]
                             exec_result = self._container.exec_run(
                                 cmd,
                                 workdir="/workspace",

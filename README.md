@@ -1,5 +1,17 @@
 # AI Bridge
 
+## 完整本地客户端
+
+本地版直接运行原生 Qt 界面、`WorkerThread` 核心和 Pi 子进程，无需连接 AI Bridge 远程服务器，也无需创建 AI Bridge 管理员账号。
+
+- 源码启动：安装项目 Python 依赖，执行 `npm ci --ignore-scripts --prefix runtime/pi` 后运行 `python boot_local.py`
+- 模型配置：在设置页填写自己的 API 服务地址、模型和密钥，新建 Pi 对话；实际推理由用户配置的模型服务提供，可能产生该提供商的费用
+- 独立安装包目标：macOS Apple Silicon、Windows x64，内含 Python、Qt、Node.js 和固定版本 Pi SDK
+- Docker 沙箱、网页自动化、向量模型、Git 和 Rhino 的外部前提仍需用户按需准备；应用启动不会自动拉取 Docker 镜像或登录网页账号
+- 本地包的构建与验收说明见 [完整本地客户端](docs/LOCAL_DESKTOP.md)。旧 `AI-Bridge-Remote` 产物仍是远程客户端，不代表本地完整安装包
+
+该打包流程仍需通过目标平台实际构建、自检和第三方许可审查，不能将源码自检当作已交付安装包。
+
 > 云-端协同的 AI 智能体开发平台，采用 **Server（云端中台）+ Client（远程客户端）+ Mobile（移动端）** 三端架构，支持浏览器模式与 API 模式双通道 LLM 交互，集成 RAG 知识检索、Docker 沙箱执行、技能系统、守护进程等能力。
 
 ---

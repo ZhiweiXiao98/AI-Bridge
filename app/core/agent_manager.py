@@ -6,6 +6,9 @@ import re
 import subprocess
 import time
 from app.core.config import ConfigManager
+from app.core.python_runtime import (
+    ensure_project_write_allowed, resolve_project_python, python_subprocess_environment,
+)
 # [RAG 注入]
 from app.core.services.knowledge_service import knowledge_engine
 
@@ -30,6 +33,9 @@ class AgentManager:
 
         # Skills 系统
         self.skills_manager = SkillsManager()
+        from app.core.app_constants import APP_ROOT
+        os.makedirs(os.path.join(APP_ROOT, "config"), exist_ok=True)
+        self.skills_manager.config_file = os.path.join(APP_ROOT, "config", "skills_config.json")
 
         # 存储依赖供 Skills 使用
         self.docker_manager = docker_manager
@@ -239,12 +245,17 @@ class AgentManager:
         return knowledge_engine.search_context(query, top_k=5)
 
     def _run_verification_test(self):
-        cmd = [sys.executable, "-m", "pytest", "tests/", "-v"]
         try:
+            from app.core.project_context import ProjectContext
+            root = getattr(self.file_service, "project_root", None) or ProjectContext.get().get_project_root()
+            python = resolve_project_python(
+                root, self.config.get("sandbox_local_python", ""), purpose="验证项目测试"
+            )
+            cmd = [python, "-m", "pytest", "tests/", "-v"]
             proc = subprocess.run(
                 cmd, capture_output=True, text=True, encoding='utf-8', errors='replace',
                 creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0,
-                timeout=60
+                timeout=60, cwd=root, env=python_subprocess_environment(),
             )
             return proc.returncode == 0, proc.stdout + "\n" + proc.stderr
         except subprocess.TimeoutExpired:
@@ -277,6 +288,12 @@ class AgentManager:
                  return False, [], f"❌ Security Error: Cannot write to '{f}' outside project root."
 
             abs_p = self.file_service.resolve_path(f)
+            try:
+                from app.core.project_context import ProjectContext
+                root = getattr(self.file_service, "project_root", None) or ProjectContext.get().get_project_root()
+                ensure_project_write_allowed(root, abs_p)
+            except RuntimeError as exc:
+                return False, [], f"❌ {exc}"
             if os.path.exists(abs_p):
                 bak = abs_p + ".bak"
                 shutil.copy2(abs_p, bak)

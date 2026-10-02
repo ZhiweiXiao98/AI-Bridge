@@ -49,6 +49,7 @@ nohup.out
 # === RAG 知识库（向量数据库，本地生成） ===
 _knowledge_base/
 _knowledge_base_v2/
+knowledge_bases/
 
 # === 用户数据 & 敏感配置 ===
 *.db

@@ -78,6 +78,9 @@ class WorkerThread(QThread):
 
     def __init__(self, startup_mode=None):
         super().__init__()
+        self._shutdown_lock = threading.Lock()
+        self._shutdown_started = False
+        self._shutdown_complete = False
         self.config = ConfigManager.load()
         self.connector = create_browser_connector(self.config)
         self.file_service = FileService(self.config)
@@ -209,6 +212,67 @@ class WorkerThread(QThread):
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
         logger.info("Worker 线程已就绪 (Monitor V2.0)")
+
+    def shutdown(self, timeout=5.0):
+        """Request cooperative cancellation and wait within one shared deadline.
+
+        A False result means a Python/native tool is still unwinding. Keep the
+        worker alive and retry; never terminate a QThread or discard a live one.
+        """
+        deadline = time.monotonic() + max(0.0, timeout)
+        if not self._shutdown_lock.acquire(timeout=max(0.0, timeout)):
+            return False
+        try:
+            if self._shutdown_complete:
+                return True
+            self.running = False
+            self.requestInterruption()
+            self.quit()
+            from app.core.services.knowledge_service import knowledge_engine
+            components = [getattr(self, name, None) for name in
+                          ("agent_runtime_bridge", "stream_bridge", "subagent_bridge", "knowledge_service", "test_runner_bridge")]
+            if knowledge_engine not in components:
+                components.append(knowledge_engine)
+            components.append(getattr(self, "docker_manager", None))
+            connector = getattr(self, "connector", None)
+            if callable(getattr(type(connector), "shutdown", None)):
+                components.append(connector)
+            components = [item for item in components if item is not None]
+            if not self._shutdown_started:
+                self._shutdown_started = True
+                # Signal every component before spending the waiting budget on
+                # any one of them. ThreadPoolExecutor cancels only queued work.
+                for component in components:
+                    try:
+                        component.shutdown(timeout=0)
+                    except Exception:
+                        logger.exception("关闭组件时发生异常: %s", type(component).__name__)
+                executor = getattr(self, "executor", None)
+                if executor:
+                    executor.shutdown(wait=False, cancel_futures=True)
+            complete = True
+            for component in components:
+                try:
+                    stopped = component.shutdown(timeout=max(0.0, deadline - time.monotonic()))
+                    complete = bool(stopped) and complete
+                except Exception:
+                    logger.exception("等待组件停止失败: %s", type(component).__name__)
+                    complete = False
+            executor = getattr(self, "executor", None)
+            for thread in list(getattr(executor, "_threads", ())):
+                if thread is not threading.current_thread():
+                    thread.join(timeout=max(0.0, deadline - time.monotonic()))
+                complete = not thread.is_alive() and complete
+            if QThread.currentThread() is not self:
+                self.wait(max(0, int((deadline - time.monotonic()) * 1000)))
+            complete = not self.isRunning() and complete
+            self._shutdown_complete = complete
+            return complete
+        finally:
+            self._shutdown_lock.release()
+
+    def stop_worker(self, timeout=5.0):
+        return self.shutdown(timeout=timeout)
 
     def init_api_stream_bridge(self):
         """在 _init_api_source 完成后调用，注入流式桥接"""

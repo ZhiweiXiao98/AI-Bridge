@@ -65,6 +65,12 @@ class ChromeConnector:
             self.interact.switch_to_chat_tab()
         return ok, msg
 
+    def shutdown(self, timeout=3.0):
+        stopped = self.conn.shutdown(timeout=timeout)
+        if stopped:
+            self.interact = None
+        return stopped
+
     def is_busy(self):
         if self.interact:
             return self.interact.is_busy()
