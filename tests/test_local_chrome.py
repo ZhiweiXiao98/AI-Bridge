@@ -149,3 +149,59 @@ def test_cancel_between_input_and_submit_does_not_commit(text):
     button.click.assert_not_called()
     assert all(call.args != ("arguments[0].click();", button) for call in manager.driver.execute_script.call_args_list)
     assert not any("\ue007" in str(call) for call in element.send_keys.call_args_list)
+
+
+@pytest.mark.parametrize("alias", ["normalize-space(.)='创建新对话'", "@aria-label='创建新对话'"])
+def test_new_chat_accepts_exact_create_conversation_button_alias(alias):
+    from app.core.driver.interaction import InteractionManager
+    driver = MagicMock()
+    driver.current_url = "https://example.invalid/chat#old"
+    button = Mock()
+    button.is_displayed.return_value = button.is_enabled.return_value = True
+    button.click.side_effect = lambda: setattr(driver, "current_url", "https://example.invalid/chat#new")
+    def find(by, selector):
+        if by == "xpath":
+            assert alias in selector
+            assert "contains(normalize-space(.)" not in selector
+            return [button]
+        return []
+    driver.find_elements.side_effect = find
+    assert InteractionManager(driver).new_chat() == (True, "已新建网页会话")
+    button.click.assert_called_once()
+
+
+@pytest.mark.parametrize("false_selector", ["div[class*='session']", "div[class*='chat-item']"])
+def test_local_empty_session_list_never_uses_wrappers_or_message_bubbles(monkeypatch, false_selector):
+    from app.core.driver.config import SELECTORS
+    connector, driver, _ = _connector(monkeypatch)
+    connector._ensure_live_window = lambda: True
+    driver.execute_script.return_value = "complete"
+    wrapper = Mock(text="")
+    wrapper.get_attribute.return_value = "chat-sessions" if "session" in false_selector else "chat-item"
+    driver.find_elements.side_effect = lambda by, selector: [wrapper] if selector == false_selector else []
+    assert connector.get_session_list() == []
+    driver.find_elements.assert_called_once_with("css selector", SELECTORS["session_item"])
+
+
+def test_local_session_list_keeps_exact_real_items(monkeypatch):
+    from app.core.driver.config import SELECTORS
+    connector, driver, _ = _connector(monkeypatch)
+    connector._ensure_live_window = lambda: True
+    driver.execute_script.return_value = "complete"
+    item = Mock(text="实际会话标题\n今天")
+    item.get_attribute.return_value = "aa-sidebar-list-item active"
+    driver.find_elements.side_effect = lambda by, selector: [item] if selector == SELECTORS["session_item"] else []
+    assert connector.get_session_list() == [{"index": 0, "title": "实际会话标题", "date": "今天", "icon": "", "active": True}]
+
+
+def test_remote_session_list_preserves_legacy_fallback(monkeypatch):
+    connector, driver, _ = _connector(monkeypatch)
+    connector.conn.local_desktop = False
+    connector._ensure_live_window = lambda: True
+    driver.execute_script.return_value = "complete"
+    item = Mock(text="旧版远程会话")
+    item.get_attribute.return_value = "legacy-session"
+    driver.find_elements.side_effect = lambda by, selector: [item] if selector == "div[class*='session']" else []
+    result = connector.get_session_list()
+    assert len(result) == 1 and result[0]["title"] == "旧版远程会话"
+    assert any(call.args == ("css selector", "div[class*='session']") for call in driver.find_elements.call_args_list)

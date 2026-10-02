@@ -9,14 +9,19 @@ import threading
 import time
 
 
-def wait_for(app, predicate, message, timeout=30):
+def wait_for(app, predicate, message, timeout=30, failure_reason=None, timeout_detail=None):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         app.processEvents()
+        if failure_reason is not None:
+            failure = failure_reason()
+            if failure:
+                raise RuntimeError("本地自检提前失败：" + str(failure))
         if predicate():
             return
         time.sleep(0.02)
-    raise RuntimeError("本地自检超时：" + message)
+    detail = str(timeout_detail() or "") if timeout_detail is not None else ""
+    raise RuntimeError("本地自检超时：" + message + ("；" + detail if detail else ""))
 
 
 class FixtureProvider(ThreadingHTTPServer):
@@ -123,13 +128,33 @@ def run_selftest(app, window, worker, home: Path):
         raise RuntimeError("本地核心与界面模式不一致")
     terminals = []
     worker.api_round_state_signal.connect(lambda payload: terminals.append(payload) if payload.get("state") in {"finalized", "failed", "cancelled"} else None)
+
+    def send(text):
+        previous = len(terminals)
+        result = worker.api_send(text)
+        if not isinstance(result, dict) or result.get("ok") is not True:
+            detail = result.get("error") if isinstance(result, dict) else "Pi 未返回请求接受确认"
+            raise RuntimeError("本地自检发送被拒绝：" + str(detail or "未知错误"))
+        return previous, result.get("request_id")
+
+    def approval_ended_early(marker):
+        previous, request_id = marker
+        matching = [item for item in terminals[previous:] if item.get("request_id") == request_id]
+        if matching:
+            terminal = matching[-1]
+            return (f"Pi 在工具审批前已结束，state={terminal.get('state')}，"
+                    f"message={terminal.get('message') or terminal.get('error') or '无错误详情'}；"
+                    f"本机模拟模型收到请求数={len(provider.requests)}")
+        return None
+
     try:
         worker.api_new_conversation("完整本地自检", runtime="pi")
         app.processEvents()
         store = worker.api_source.conv_store
         conversation = store.active_id
-        worker.api_send("本地自检读取")
-        wait_for(app, lambda: page._api_approval_dialog is not None, "等待真实工具审批界面")
+        previous = send("本地自检读取")
+        wait_for(app, lambda: page._api_approval_dialog is not None, "等待真实工具审批界面",
+                 failure_reason=lambda: approval_ended_early(previous))
         if (project / "must-not-exist.txt").exists():
             raise RuntimeError("审批前不应执行写入")
         page._api_approval_dialog.button(QMessageBox.StandardButton.Yes).click()
@@ -143,22 +168,24 @@ def run_selftest(app, window, worker, home: Path):
         if not Path(session).is_file():
             raise RuntimeError("Pi 未保存原生会话")
 
-        worker.api_send("本地自检恢复")
+        send("本地自检恢复")
         wait_for(app, lambda: not worker.agent_runtime_bridge.is_running and len(terminals) >= 2, "从原生会话继续")
         if store.get_runtime_session(conversation)["session_path"] != session:
             raise RuntimeError("续聊没有恢复同一原生会话")
         if sum(m.get("role") == "user" for m in provider.requests[-1]) < 2:
             raise RuntimeError("续聊未携带上轮历史")
 
-        worker.api_send("本地自检拒绝")
-        wait_for(app, lambda: page._api_approval_dialog is not None, "拒绝工具审批")
+        previous = send("本地自检拒绝")
+        wait_for(app, lambda: page._api_approval_dialog is not None, "拒绝工具审批",
+                 failure_reason=lambda: approval_ended_early(previous))
         page._api_approval_dialog.button(QMessageBox.StandardButton.No).click()
         wait_for(app, lambda: not worker.agent_runtime_bridge.is_running and len(terminals) >= 3, "拒绝后结束")
         if (project / "must-not-exist.txt").exists():
             raise RuntimeError("被拒绝的文件工具仍发生了写入")
 
-        worker.api_send("本地自检取消")
-        wait_for(app, lambda: page._api_approval_dialog is not None, "取消待批准请求")
+        previous = send("本地自检取消")
+        wait_for(app, lambda: page._api_approval_dialog is not None, "取消待批准请求",
+                 failure_reason=lambda: approval_ended_early(previous))
         page._stop_api_request()
         wait_for(app, lambda: not worker.agent_runtime_bridge.is_running and len(terminals) >= 4, "取消请求与 Pi 退出")
         if (project / "must-not-exist.txt").exists() or ProjectContext.get()._runtime_leases:
@@ -253,13 +280,23 @@ def run_browser_selftest(app, window, worker, home: Path, fixture):
     def ready():
         return worker.browser_command_bridge.ready and session() is not None and session().process is not None
 
+    def browser_diagnostic():
+        current = session()
+        process = current.process if current is not None else None
+        snapshot = worker.connector.conn.diagnostic_snapshot()
+        return (f"Worker模式={worker.mode}；页面加载次数={fixture.page_ready_count}；"
+                f"专用Chrome进程退出码={process.poll() if process is not None else '尚未启动'}；"
+                f"最近连接状态={worker.browser_command_bridge._last_diagnostic or '尚无诊断'}；"
+                f"driver_diagnostic={json.dumps(snapshot, ensure_ascii=False, sort_keys=True)}")
+
     def send(text):
         wait_for(app, lambda: page.browser_input_area.send_btn.isEnabled() and not page.browser_input_area.is_ai_busy,
                  "等待浏览器输入恢复可发送")
         page.browser_input_area.input_box.setPlainText(text)
         page.browser_input_area.send_btn.click()
 
-    wait_for(app, ready, "真实浏览器、匹配驱动和输入页面就绪", timeout=50)
+    wait_for(app, ready, "真实浏览器、匹配驱动和输入页面就绪", timeout=50,
+             timeout_detail=browser_diagnostic)
     if worker.mode != "browser" or page.current_mode != "browser" or page.session_tabs.currentIndex() != 0:
         raise RuntimeError("浏览器 Worker 与界面模式不一致")
     browser_processes.append(session().process)
@@ -307,7 +344,7 @@ def run_browser_selftest(app, window, worker, home: Path, fixture):
     old_process.wait(timeout=10)
     page.browser_reconnect_btn.click()
     wait_for(app, lambda: ready() and session().process.pid != old_process.pid,
-             "浏览器窗口关闭后真实新进程重连", timeout=60)
+             "浏览器窗口关闭后真实新进程重连", timeout=60, timeout_detail=browser_diagnostic)
     browser_processes.append(session().process)
     wait_for(app, lambda: fixture.page_ready_count > before_page_loads,
              "新浏览器进程实际重新加载网页")

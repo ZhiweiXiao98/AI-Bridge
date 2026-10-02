@@ -171,7 +171,8 @@ class InteractionManager:
         previous = active[0].get_attribute("outerHTML") if active else ""
         candidates = self.driver.find_elements(By.XPATH,
             "//button[@data-action='new-chat' or @aria-label='新建对话' or @aria-label='新建聊天' "
-            "or normalize-space(.)='新建对话' or normalize-space(.)='新建聊天']")
+            "or @aria-label='创建新对话' or normalize-space(.)='新建对话' "
+            "or normalize-space(.)='新建聊天' or normalize-space(.)='创建新对话']")
         visible = [button for button in candidates if button.is_displayed() and button.is_enabled()]
         if len(visible) != 1:
             return False, "网页没有唯一可识别的“新建对话”按钮，请在专用 Chrome 窗口中新建"

@@ -13,7 +13,10 @@ def runtime_root():
 
 
 def sidecar_path():
-    return runtime_root() / "pi" / "sidecar.mjs"
+    # PyInstaller macOS bundles link data from Frameworks into Resources. Node
+    # resolves import.meta.url, but leaves argv[1] as supplied; the sidecar's
+    # main-module check therefore needs the canonical file path in argv[1].
+    return (runtime_root() / "pi" / "sidecar.mjs").resolve()
 
 
 def node_executable():

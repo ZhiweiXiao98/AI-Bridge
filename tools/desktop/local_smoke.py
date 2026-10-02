@@ -102,7 +102,10 @@ def terminate_tree(process: subprocess.Popen, observed: dict) -> None:
 def failure_diagnostic(log_path: Path, state: Path) -> str:
     """只取专用空 HOME 自检的错误摘要；不上传原始日志、会话或网页内容。"""
     messages = []
-    for path in (log_path, state / "local-startup.log"):
+    sources = [log_path, state / "local-startup.log"]
+    if log_path.name == "local-browser-smoke.log":
+        sources.append(state / "logs/chrome-startup.log")
+    for path in sources:
         if not path.is_file():
             continue
         value = path.read_text(encoding="utf-8", errors="replace")[-64_000:]
@@ -110,7 +113,7 @@ def failure_diagnostic(log_path: Path, state: Path) -> str:
         if traceback_start >= 0:
             lines = value[traceback_start:].splitlines()[:36]
         else:
-            lines = [line for line in value.splitlines() if re.search(r"(?:Error|Exception|FATAL|failed|失败)", line)][-12:]
+            lines = [line for line in value.splitlines() if re.search(r"(?:Error|Exception|FATAL|failed|失败)", line, re.I)][-12:]
         text = "\n".join(lines)
         for private_path in (str(state), str(log_path.parent), str(ROOT), str(Path.home())):
             text = text.replace(private_path, "<自检目录>")

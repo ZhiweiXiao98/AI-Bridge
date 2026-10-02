@@ -105,6 +105,8 @@ class LocalChromeSession:
         self._owned_processes = []
         self._monitor_stop = threading.Event()
         self._monitor_thread = None
+        self.diagnostic_stage = "not_started"
+        self.driver_version = ""
 
     def _track_process(self, process):
         with self._lock:
@@ -143,8 +145,10 @@ class LocalChromeSession:
         port_file = self.profile / "DevToolsActivePort"
         process = self.process
         if process is None or process.poll() is not None:
+            self.diagnostic_stage = "locating_chrome"
             self.binary = find_chrome(self.config)
             target = browser_url(self.config) if url is None else validate_browser_url(url)
+            self.diagnostic_stage = "preparing_private_profile"
             self.profile.mkdir(parents=True, exist_ok=True, mode=0o700)
             if self.profile.is_symlink():
                 raise BrowserSetupError("专用浏览器资料目录不能链接到其他浏览器的用户资料，请更换本地数据目录")
@@ -160,16 +164,19 @@ class LocalChromeSession:
             with self._lock:
                 if self._closed:
                     raise BrowserSetupError("浏览器会话正在关闭")
+                self.diagnostic_stage = "launching_chrome"
                 with (log_dir / "chrome-startup.log").open("ab") as log:
                     self.process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                                     stderr=log, env=python_subprocess_environment())
                 process = self.process
             self._track_process(process)
         deadline = time.monotonic() + timeout
+        self.diagnostic_stage = "waiting_devtools_file"
         while time.monotonic() < deadline:
             if self._closed:
                 raise BrowserSetupError("浏览器会话正在关闭")
             if process.poll() is not None:
+                self.diagnostic_stage = "chrome_exited_before_debugger"
                 raise BrowserSetupError("Chrome 未能启动专用窗口。请关闭此前的 AI-Bridge 专用 Chrome 窗口后重试；也请检查系统是否允许启动 Chrome。未接管其他浏览器。")
             try:
                 lines = port_file.read_text().splitlines()
@@ -177,6 +184,7 @@ class LocalChromeSession:
                 browser_id = lines[1]
                 if not 1 <= port <= 65535 or not browser_id.startswith("/devtools/browser/"):
                     raise ValueError("invalid debugger metadata")
+                self.diagnostic_stage = "checking_loopback_debugger"
                 opener = build_opener(ProxyHandler({}))
                 with opener.open(f"http://127.0.0.1:{port}/json/version", timeout=0.5) as response:
                     metadata = json.load(response)
@@ -189,12 +197,15 @@ class LocalChromeSession:
                     self.version = actual_version
                 else:
                     raise ValueError("missing actual browser version")
+                self.diagnostic_stage = "debugger_ready"
                 return port
             except (OSError, ValueError, IndexError):
                 time.sleep(0.1)
+        self.diagnostic_stage = "debugger_start_timeout"
         raise BrowserSetupError("专用 Chrome 调试连接启动超时。请检查 Chrome 是否被系统安全提示阻止，然后重新连接。")
 
     def resolve_driver(self):
+        self.diagnostic_stage = "resolving_driver"
         configured = str(self.config.get("chromedriver_path") or "").strip()
         name = "chromedriver.exe" if sys.platform == "win32" else "chromedriver"
         if configured:
@@ -204,9 +215,13 @@ class LocalChromeSession:
         else:
             bundled = resource_path("runtime", "chromedriver", name)
             driver = bundled if bundled.is_file() else self._manager_driver()
+        self.diagnostic_stage = "reading_driver_version"
         version = executable_version(driver)
+        self.driver_version = version
         if version.split(".")[0] != self.version.split(".")[0]:
+            self.diagnostic_stage = "driver_version_mismatch"
             raise BrowserSetupError(f"Chrome {self.version} 与 ChromeDriver {version} 不匹配。请选择匹配驱动，或允许下载官方匹配驱动后重新连接。")
+        self.diagnostic_stage = "driver_resolved"
         return str(driver)
 
     def _manager_driver(self):

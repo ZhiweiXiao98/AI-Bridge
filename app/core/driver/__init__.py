@@ -110,29 +110,40 @@ class ChromeConnector:
 
     def ready_for_input(self, require_idle=True):
         if not self.driver or not self.interact:
+            self.conn.diagnostic_stage = "webdriver_not_ready"
             return False, "Chrome 尚未连接，请点击“重新连接”"
         try:
             with self._dom_lock:
                 if self.conn.local_desktop:
                     expected = origin(browser_url(self.conn.config))
                     if expected is None:
+                        self.conn.diagnostic_stage = "target_not_configured"
                         return False, "专用 Chrome 已启动。请在“连接设置”中填写实际聊天网站地址，然后重新连接"
                     self.interact.allowed_origin = expected
                     if self.interact.switch_to_chat_tab() is not True:
+                        self.conn.diagnostic_stage = "target_surface_not_found"
                         return False, "没有找到配置网站的聊天页面。请在专用 Chrome 中打开该网站并完成登录；其他网站不会接收消息"
                     if origin(self.driver.current_url) != expected:
+                        self.conn.diagnostic_stage = "target_origin_mismatch"
                         return False, "当前网页与配置的网站不一致，已阻止发送"
                 inputs = self.driver.find_elements(By.CSS_SELECTOR, SELECTORS["input_area"])
                 if not any(element.is_displayed() for element in inputs):
                     if not require_idle and self.interact.is_busy():
+                        self.conn.diagnostic_stage = "target_generating"
                         return True, "目标网页正在生成，可以停止"
+                    self.conn.diagnostic_stage = "composer_not_found"
                     return False, "Chrome 已连接，但网页没有受支持的聊天输入框。请完成登录；当前适配器仅支持 WebAI（aa-chat）页面结构"
                 if require_idle and self.interact.is_busy():
+                    self.conn.diagnostic_stage = "target_generating"
                     return False, "网页仍在生成回复，请等待完成或点击“停止生成”"
                 if require_idle and not any(element.is_displayed() and element.is_enabled() for element in inputs):
+                    self.conn.diagnostic_stage = "composer_disabled"
                     return False, "聊天输入框暂不可用，请检查网页状态后重试"
+                self.conn.diagnostic_stage = "page_ready"
                 return True, "目标聊天网页已连接，可以发送消息"
-        except Exception:
+        except Exception as error:
+            self.conn.diagnostic_stage = "webdriver_page_check_failed"
+            self.conn.diagnostic_error_type = type(error).__name__
             return False, "Chrome 连接已中断或网页已关闭，请点击“重新连接”"
 
     def cancel_generation(self):
@@ -373,7 +384,10 @@ class ChromeConnector:
 
             sessions = self.driver.find_elements("css selector", selector)
 
-            if len(sessions) == 0:
+            # Local switching also uses the exact session-item selector. Broad
+            # fallbacks can mistake empty sidebar wrappers or message bubbles
+            # for conversations and produce unselectable list entries.
+            if len(sessions) == 0 and not self.conn.local_desktop:
                 alt_selectors = [
                     "div[class*='sidebar-list-item']",
                     "div[class*='session']",

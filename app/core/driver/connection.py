@@ -5,6 +5,7 @@ import os
 import sys
 import shutil
 import traceback
+import re
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -46,6 +47,44 @@ class ConnectionManager:
         self.local_desktop = os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1"
         self.local_session = LocalChromeSession(self.config) if self.local_desktop else None
         self.status_callback = None
+        self.diagnostic_stage = "not_connected"
+        self.diagnostic_error_type = ""
+
+    def diagnostic_snapshot(self):
+        """Non-DOM diagnostics safe to retain from a fresh-home smoke failure.
+
+        No URLs, command lines, filesystem paths, webpage text or raw errors.
+        Polling an owned child does not make a WebDriver request from the UI.
+        """
+        session = self.local_session
+        process = session.process if session else None
+        exit_code = process.poll() if process is not None else None
+        service_process = getattr(self._service, "process", None)
+        def version(value):
+            return value if isinstance(value, str) and re.fullmatch(r"\d+\.\d+\.\d+\.\d+", value) else ""
+        connection_stages = {"not_connected", "starting_private_chrome", "preparing_driver", "attaching_webdriver",
+                             "webdriver_attached", "webdriver_attach_failed", "webdriver_attach_timeout",
+                             "debugger_port_unreachable", "webdriver_not_ready", "target_not_configured",
+                             "target_surface_not_found", "target_origin_mismatch", "target_generating",
+                             "composer_not_found", "composer_disabled", "page_ready", "webdriver_page_check_failed"}
+        chrome_stages = {"not_started", "locating_chrome", "preparing_private_profile", "launching_chrome",
+                         "waiting_devtools_file", "chrome_exited_before_debugger", "checking_loopback_debugger",
+                         "debugger_ready", "debugger_start_timeout", "resolving_driver", "reading_driver_version",
+                         "driver_version_mismatch", "driver_resolved"}
+        error_type = self.diagnostic_error_type
+        return {
+            "connection_stage": self.diagnostic_stage if self.diagnostic_stage in connection_stages else "unknown",
+            "chrome_stage": (session.diagnostic_stage if session.diagnostic_stage in chrome_stages else "unknown") if session else "not_local",
+            "error_type": error_type if re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,63}", error_type) else "",
+            "chrome_process_created": process is not None,
+            "chrome_process_running": process is not None and exit_code is None,
+            "chrome_exit_code": exit_code if isinstance(exit_code, int) else None,
+            "devtools_file_exists": bool(session and (session.profile / "DevToolsActivePort").is_file()),
+            "driver_created": self.driver is not None,
+            "driver_process_running": service_process is not None and service_process.poll() is None,
+            "chrome_version": version(session.version if session else ""),
+            "chromedriver_version": version(session.driver_version if session else ""),
+        }
 
     def configure(self, config):
         config = dict(config)
@@ -56,9 +95,11 @@ class ConnectionManager:
         if not self.local_session:
             return False, "远程服务模式请在服务端启动 Chrome"
         try:
+            self.diagnostic_stage = "starting_private_chrome"
             self.port = self.local_session.start(url, headless=headless)
             return True, "已启动 AI-Bridge 专用 Chrome（仅本机调试连接）"
         except (BrowserSetupError, OSError) as error:
+            self.diagnostic_error_type = type(error).__name__
             return False, str(error)
 
     def is_port_open(self) -> bool:
@@ -93,6 +134,8 @@ class ConnectionManager:
                 container["driver"].command_executor._client_config.timeout = 5
             print("✅ [Selenium] WebDriver 创建成功！")
         except Exception as e:
+            self.diagnostic_error_type = type(e).__name__
+            self.diagnostic_stage = "webdriver_attach_failed"
             print(f"❌ [Selenium] WebDriver 创建崩溃: {e}")
             traceback.print_exc(file=sys.stderr)
             container["error"] = e
@@ -199,12 +242,14 @@ class ConnectionManager:
         """
         if self.local_session:
             try:
+                self.diagnostic_stage = "preparing_driver"
                 if self.status_callback:
                     self.status_callback("正在准备匹配的官方 ChromeDriver…" if self.config.get("browser_allow_driver_download") is True
                                          else "正在检查本地 ChromeDriver（不会下载）…")
                 driver = self.local_session.resolve_driver()
                 return True, TrustedDriverService(driver, env=python_subprocess_environment()), "本地匹配 ChromeDriver 已就绪"
             except (BrowserSetupError, OSError) as error:
+                self.diagnostic_error_type = type(error).__name__
                 return False, None, str(error)
         local_driver = self._resolve_local_driver_path()
         if local_driver:
@@ -234,6 +279,7 @@ class ConnectionManager:
         if self.driver is not None:
             try:
                 self.driver.window_handles
+                self.diagnostic_stage = "webdriver_attached"
                 return True, "Chrome 调试连接已就绪"
             except Exception:
                 self.driver = None
@@ -244,6 +290,7 @@ class ConnectionManager:
         print(f"🔌 [ConnectionManager] 正在尝试连接 Chrome 远程调试端口 {self.port}...")
 
         if not self.is_port_open():
+            self.diagnostic_stage = "debugger_port_unreachable"
             print(f"❌ [ConnectionManager] 端口 {self.port} 未开放！请确保 Chrome 已启动并开启了远程调试。")
             return False, f"端口 {self.port} 未开放 (请点击 '启动 Chrome 服务')"
 
@@ -261,6 +308,7 @@ class ConnectionManager:
             return False, service_msg
 
         print(f"🔧 [ConnectionManager] {service_msg}")
+        self.diagnostic_stage = "attaching_webdriver"
 
         container = {}
         with self._lifecycle_lock:
@@ -278,6 +326,7 @@ class ConnectionManager:
             return False, "浏览器连接正在关闭"
 
         if t.is_alive():
+            self.diagnostic_stage = "webdriver_attach_timeout"
             print("❌ [ConnectionManager] WebDriver 初始化严重超时！")
             try:
                 import selenium
@@ -292,6 +341,8 @@ class ConnectionManager:
             return False, f"WebDriver 初始化失败: {err}"
 
         self.driver = container["driver"]
+        self.diagnostic_stage = "webdriver_attached"
+        self.diagnostic_error_type = ""
         if not self.local_desktop:
             socket.setdefaulttimeout(None)
         print("✅ [ConnectionManager] WebDriver 已成功连接到 Chrome！")

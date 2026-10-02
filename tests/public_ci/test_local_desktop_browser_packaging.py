@@ -146,6 +146,20 @@ class BrowserSmokeEvidenceTests(unittest.TestCase):
         self.assertEqual(set(report), {"schema_version", "status", "stage", "error_type", "summary",
                                        "binary_distribution_approved", "verification_limit"})
 
+    def test_only_browser_probe_reads_sanitized_chrome_errors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state = Path(directory)
+            (state / "logs").mkdir()
+            (state / "logs/chrome-startup.log").write_text(
+                f"normal page content\n[ERROR:startup] failed {state}/browser-profile api_key=secret\n", encoding="utf-8")
+            api = local_smoke.failure_diagnostic(state / "local-smoke.log", state)
+            self.assertNotIn("chrome-startup.log", api)
+            browser = local_smoke.failure_diagnostic(state / "local-browser-smoke.log", state)
+            self.assertIn("[ERROR:startup]", browser)
+            self.assertNotIn("normal page content", browser)
+            self.assertNotIn(str(state), browser)
+            self.assertNotIn("api_key=secret", browser)
+
 
 if __name__ == "__main__":
     unittest.main()
