@@ -1,4 +1,4 @@
-"""A local reconnect restores the authoritative view without re-exporting code."""
+"""Reconnect and new-chat navigation restore snapshots without re-exporting code."""
 import copy
 from types import MethodType, SimpleNamespace
 from unittest.mock import Mock
@@ -105,3 +105,55 @@ def test_reconnect_to_empty_page_clears_old_canonical_history(monkeypatch):
     assert worker._canonical_store.conversation_id == "empty-chat"
     assert worker._canonical_store.last_seq == previous_seq + 1
     worker.process_batch.assert_not_called()
+
+
+def test_new_chat_to_empty_page_clears_old_history_once_without_tool_replay():
+    worker = make_worker()
+    previous_seq = worker._canonical_store.last_seq
+    worker.agent = SimpleNamespace(shift_roles_for_new_chat=Mock())
+    worker.connector.new_chat = Mock(return_value=(True, "created"))
+    worker.connector.get_chat_title_id.return_value = "empty-new-chat"
+    worker.connector.get_chat_content_incremental.side_effect = lambda **_: ([], True, False)
+
+    WorkerThread._execute_task_sync(worker, SimpleNamespace(action="new_chat_task"))
+    assert worker._browser_snapshot_pending is True
+    worker._browser_process_messages()
+
+    assert worker.messages_signal.items == [[]]
+    assert worker.last_messages_snapshot == []
+    assert worker._canonical_store.message_count == 0
+    assert worker._canonical_store.conversation_id == "empty-new-chat"
+    assert worker._canonical_store.last_seq == previous_seq + 1
+    assert worker._browser_snapshot_pending is False
+    worker._browser_process_messages()
+    assert worker.messages_signal.items == [[]]
+    worker.process_batch.assert_not_called()
+    worker.executor.submit.assert_not_called()
+    assert not worker.tool_router.mock_calls
+
+
+def test_new_chat_snapshot_retries_transient_read_failure():
+    worker = make_worker()
+    worker.agent = SimpleNamespace(shift_roles_for_new_chat=Mock())
+    worker.connector.new_chat = Mock(return_value=(True, "created"))
+    worker.connector.get_chat_title_id.return_value = "empty-new-chat"
+    worker.connector.get_chat_content_incremental.side_effect = RuntimeError("temporary DOM failure")
+    WorkerThread._execute_task_sync(worker, SimpleNamespace(action="new_chat_task"))
+    worker._browser_process_messages()
+    assert worker._browser_snapshot_pending is True
+    assert worker._canonical_store.message_count == 4 and not worker.messages_signal.items
+    worker.connector.get_chat_content_incremental.side_effect = lambda **_: ([], True, False)
+    worker._browser_process_messages()
+    assert worker.messages_signal.items == [[]]
+    assert worker._browser_snapshot_pending is False
+    worker.process_batch.assert_not_called()
+
+
+def test_failed_new_chat_does_not_request_a_new_snapshot_or_change_history():
+    worker = make_worker()
+    worker.agent = SimpleNamespace(shift_roles_for_new_chat=Mock())
+    worker.connector.new_chat = Mock(return_value=(False, "not found"))
+    WorkerThread._execute_task_sync(worker, SimpleNamespace(action="new_chat_task"))
+    assert not getattr(worker, "_browser_snapshot_pending", False)
+    assert worker.current_chat_id == "same-chat"
+    assert worker._canonical_store.message_count == 4 and not worker.messages_signal.items

@@ -494,6 +494,8 @@ class WorkerThread(QThread):
                 else:
                     self.current_chat_id = f"new_chat_{id(self)}"
                 self._normalizer.clear()
+                # 新会话可以为空，必须用完整快照清除旧 UI；读取失败沿现有路径重试。
+                self._browser_snapshot_pending = True
                 self.safe_emit_status("✨ 新会话已创建")
             self.agent.shift_roles_for_new_chat()
 
