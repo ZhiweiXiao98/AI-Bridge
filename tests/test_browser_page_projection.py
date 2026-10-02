@@ -114,3 +114,36 @@ def test_load_more_retains_hidden_history_and_latest_stream_text(page):
     page.browser_msg_area.flush_render()
     assert set(page.browser_msg_area._bubbles_by_id) == {f"{i}:AI" for i in range(4)}
     assert page.browser_msg_area._bubbles_by_id["3:AI"].current_data["segments"] == final["segments"]
+
+
+def test_reconnect_snapshot_restores_cleared_same_conversation_view(page):
+    page.message_window_service = MessageWindowService(default_turns=10)
+    initial = [message(f"{i}:AI", f"restored {i}", ordinal=i) for i in range(4)]
+    deliver(page, initial)
+    # The native acceptance gate deliberately clears only what the user can see;
+    # reconnect must repopulate it even when every DOM message is unchanged.
+    page._browser_all_messages = []
+    page.browser_msg_area.render_messages([], "")
+    assert not page.browser_msg_area._bubbles_by_id
+    deliver(page, [dict(item, _seq=2) for item in initial])
+    assert len(page._browser_all_messages) == 4
+    assert set(page.browser_msg_area._bubbles_by_id) == {f"{i}:AI" for i in range(4)}
+    assert "restored 0" in str(page.browser_msg_area._bubbles_by_id["0:AI"].current_data)
+
+
+def test_reconnect_snapshot_updates_visible_tail_with_unchanged_first_message(page):
+    user = message("turn:User", "question", role="User")
+    partial = message("turn:AI", "partial", ordinal=1)
+    deliver(page, [user, partial])
+    final = message("turn:AI", "restored final", seq=2, ordinal=1)
+    deliver(page, [dict(user, _seq=2), final])
+    assert page._browser_all_messages[-1] == final
+    assert page.browser_msg_area._bubbles_by_id["turn:AI"].current_data["segments"] == final["segments"]
+
+
+def test_reconnect_to_empty_page_clears_full_cache_and_bubbles(page):
+    deliver(page, [message("old:AI", "old browser history")])
+    deliver(page, [])
+    assert page._browser_all_messages == []
+    assert page._browser_message_projection.get_ordered_messages() == []
+    assert page.browser_msg_area._bubbles_by_id == {}

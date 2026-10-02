@@ -12,7 +12,7 @@ class WorkerBrowserMessageSyncBridge:
     def __init__(self, worker):
         self.worker = worker
 
-    def emit_browser_messages_snapshot(self, reason="background_sync"):
+    def emit_browser_messages_snapshot(self, reason="background_sync", *, force_full=False, allow_auto_export=True):
         worker = self.worker
         if not worker.connector.interact:
             return False
@@ -26,7 +26,12 @@ class WorkerBrowserMessageSyncBridge:
             if reason == "after_autofix" and old_fps:
                 self._log_code_fingerprint_changes(raw_msgs, old_fps, reason)
 
-            self.do_push_extracted_messages(raw_msgs, reason=f"snapshot_{reason}")
+            if force_full and worker._canonical_store.conversation_id != worker.current_chat_id:
+                # DOM IDs may repeat in a different webpage conversation. Do
+                # not reuse cached CanonicalMessages with the old session ID.
+                worker._normalizer.clear()
+            self.do_push_extracted_messages(raw_msgs, reason=f"snapshot_{reason}",
+                                            force_full=force_full, allow_auto_export=allow_auto_export)
             worker.state_service.save_states()
             self.check_and_emit_sync()
             return True
@@ -131,7 +136,7 @@ class WorkerBrowserMessageSyncBridge:
 
         self.do_push_extracted_messages(raw_msgs, reason=reason)
 
-    def do_push_extracted_messages(self, raw_msgs, reason="unknown", force_full=False):
+    def do_push_extracted_messages(self, raw_msgs, reason="unknown", force_full=False, *, allow_auto_export=True):
         worker = self.worker
         raw_msgs = worker.file_service.process_images(raw_msgs)
         worker.last_messages_snapshot = raw_msgs
@@ -171,10 +176,11 @@ class WorkerBrowserMessageSyncBridge:
                 len(canonical_msgs),
             )
 
-        try:
-            worker.process_batch(raw_msgs)
-        except Exception as exc:
-            logger.warning(exc)
+        if allow_auto_export:
+            try:
+                worker.process_batch(raw_msgs)
+            except Exception as exc:
+                logger.warning(exc)
 
     def _emit_snapshot(self, canonical_msgs, seq, reason):
         worker = self.worker

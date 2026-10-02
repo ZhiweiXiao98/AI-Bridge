@@ -21,7 +21,9 @@
 
 设置好 Chrome、目标网页及驱动后，可从主浏览器标签页发送、读取、停止和重连。程序只管理自己启动的专用 Chrome 和驱动，关闭时不终止用户其他浏览器。网页登录由用户在该专用窗口完成。首次安装 Chrome 请使用 Google 官方渠道；离线环境需自行提供匹配且可信的 ChromeDriver。
 
-CI 使用 **Chrome for Testing 154.0.8037.57** 和同版本驱动，访问仅监听回环地址的 HTML 聊天夹具。夹具验证真实浏览器、Selenium、Worker 和 Qt UI 的联动，不登录第三方账号、不访问真实服务、不调用模型。它不能证明任意网站或网站的新 DOM 已经适配，也不能替代用户实际目标站点的验收。
+macOS CI 使用 **Chrome for Testing 154.0.8037.57** 和同版本驱动。Windows CI 使用标准 GitHub runner 已安装、Google LLC 签名有效的 Chrome，并配置已固定归档哈希的 **ChromeDriver 154.0.8037.57**；要求两者 `MAJOR.MINOR.BUILD` 完全相同，并分别记录实际完整版本。此预装分支不运行安装器、不修改 ACL、系统设置或浏览器沙箱。
+
+两种测试均访问仅监听回环地址的 HTML 聊天夹具，验证真实浏览器、Selenium、Worker 和 Qt UI 的联动，不登录第三方账号、不访问真实服务、不调用模型。它们不能证明任意网站或网站的新 DOM 已经适配，也不能替代用户实际目标站点的验收。
 
 ## 用户数据与只读资源
 
@@ -55,6 +57,8 @@ python tools/desktop/local_browser_fixture.py --output build/local-desktop/brows
 python tools/desktop/local_smoke.py --browser-fixture build/local-desktop/browser-test/runtime.json
 ```
 
+上述浏览器归档流程适用于 macOS/Linux 工程验证。Windows 标准 GitHub CI 将准备浏览器那一步替换为 `python tools/desktop/local_preinstalled_browser.py --output build/local-desktop/browser-test`。该分支只读 HKLM 的 Chrome 安装记录和 Authenticode 签名，要求标准 Program Files 安装位置，并记录镜像标识、Chrome 签名与字节哈希。Chrome 版本若已与固定驱动不兼容则失败，不自动更新系统 Chrome。普通本地重建不能冒充标准 CI 或把发现浏览器当成运行通过。
+
 构建时会从固定官方 Node 归档同时提取 Node 和临时 npm，最终包只携带 Node 与其许可证，不携带构建用 npm。无需另外安装构建用 Node/npm。`--prepare-only` 可只生成输入和许可证材料；`--print-command` 只显示冻结命令。
 
 本地独立构建输入保留原 `requirements.lock` 的完整候选集合，并公开修正以下问题，不修改远程客户端锁：
@@ -87,7 +91,7 @@ Pi 原锁中七个 `@earendil-works` 子包缺 `integrity`。`licenses/local/npm
 
 浏览器检查记录 WebDriver capabilities 暴露的精确 Chrome/驱动版本、实际分块快照数量与进程清理证据。此恢复测试限定为应用拥有的 Chrome 正常关闭后重连，记录 `browser_restart_method=owned-graceful-reconnect`、`crash_recovery_tested=false`，不代表强杀、崩溃或断电后历史一定恢复。Chrome 进程重启与应用进程重启严格区分：`application_process_restart=false` 明确保留浏览器链路应用重启恢复未覆盖的边界，不能把 API 链路的第二进程恢复当成浏览器恢复。
 
-`licenses/local/browser-test-sources.json` 保存官方 CfT 版本清单 URL、三个工程目标归档的实际下载 SHA-256 和大小。解压器保留 macOS framework 的内部相对链接，拒绝路径穿越、外部链接和特殊文件。浏览器及驱动下载到独立 `browser-test/`，不加入 `resources/`、`dist/` 或任何上传清单的二进制内容；JSON 仅记录版本、官方来源及校验值。当前云执行环境拒绝 Chrome 必需的 AF_UNIX 能力，因此不能在这里假称浏览器实跑成功；真实浏览器执行依赖 Mac/Windows CI 的终态证据。
+`licenses/local/browser-test-sources.json` 保存官方 CfT 版本清单 URL、三个工程目标归档的实际下载 SHA-256 和大小。解压器保留 macOS framework 的内部相对链接，拒绝路径穿越、外部链接和特殊文件。macOS 使用完整固定 CfT；Windows 独立标注 `runner-preinstalled-chrome` 来源，仅取得固定驱动，不把预装 Chrome 伪称为下载的 CfT。原 CfT 分支仍强制浏览器/驱动精确同版本及固定归档来源。测试运行时不加入 `resources/`、`dist/` 或任何上传清单的二进制内容；JSON 仅记录版本、官方来源、镜像/签名及校验值。当前云执行环境拒绝 Chrome 必需的 AF_UNIX 能力，因此不能在这里假称浏览器实跑成功；真实浏览器执行依赖 Mac/Windows CI 的终态证据。
 
 如只需独立诊断 API 链路，可显式执行 `local_smoke.py --api-only`。其 JSON 会把浏览器自检标为未运行，不能代替默认验收。
 

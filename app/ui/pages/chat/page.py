@@ -1027,7 +1027,11 @@ class ChatPage(QWidget):
                 _raw = getattr(self.worker, 'browser_round_state', None)
                 if isinstance(_raw, str) and _raw:
                     browser_round_state = _raw
-            self.browser_msg_area.render_messages(visible, incoming_id, round_state=browser_round_state)
+            # Unchanged cached messages retain their original event metadata.
+            # A resync is a new snapshot even if its first message is unchanged.
+            snapshot_seq = message[0].get('_seq', 0) if message else 0
+            window = [dict(msg, _seq=snapshot_seq, _event='conversation.snapshot') for msg in visible]
+            self.browser_msg_area.render_messages(window, incoming_id, round_state=browser_round_state)
             self.browser_msg_area.set_load_more_visible(has_more)
 
     def _on_browser_ai_state(self, payload):

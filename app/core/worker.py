@@ -189,6 +189,7 @@ class WorkerThread(QThread):
         self.current_user = "System"
         self.was_busy = False
         self.last_messages_snapshot = []
+        self._browser_snapshot_pending = False
         self.last_session_scan = 0
         self.last_queue_scan = 0
         self.last_occupancy_scan = 0
@@ -1580,6 +1581,10 @@ class WorkerThread(QThread):
         except Exception:
             pass
         self.last_session_scan = 0
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+            # A new transport needs an authoritative projection even when its
+            # recovered DOM is identical to the prior canonical cache.
+            self._browser_snapshot_pending = True
         return True
 
     def _browser_scan_queues(self):
@@ -1692,6 +1697,14 @@ class WorkerThread(QThread):
             self.safe_emit_status(f"🔄 识别会话变更: {detected_title_id[:6]}")
             self.current_chat_id = detected_title_id
             self._check_and_emit_sync(True)
+
+        if getattr(self, "_browser_snapshot_pending", False):
+            restored = self.browser_message_sync_bridge.emit_browser_messages_snapshot(
+                reason="reconnect", force_full=True, allow_auto_export=False,
+            )
+            if restored:
+                self._browser_snapshot_pending = False
+            return
 
         # 状态机驱动推送决策
         transient_mode = bool(self.was_busy or len(self.toggle_queue) > 0)

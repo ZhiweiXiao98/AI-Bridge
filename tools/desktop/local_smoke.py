@@ -188,6 +188,11 @@ def run_application(executable: Path, argument: str, state: Path, env: dict, log
 def read_browser_fixture(path: Path) -> tuple[dict, dict]:
     from local_browser_fixture import selected_sources, test_platform
     runtime = json.loads(path.read_text(encoding="utf-8"))
+    if runtime.get("source_kind") == "runner-preinstalled-chrome":
+        from local_preinstalled_browser import validate_runtime
+        return runtime, validate_runtime(runtime, path)
+    if runtime.get("source_kind") not in (None, "fixed-cft"):
+        raise RuntimeError("不支持的浏览器自检来源")
     manifest_path = ROOT / "licenses/local/browser-test-sources.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     records = selected_sources(manifest, test_platform())
@@ -209,7 +214,16 @@ def read_browser_fixture(path: Path) -> tuple[dict, dict]:
 def validate_browser_report(report: dict, fixture: dict) -> dict:
     if report.get("mode") != "local-browser" or report.get("fixture") != "loopback-html" or report.get("real_site_visited") is not False:
         raise RuntimeError("浏览器自检没有使用真实本地 Worker 和仅回环测试页面")
-    if report.get("browser_version") != fixture["version"] or report.get("chromedriver_version") != fixture["version"]:
+    if fixture.get("source_kind") == "runner-preinstalled-chrome":
+        from local_preinstalled_browser import compatible_build
+        browser_version, driver_version = fixture["browser_version"], fixture["chromedriver_version"]
+        if not compatible_build(browser_version, driver_version):
+            raise RuntimeError("预装 Chrome 与固定驱动的构建版本不兼容")
+    elif fixture.get("source_kind") in (None, "fixed-cft"):
+        browser_version = driver_version = fixture["version"]
+    else:
+        raise RuntimeError("不支持的浏览器自检来源")
+    if report.get("browser_version") != browser_version or report.get("chromedriver_version") != driver_version:
         raise RuntimeError("实际浏览器/驱动 capabilities 与固定官方测试版本不一致")
     if not REQUIRED_BROWSER_CHECKS.issubset(report.get("checks", [])):
         raise RuntimeError("浏览器自检缺少发送、分块读取、停止、重连或所有权清理证据")
