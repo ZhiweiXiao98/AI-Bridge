@@ -37,10 +37,12 @@ def test_browser_probe_distinguishes_fixture_cache_and_render_without_content():
                            browser_input_area=SimpleNamespace(is_ai_busy=False, queued_payload=(secret, [])))
     worker = SimpleNamespace(mode="browser", last_messages_snapshot=[{}, {}],
                              connector=SimpleNamespace(conn=SimpleNamespace(diagnostic_snapshot=lambda: {"connection_stage": "page_ready"})))
-    fixture = SimpleNamespace(snapshot=lambda: {"request_count": 1, "chunk_count": 13, "response_count": 1,
+    fixture = SimpleNamespace(page_ready_events=[{"restored_message_count": 4, "text": secret}],
+                              snapshot=lambda: {"request_count": 1, "chunk_count": 13, "response_count": 1,
                                                 "events": [{"text": secret}], "url": secret})
     probe = browser_selftest_probe(page, worker, fixture, 3)
     assert probe["fixture_counts"]["response_count"] == 1
+    assert probe["last_restored_message_count"] == 4
     assert probe["ui_cached_message_count"] == 1 and probe["rendered_bubble_count"] == 1
     assert probe["final_marker_cached"] is False and probe["final_marker_rendered"] is True
     assert probe["ui_has_queued_message"] is True

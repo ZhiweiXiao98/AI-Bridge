@@ -83,9 +83,9 @@ Pi 原锁中七个 `@earendil-works` 子包缺 `integrity`。`licenses/local/npm
 3. 包内精确 Node/Pi 接入仅监听回环地址的模拟模型，完成真实工具批准、真实文件读取、拒绝不写入、取消不写入
 4. 原生 Pi 会话保存与续聊成功，项目锁释放，Worker 和 Pi 正常退出
 5. 再启动第二个真正的应用进程，看到原会话、历史及相同 Pi 会话，且模拟模型密钥已清除
-6. 用另一个全新空目录启动第三个冻结应用进程，显式提供已校验的官方 Chrome 与匹配驱动，验证真实 UI 发送、回执、流式/最终文本、停止和待发队列清除、断开重连、Chrome 新进程恢复同一资料目录历史、活动生成中关闭主窗口，以及所有已观察到的自有后代退出
+6. 用另一个全新空目录启动第三个冻结应用进程，显式提供已校验的官方 Chrome 与匹配驱动，验证真实 UI 发送、回执、流式/最终文本、停止和待发队列清除；点击 UI 重连并正常关闭专用 Chrome 后，要求旧进程退出、新进程恢复同一资料目录的至少四条消息；另验证活动生成中关闭主窗口，以及所有已观察到的自有后代退出
 
-浏览器检查记录 WebDriver capabilities 暴露的精确 Chrome/驱动版本、实际分块快照数量与进程清理证据。Chrome 进程重启与应用进程重启严格区分：当前浏览器链路只证明前者，`application_process_restart=false` 明确保留应用重启恢复未覆盖的边界，不能把 API 链路的第二进程恢复当成浏览器恢复。
+浏览器检查记录 WebDriver capabilities 暴露的精确 Chrome/驱动版本、实际分块快照数量与进程清理证据。此恢复测试限定为应用拥有的 Chrome 正常关闭后重连，记录 `browser_restart_method=owned-graceful-reconnect`、`crash_recovery_tested=false`，不代表强杀、崩溃或断电后历史一定恢复。Chrome 进程重启与应用进程重启严格区分：`application_process_restart=false` 明确保留浏览器链路应用重启恢复未覆盖的边界，不能把 API 链路的第二进程恢复当成浏览器恢复。
 
 `licenses/local/browser-test-sources.json` 保存官方 CfT 版本清单 URL、三个工程目标归档的实际下载 SHA-256 和大小。解压器保留 macOS framework 的内部相对链接，拒绝路径穿越、外部链接和特殊文件。浏览器及驱动下载到独立 `browser-test/`，不加入 `resources/`、`dist/` 或任何上传清单的二进制内容；JSON 仅记录版本、官方来源及校验值。当前云执行环境拒绝 Chrome 必需的 AF_UNIX 能力，因此不能在这里假称浏览器实跑成功；真实浏览器执行依赖 Mac/Windows CI 的终态证据。
 

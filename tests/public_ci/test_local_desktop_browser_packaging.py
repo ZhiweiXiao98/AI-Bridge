@@ -2,7 +2,7 @@
 import json
 import io
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import stat
 import sys
 import tempfile
@@ -136,6 +136,7 @@ class BrowserSmokeEvidenceTests(unittest.TestCase):
                 "browser_version": "154.0.8037.57", "chromedriver_version": "154.0.8037.57", "qt": "6.11.1",
                 "checks": sorted(local_smoke.REQUIRED_BROWSER_CHECKS), "stream_snapshot_count": 3,
                 "browser_process_restart": True, "application_process_restart": False,
+                "browser_restart_method": "owned-graceful-reconnect", "crash_recovery_tested": False,
                 "same_profile_history_restored": True, "cancelled_queue_sent": False,
                 "request_count": 4, "response_count": 2, "private_profile": "/private/state"}
 
@@ -143,6 +144,8 @@ class BrowserSmokeEvidenceTests(unittest.TestCase):
         safe = local_smoke.validate_browser_report(self.report(), {"version": "154.0.8037.57"})
         self.assertTrue(safe["browser_process_restart"])
         self.assertFalse(safe["application_process_restart"])
+        self.assertEqual(safe["browser_restart_method"], "owned-graceful-reconnect")
+        self.assertFalse(safe["crash_recovery_tested"])
         self.assertNotIn("private_profile", safe)
 
     def test_browser_evidence_requires_exact_capabilities_and_real_checks(self):
@@ -150,6 +153,8 @@ class BrowserSmokeEvidenceTests(unittest.TestCase):
                            ("fixture", "real-user-site"), ("real_site_visited", True), ("checks", []),
                            ("stream_snapshot_count", 1), ("cancelled_queue_sent", True),
                            ("same_profile_history_restored", False), ("application_process_restart", True),
+                           ("browser_restart_method", "forced-kill"), ("crash_recovery_tested", True),
+                           ("browser_restart_method", None), ("crash_recovery_tested", None),
                            ("request_count", 3)):
             report = self.report()
             report[field] = bad
@@ -168,6 +173,36 @@ class BrowserSmokeEvidenceTests(unittest.TestCase):
             self.assertNotIn(str(state), summary)
             self.assertNotIn("local-fixture-not-a-secret", summary)
             self.assertNotIn("api_key=secret", summary)
+
+    def test_traceback_stops_at_exception_before_buffered_startup_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state = Path(directory)
+            log = state / "outer.log"
+            log.write_text('Traceback (most recent call last):\n  File "module.py", line 4\n'
+                           '    raise RuntimeError("测试失败")\nRuntimeError: 测试失败\n'
+                           '[PluginLoader] private startup data\nERROR: unrelated later data\n', encoding="utf-8")
+            summary = local_smoke.failure_diagnostic(log, state)
+            self.assertIn("RuntimeError: 测试失败", summary)
+            self.assertNotIn("private startup data", summary)
+            self.assertNotIn("unrelated later data", summary)
+
+    def test_windows_literal_and_repr_paths_are_both_redacted(self):
+        windows_root = PureWindowsPath(r"D:\a\private-repo")
+        windows_home = PureWindowsPath(r"C:\Users\private-runner")
+        paths = [str(windows_root / "build"), str(windows_home / "AppData" / "Local" / "Temp")]
+        message = "ERROR: " + " | ".join(paths) + " | " + repr(paths)
+        with tempfile.TemporaryDirectory() as directory:
+            state = Path(directory)
+            log = state / "outer.log"
+            log.write_text(message, encoding="utf-8")
+            with patch.object(local_smoke, "ROOT", windows_root), patch.object(Path, "home", return_value=windows_home):
+                summary = local_smoke.failure_diagnostic(log, state)
+                report = local_smoke.safe_failure_report("测试", RuntimeError(message), windows_root / "build")
+        for text in (summary, report["summary"]):
+            self.assertNotIn("private-repo", text)
+            self.assertNotIn("private-runner", text)
+            self.assertNotIn("D:", text)
+            self.assertNotIn("C:", text)
 
     def test_failure_json_is_not_stale_success_or_raw_user_state(self):
         report = local_smoke.safe_failure_report("API首次完整运行", RuntimeError(

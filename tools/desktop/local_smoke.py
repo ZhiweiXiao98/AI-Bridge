@@ -99,6 +99,14 @@ def terminate_tree(process: subprocess.Popen, observed: dict) -> None:
             pass
 
 
+def redact_known_paths(text: str, paths: tuple[str, ...], replacement: str) -> str:
+    """同时处理日志原文及 Python 列表 repr 中的 Windows 转义路径。"""
+    for private_path in sorted(set(paths), key=len, reverse=True):
+        text = text.replace(private_path.replace("\\", "\\\\"), replacement)
+        text = text.replace(private_path, replacement)
+    return text
+
+
 def failure_diagnostic(log_path: Path, state: Path) -> str:
     """只取专用空 HOME 自检的错误摘要；不上传原始日志、会话或网页内容。"""
     messages = []
@@ -111,12 +119,17 @@ def failure_diagnostic(log_path: Path, state: Path) -> str:
         value = path.read_text(encoding="utf-8", errors="replace")[-64_000:]
         traceback_start = value.rfind("Traceback (most recent call last):")
         if traceback_start >= 0:
-            lines = value[traceback_start:].splitlines()[:36]
+            lines = []
+            for line in value[traceback_start:].splitlines()[:36]:
+                lines.append(line)
+                # 标准 traceback 的栈帧/源码均缩进，首个非缩进尾行是异常。
+                # 异常之后可能有缓冲的启动输出，不能把这些无关内容带进摘要。
+                if len(lines) > 1 and line and not line[0].isspace():
+                    break
         else:
             lines = [line for line in value.splitlines() if re.search(r"(?:Error|Exception|FATAL|failed|失败)", line, re.I)][-12:]
-        text = "\n".join(lines)
-        for private_path in (str(state), str(log_path.parent), str(ROOT), str(Path.home())):
-            text = text.replace(private_path, "<自检目录>")
+        text = redact_known_paths("\n".join(lines),
+                                  (str(state), str(log_path.parent), str(ROOT), str(Path.home())), "<自检目录>")
         text = re.sub(r'File "[^"\n]*[/\\]([^/\\"\n]+\.py)"', r'File "\1"', text)
         text = text.replace("local-fixture-not-a-secret", "<模拟凭证>")
         text = re.sub(r"(?i)(api[_-]?key|authorization|bearer)(\s*[:=]\s*|\s+)[^\s,;]+", r"\1=<已隐藏>", text)
@@ -203,17 +216,18 @@ def validate_browser_report(report: dict, fixture: dict) -> dict:
     if (report.get("stream_snapshot_count", 0) < 2 or report.get("same_profile_history_restored") is not True
             or report.get("cancelled_queue_sent") is not False or report.get("browser_process_restart") is not True
             or report.get("application_process_restart") is not False
+            or report.get("browser_restart_method") != "owned-graceful-reconnect"
+            or report.get("crash_recovery_tested") is not False
             or report.get("request_count", 0) < 4 or report.get("response_count", 0) < 2):
         raise RuntimeError("浏览器流式/取消队列/同资料目录恢复自检未完成")
     return {key: report[key] for key in ("mode", "fixture", "browser_version", "chromedriver_version", "real_site_visited",
             "qt", "checks", "stream_snapshot_count", "browser_process_restart", "application_process_restart",
+            "browser_restart_method", "crash_recovery_tested",
             "same_profile_history_restored", "cancelled_queue_sent", "request_count", "response_count")}
 
 
 def safe_failure_report(stage: str, error: Exception, output: Path) -> dict:
-    summary = str(error)
-    for private_path in (str(output), str(ROOT), str(Path.home())):
-        summary = summary.replace(private_path, "<构建目录>")
+    summary = redact_known_paths(str(error), (str(output), str(ROOT), str(Path.home())), "<构建目录>")
     summary = re.sub(r"(?:[A-Za-z]:[/\\]|/(?:tmp|var|private|Users|home|workspace|opt)/)[^\s\"'\n]*", "<自检目录>", summary)
     summary = summary.replace("local-fixture-not-a-secret", "<模拟凭证>")
     summary = re.sub(r"(?i)(api[_-]?key|authorization|bearer)(\s*[:=]\s*|\s+)[^\s,;]+", r"\1=<已隐藏>", summary)

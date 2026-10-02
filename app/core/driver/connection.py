@@ -6,6 +6,7 @@ import sys
 import shutil
 import traceback
 import re
+import subprocess
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -29,6 +30,8 @@ class ConnectionManager:
     提供端口检测、WebDriver 初始化和错误处理功能。
     """
 
+    _BROWSER_CLOSE_GRACE_SECONDS = 2.0
+
     def __init__(self, port, config=None):
         """
         初始化连接管理器。
@@ -43,6 +46,8 @@ class ConnectionManager:
         self._owned_services = []
         self._init_workers = []
         self._shutdown_worker = None
+        self._browser_close_worker = None
+        self._browser_close_deadline = None
         self.config = dict(config if config is not None else ConfigManager.load())
         self.local_desktop = os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1"
         self.local_session = LocalChromeSession(self.config) if self.local_desktop else None
@@ -152,6 +157,38 @@ class ConnectionManager:
         deadline = time.monotonic() + max(0.0, timeout)
         with self._lifecycle_lock:
             self._closed = True
+            # Only this app's dedicated Chrome may be closed. A remote/server
+            # connection can be attached to the user's shared Chrome.
+            process = self.local_session.process if self.local_desktop and self.local_session else None
+            if (self._browser_close_worker is None and self.driver is not None
+                    and process is not None and process.poll() is None):
+                driver = self.driver
+                self._browser_close_deadline = time.monotonic() + self._BROWSER_CLOSE_GRACE_SECONDS
+                def close_owned_browser():
+                    try:
+                        driver.execute_cdp_cmd("Browser.close", {})
+                    except Exception:
+                        # Closing Chrome can itself disconnect the command.
+                        # The owned process exit, not the RPC reply, confirms it.
+                        pass
+                self._browser_close_worker = threading.Thread(target=close_owned_browser, daemon=True,
+                                                               name="local-chrome-graceful-close")
+                self._browser_close_worker.start()
+            grace_deadline = self._browser_close_deadline
+
+        # Keep the driver service alive while Chrome flushes its profile. The
+        # grace deadline is fixed on the first call, even when timeout=0; a
+        # bounded caller may retry without restarting the grace or CDP command.
+        if process is not None and grace_deadline is not None and process.poll() is None:
+            remaining = max(0.0, min(deadline, grace_deadline) - time.monotonic())
+            try:
+                process.wait(timeout=remaining)
+            except subprocess.TimeoutExpired:
+                pass
+            if process.poll() is None and time.monotonic() < grace_deadline:
+                return False
+
+        with self._lifecycle_lock:
             services = list(self._owned_services)
             if self._service is not None and self._service not in services:
                 services.append(self._service)
@@ -165,6 +202,9 @@ class ConnectionManager:
                 self._shutdown_worker = threading.Thread(target=stop_services, daemon=True,
                                                         name="chromedriver-cleanup")
                 self._shutdown_worker.start()
+            # A hung CDP RPC must not hold reconnect hostage after its old
+            # service and owned browser have exited. This daemon captures only
+            # that old driver, and never reads a replacement connector/driver.
             threads = [self._shutdown_worker, *self._init_workers]
             if self._init_worker is not None and self._init_worker not in threads:
                 threads.append(self._init_worker)

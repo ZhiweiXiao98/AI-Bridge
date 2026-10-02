@@ -271,6 +271,8 @@ def browser_selftest_probe(page, worker, fixture, stream_snapshot_count=0):
         "fixture_counts": {key: counts.get(key, 0) for key in (
             "page_ready_count", "request_count", "chunk_count", "response_count", "cancel_count",
             "session_switch_count", "new_chat_count", "clear_count")},
+        "last_restored_message_count": (fixture.page_ready_events[-1].get("restored_message_count", 0)
+                                        if fixture.page_ready_events else 0),
         "worker_mode": worker.mode if worker.mode in {"api", "browser"} else "unknown",
         "ui_mode": page.current_mode if page.current_mode in {"api", "browser"} else "unknown",
         "worker_message_count": len(worker.last_messages_snapshot),
@@ -358,20 +360,22 @@ def run_browser_selftest(app, window, worker, home: Path, fixture):
         raise RuntimeError("停止后仍自动发送了已取消的队列")
     checks.append("浏览器停止生成")
 
-    # 模拟用户关闭应用拥有的专用 Chrome，不能终止普通用户的其他浏览器。
+    # 走真实客户端重连/正常关闭路径，让 Chrome 完成资料写盘。
+    # 不用 SIGTERM/TerminateProcess 冒充正常关窗，也不宣称覆盖任意崩溃恢复。
     before_page_loads = fixture.page_ready_count
     old_process = session().process
     page._browser_all_messages = []
     page.browser_msg_area.render_messages([], "")
-    old_process.terminate()
-    old_process.wait(timeout=10)
     page.browser_reconnect_btn.click()
     wait(lambda: ready() and session().process.pid != old_process.pid,
          "浏览器窗口关闭后真实新进程重连", timeout=60)
     browser_processes.append(session().process)
+    if old_process.poll() is None:
+        raise RuntimeError("新的浏览器已启动，但此前自有浏览器仍未退出；" + browser_diagnostic())
     wait(lambda: fixture.page_ready_count > before_page_loads, "新浏览器进程实际重新加载网页")
-    if fixture.page_ready_events[-1]["restored_message_count"] < 4:
-        raise RuntimeError("新浏览器进程没有从同一资料目录恢复前两轮消息")
+    restored = fixture.page_ready_events[-1]["restored_message_count"]
+    if restored < 4:
+        raise RuntimeError(f"新浏览器进程未完整恢复前两轮消息，实际恢复 {restored} 条；" + browser_diagnostic())
     wait(lambda: first in ui_text() and first in rendered_text(), "专用资料目录中的网页历史恢复")
     checks += ["浏览器断开后重连", "浏览器重启后重新连接"]
     page.browser_input_area.clear_inputs()
@@ -390,5 +394,6 @@ def run_browser_selftest(app, window, worker, home: Path, fixture):
             "chromedriver_version": driver_version, "real_site_visited": False, "qt": qVersion(),
             "checks": checks, "stream_snapshot_count": len(ui_stream_samples),
             "browser_process_restart": True, "application_process_restart": False,
+            "browser_restart_method": "owned-graceful-reconnect", "crash_recovery_tested": False,
             "same_profile_history_restored": True, "cancelled_queue_sent": False,
             "request_count": fixture.request_count, "response_count": fixture.response_count}
