@@ -111,6 +111,18 @@ class CompleteBuildTests(unittest.TestCase):
 
 
 class ComplianceTests(unittest.TestCase):
+    def test_native_toc_index_preserves_exact_suffix_matches(self):
+        entries = [("a/pkg/LICENSE", "first"), ("b/pkg/LICENSE", "second"),
+                   ("pkg/LICENSE", "short"), ("node/bin/node", "node"),
+                   ("a/pkg/LICENSE", "duplicate-origin")]
+        indexed = local_compliance.native_toc_index(entries)
+        for relative in ("bundle/_internal/a/pkg/LICENSE", "bundle/_internal/b/pkg/LICENSE",
+                         "bundle/_internal/node/bin/node", "bundle/missing.dll"):
+            expected = [(name, source) for name, source in entries if relative.endswith("/" + name)]
+            actual = [(name, source) for name, source in indexed.get(Path(relative).name, ())
+                      if relative.endswith("/" + name)]
+            self.assertEqual(actual, expected)
+
     def test_install_report_does_not_use_remote_distribution_allowlist(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "install.json"
@@ -150,7 +162,13 @@ class ComplianceTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/local-desktop-build.yml").read_text(encoding="utf-8")
         upload = workflow.split("uses: actions/upload-artifact@", 1)[1]
         self.assertEqual(upload.count(".json"), 3)
-        for forbidden in ("dist/", "node_modules", "install-report", "*.zip", "*.exe", "*.log", "if: always()"):
+        paths = upload.split("path: |", 1)[1].split("if-no-files-found:", 1)[0]
+        self.assertEqual([line.strip() for line in paths.splitlines() if line.strip()], [
+            "build/local-desktop/review/local-build-inputs.json",
+            "build/local-desktop/review/local-desktop-inventory.json",
+            "build/local-desktop/review/local-smoke.json",
+        ])
+        for forbidden in ("dist/", "node_modules", "install-report", "*.zip", "*.exe", "*.log", "runtime.json"):
             self.assertNotIn(forbidden, upload)
         self.assertNotIn("secrets.", workflow)
         self.assertNotIn("contents: write", workflow)

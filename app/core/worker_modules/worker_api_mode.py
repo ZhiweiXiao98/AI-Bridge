@@ -82,6 +82,9 @@ class WorkerApiModeBridge:
                     logger.warning("Browser 模式重复切换同步失败: %s", e)
             return
         old_mode = self.mode
+        browser = getattr(self.worker, "browser_command_bridge", None)
+        if old_mode == "browser" and browser:
+            browser.cancel()
         self.mode = mode
         self._normalizer.clear()
         self.safe_emit_status(f"🔄 切换模式: {old_mode} → {mode}")
@@ -101,20 +104,11 @@ class WorkerApiModeBridge:
                 self.context_status_signal.emit({})
                 self.safe_emit_status("🤖 API 模式暂无对话")
         else:
-            try:
-                if self.connector.interact:
-                    self.connector.interact.switch_to_chat_tab()
-                s_list = self.connector.get_session_list()
-                if s_list:
-                    self.sessions_signal.emit(s_list)
-                raw_msgs, _ = self.connector.get_chat_content(self.target_class, auto_wake=False)
-                raw_msgs = self.file_service.process_images(raw_msgs)
-                if raw_msgs:
-                    self._do_push_extracted_messages(raw_msgs, reason='mode_switch', force_full=True)
-                else:
-                    self.messages_signal.emit([])
-            except Exception as e:
-                self.safe_emit_status(f"⚠️ Browser 模式数据补推失败: {e}")
+            # This entry point is called on the GUI/RPC thread. Browser DOM and
+            # connection work must wait for the worker loop.
+            self.messages_signal.emit([])
+            if browser:
+                browser.reconnect()
             self.context_status_signal.emit({})
     def _init_api_source(self):
         """延迟初始化 APISource"""
@@ -254,6 +248,10 @@ class WorkerApiModeBridge:
            logger.warning("[API] 没有活跃对话")
            self.safe_emit_status("⚠️ 当前没有可用的 API 对话，请先新建对话")
            return
+        profile = self.api_source.get_runtime_profile() if hasattr(self.api_source, "get_runtime_profile") else {}
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1" and profile.get("kind") == "browser_stateless":
+            self.safe_emit_status("⚠️ 本地客户端未开放会清空网页对话的无状态 Profile，请使用浏览器标签页。")
+            return False
         if getattr(self.api_source, "get_conversation_runtime", lambda: "legacy")() != "legacy":
             self._api_pending_text = None
             return self.agent_runtime_bridge.start(text, **kwargs)
@@ -285,11 +283,11 @@ class WorkerApiModeBridge:
         self._init_api_source()
         if not self.api_source:
             if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
-                self.safe_emit_status("❌ 本地 API 源不可用，请检查模型配置后重启；未连接浏览器")
+                self.safe_emit_status("❌ 本地 API 源不可用，请检查模型配置，或切换到浏览器标签页。")
+                time.sleep(1.0)
                 return
             self.safe_emit_status("❌ API源不可用，回退到浏览器模式")
             self.mode = "browser"
-            self._run_browser_loop()
             return
 
         self.safe_emit_status("🤖 API 模式已启动")
@@ -310,8 +308,11 @@ class WorkerApiModeBridge:
                 # 模式被切走了，退出循环
                 if self.mode != "api":
                     self.safe_emit_status("🔄 退出API循环，切换到浏览器模式")
-                    self._run_browser_loop()
                     return
+
+                browser = getattr(self.worker, "browser_command_bridge", None)
+                if browser:
+                    browser.process_controls()
 
                 # 检查是否有待发送消息
                 text = self._api_pending_text

@@ -111,13 +111,13 @@ class ToolRouterService:
 
         fallback_rounds: List[ToolRoundResult] = []
         _t0 = time.time()
-        tool_result = self._handle_function_calling(chat_id, raw_text)
+        tool_result = self._handle_function_calling(chat_id, raw_text, on_intent_start, on_intent_end)
         logger.info("[工具路由] 函数调用识别完成 | 耗时=%.1fs | 命中=%s",
                      time.time() - _t0, bool(tool_result and tool_result.has_any_tool))
         if tool_result and tool_result.has_any_tool:
             fallback_rounds.append(tool_result)
         _t1 = time.time()
-        code_result = self._handle_code_blocks(chat_id, messages)
+        code_result = self._handle_code_blocks(chat_id, messages, on_intent_start, on_intent_end)
         logger.info("[工具路由] 代码块识别完成 | 耗时=%.1fs | 命中=%s",
                      time.time() - _t1, bool(code_result and code_result.has_any_tool))
         if code_result and code_result.has_any_tool:
@@ -165,7 +165,7 @@ class ToolRouterService:
             logger.error(f"提取文本失败: {e}")
         return None
 
-    def _handle_function_calling(self, chat_id: str, raw_text: str) -> Optional[ToolRoundResult]:
+    def _handle_function_calling(self, chat_id: str, raw_text: str, on_intent_start=None, on_intent_end=None) -> Optional[ToolRoundResult]:
         """处理 Function Calling 格式的工具调用"""
         code_blocks = re.findall(r"```\w*\s*\n(.*?)\n```", raw_text, re.DOTALL)
 
@@ -200,7 +200,7 @@ class ToolRouterService:
             if intent.name == 'knowledge_search':
                 self._log_knowledge_health()
 
-        round_result = self.runtime_executor.execute_intents(intents)
+        round_result = self.runtime_executor.execute_intents(intents, on_intent_start=on_intent_start, on_intent_end=on_intent_end)
         round_result.source_protocol = 'browser_fallback_function_calling'
         return round_result
 
@@ -230,7 +230,7 @@ class ToolRouterService:
                     health.get("embedding_mode"), health.get("reranker_mode"),
                     health.get("consecutive_failures", 0))
 
-    def _handle_code_blocks(self, chat_id: str, messages: list) -> Optional[ToolRoundResult]:
+    def _handle_code_blocks(self, chat_id: str, messages: list, on_intent_start=None, on_intent_end=None) -> Optional[ToolRoundResult]:
         """处理代码块执行（向后兼容）"""
         code_blocks = self._extract_all_code_blocks(messages)
         if not code_blocks:
@@ -261,7 +261,7 @@ class ToolRouterService:
         if not intents:
             return None
 
-        round_result = self.runtime_executor.execute_intents(intents)
+        round_result = self.runtime_executor.execute_intents(intents, on_intent_start=on_intent_start, on_intent_end=on_intent_end)
         round_result.source_protocol = 'browser_fallback_exec_code'
         executed = any(r.kind == 'exec_code' for r in round_result.results)
         if executed and hasattr(self.agent, 'worker') and hasattr(self.agent.worker, 'code_execution_completed'):

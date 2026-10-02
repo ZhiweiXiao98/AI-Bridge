@@ -8,6 +8,11 @@ import subprocess
 import sys
 
 
+def select_startup_mode(explicit, saved, smoke=False):
+    mode = explicit or ("api" if smoke else saved)
+    return mode if mode in {"api", "browser"} else "api"
+
+
 def _stdio(home: Path):
     # --windowed 冻结程序没有控制台，旧核心仍有 print 调用。
     for name in ("stdout", "stderr"):
@@ -21,13 +26,14 @@ def _stdio(home: Path):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("api", "browser"), default="api")
+    parser.add_argument("--mode", choices=("api", "browser"), default=None)
     smoke_options = parser.add_mutually_exclusive_group()
     smoke_options.add_argument("--local-smoke-test", action="store_true", help="只使用本机模拟模型验证完整链路")
+    smoke_options.add_argument("--local-browser-smoke-test", action="store_true", help="使用独立 Chrome 和本机模拟网页验证浏览器模式")
     smoke_options.add_argument("--local-resume-smoke-test", action="store_true", help="仅重开先前自检产生的专用数据")
     args = parser.parse_args(argv)
-    smoke = args.local_smoke_test or args.local_resume_smoke_test
-    if args.local_smoke_test:
+    smoke = args.local_smoke_test or args.local_resume_smoke_test or args.local_browser_smoke_test
+    if args.local_smoke_test or args.local_browser_smoke_test:
         supplied_home = os.environ.get("AI_BRIDGE_LOCAL_HOME")
         if not supplied_home:
             parser.error("自检必须通过 AI_BRIDGE_LOCAL_HOME 指定一个新的空目录，不能使用真实用户数据")
@@ -55,7 +61,7 @@ def main(argv=None):
             QMessageBox.information(None, "AI Bridge 已在运行", "同一数据目录已有本地客户端，请切回已打开的窗口。")
         return 2
 
-    worker = window = None
+    worker = window = browser_fixture = None
     splash = QLabel("AI Bridge\n正在加载本地核心与界面…")
     splash.setWindowTitle("启动完整本地客户端")
     splash.setMinimumSize(420, 100)
@@ -72,6 +78,13 @@ def main(argv=None):
             config["subagent"] = {**config.get("subagent", {}), "enabled": False}
             ConfigManager.save(config)
             marker.write_text("1\n", encoding="utf-8")
+
+        saved_mode = ConfigManager.load().get("startup_mode", "api")
+        args.mode = select_startup_mode(args.mode, saved_mode, smoke)
+        if args.local_browser_smoke_test:
+            from app.core.local_selftest import prepare_browser_selftest
+            browser_fixture = prepare_browser_selftest(home)
+            args.mode = "browser"
 
         from app.core.project_context import ProjectContext
         context = ProjectContext.initialize()
@@ -93,6 +106,13 @@ def main(argv=None):
         window = MainWindow(worker_core=worker, user_profile={"role": "developer", "username": "本地用户"})
         window.chat_page.on_mode_switch(args.mode)
         window.setWindowTitle("AI Bridge · 完整本地客户端")
+        def remember_mode(mode):
+            if not smoke and mode in {"api", "browser"}:
+                saved = ConfigManager.load()
+                saved["startup_mode"] = mode
+                ConfigManager.save(saved)
+        worker.mode_changed_signal.connect(remember_mode)
+        remember_mode(args.mode)
         window.show()
         splash.close()
         app.processEvents()
@@ -107,24 +127,31 @@ def main(argv=None):
                 old_hook(kind, value, tb)
             sys.excepthook = capture_exception
             try:
-                runner = run_selftest if args.local_smoke_test else run_resume_selftest
-                result = runner(app, window, worker, home)
+                if args.local_browser_smoke_test:
+                    from app.core.local_selftest import run_browser_selftest
+                    result = run_browser_selftest(app, window, worker, home, browser_fixture)
+                else:
+                    runner = run_selftest if args.local_smoke_test else run_resume_selftest
+                    result = runner(app, window, worker, home)
+                window.close()
+                app.processEvents()
                 if failures:
                     raise RuntimeError("界面自检发现未处理异常：" + "; ".join(failures))
             finally:
                 sys.excepthook = old_hook
             import json
-            report_name = "local-smoke.json" if args.local_smoke_test else "local-resume-smoke.json"
+            report_name = ("local-browser-smoke.json" if args.local_browser_smoke_test else
+                           "local-smoke.json" if args.local_smoke_test else "local-resume-smoke.json")
             (home / report_name).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-            window.close()
-            app.processEvents()
             return 0
 
         # 首次配置仍直接使用现有设置页，不引入远程地址或额外应用账号。
         from app.core.api_mode_config import APIModeConfigManager
         profiles = APIModeConfigManager.load().get("profiles", {})
         configured = any(p.get("api_key") for p in profiles.values())
-        if not configured:
+        if args.mode == "browser":
+            window.statusBar().showMessage("浏览器模式：在连接设置中填写目标网站，使用专用 Chrome 窗口登录。", 0)
+        elif not configured:
             window.statusBar().showMessage("本地核心已就绪。请在设置中填写模型服务、地址和密钥，然后新建 Pi 对话。", 0)
         help_menu = window.menuBar().addMenu("本地运行")
         action = help_menu.addAction("运行环境与使用说明")
@@ -136,7 +163,7 @@ def main(argv=None):
                 f"Pi：{'可用' if pi['available'] else pi['reason']}\n"
                 f"数据目录：{home}\n\n"
                 "模型：在设置中配置自己的 API 服务；只有发送请求才调用模型，可能产生提供商费用。\n"
-                "网页模式：需要已安装的 Chrome、远程调试端口及已登录的网页账号；不同网站仍需相应适配。\n"
+                "网页模式：使用已安装的 Chrome 和独立资料目录；在连接设置中指定网站，必要时明确允许获取官方匹配驱动。网页账号请自行登录。\n"
                 "Docker 沙箱：需要用户安装并启动 Docker 和准备沙箱镜像；应用不会自动下载或启动 Docker。\n"
                 "知识检索：已包含 RAG 引擎，首次使用向量模型时需要下载模型。\n"
                 "开发工具：项目 Python、Git、Rhino 由需要这些能力的用户另外配置。\n"
@@ -155,13 +182,15 @@ def main(argv=None):
     finally:
         if worker is not None:
             worker.stop_worker()
+        if browser_fixture is not None:
+            browser_fixture.close()
         lock.unlock()
 
     if exit_code == 42:
         command = [sys.executable] if getattr(sys, "frozen", False) else [sys.executable, str(Path(__file__).resolve())]
         env = os.environ.copy()
         env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
-        subprocess.Popen(command + ["--mode", args.mode], env=env, cwd=str(home))
+        subprocess.Popen(command + ["--mode", worker.mode], env=env, cwd=str(home))
     return exit_code
 
 

@@ -237,12 +237,21 @@ def privacy_findings(files: list[dict]) -> list[str]:
     return result
 
 
+def native_toc_index(entries: list[tuple[str, str]]) -> dict:
+    """按文件名缩小候选集合；仍保留后续完整路径后缀与最长匹配规则。"""
+    result = {}
+    for name, source in entries:
+        result.setdefault(PurePosixPath(name).name, []).append((name, source))
+    return result
+
+
 def collect_inventory(root: Path, output: Path, prepared: dict, resources: list, node: dict, pi: dict) -> dict:
     work = output / "work" / NAME
     index = provenance_index(installed_distributions())
     entries = read_toc(work / "Analysis-00.toc") + read_toc(work / "COLLECT-00.toc")
     pure = {name: source for name, source, kind in read_toc(work / "PYZ-00.toc")}
     native = [(name.replace("\\", "/"), source) for name, source, kind in entries if kind in {"BINARY", "EXTENSION", "DATA"}]
+    native_index = native_toc_index(native)
     bundles = []
     for bundle, executable in bundle_roots(output):
         verify_bundle_data(bundle, output)
@@ -258,7 +267,7 @@ def collect_inventory(root: Path, output: Path, prepared: dict, resources: list,
             continue
         relative = path.relative_to(output / "dist").as_posix()
         record = {"path": relative, "size": path.stat().st_size, "sha256": digest(path)}
-        matches = [(name, source) for name, source in native if relative.endswith("/" + name)]
+        matches = [(name, source) for name, source in native_index.get(path.name, ()) if relative.endswith("/" + name)]
         if matches:
             length = max(len(name) for name, _ in matches)
             sources = {source for name, source in matches if len(name) == length}

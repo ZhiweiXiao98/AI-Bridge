@@ -48,6 +48,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     env:
+      PYTHONUTF8: '1'
       HF_HUB_OFFLINE: '1'
       TRANSFORMERS_OFFLINE: '1'
       ANONYMIZED_TELEMETRY: 'False'
@@ -78,11 +79,14 @@ jobs:
         run: python -m unittest discover -s tests/public_ci -p "test_local_desktop*.py" -v
       - name: 构建本地核心、UI、RAG、浏览器与 Pi
         run: python tools/desktop/local_build.py
+      - name: 准备仅自检使用的固定官方 Chrome 与匹配驱动
+        run: python tools/desktop/local_browser_fixture.py --output build/local-desktop/browser-test
       - name: 无宿主 Python 或 Node 的完整本地冒烟
-        run: python tools/desktop/local_smoke.py
+        run: python tools/desktop/local_smoke.py --browser-fixture build/local-desktop/browser-test/runtime.json
       # 只上传下面三个明确 JSON。即使构建成功，也不得上传 dist、依赖归档、
       # 原始 pip 报告、日志、用户状态、会话或模型；不提供绕过审查的输入开关。
       - name: 仅上传审查清单
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: AI-Bridge-Local-review-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}

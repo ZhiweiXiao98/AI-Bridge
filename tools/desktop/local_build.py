@@ -54,6 +54,13 @@ def write_json(path: Path, value) -> None:
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def configure_console() -> None:
+    """Windows runner 的重定向输出可能默认 cp1252；所有中文 CLI 明确使用 UTF-8。"""
+    for stream in (sys.stdout, sys.stderr):
+        if stream is not None and hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def public_resources(root: Path = ROOT) -> list[str]:
     """从 Git 跟踪文件中选取所需公开资源，忽略外部插件和本地生成文件。"""
     tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=root).decode("utf-8").split("\0")
@@ -312,6 +319,7 @@ def command(output: Path) -> list[str]:
 
 
 def main() -> None:
+    configure_console()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "build/local-desktop")
     parser.add_argument("--print-command", action="store_true")

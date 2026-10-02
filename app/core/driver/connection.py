@@ -12,6 +12,14 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from app.core.config import ConfigManager
 from app.core.app_constants import APP_ROOT, LOCAL_SERVER_HOST
+from app.core.python_runtime import python_subprocess_environment
+from app.core.driver.local_chrome import LocalChromeSession, BrowserSetupError
+
+
+class TrustedDriverService(Service):
+    """An explicit local driver path cannot be replaced by SE_CHROMEDRIVER."""
+    def env_path(self):
+        return None
 
 
 class ConnectionManager:
@@ -20,7 +28,7 @@ class ConnectionManager:
     提供端口检测、WebDriver 初始化和错误处理功能。
     """
 
-    def __init__(self, port):
+    def __init__(self, port, config=None):
         """
         初始化连接管理器。
         :param port: Chrome 远程调试端口号 (例如 9527)。
@@ -34,6 +42,24 @@ class ConnectionManager:
         self._owned_services = []
         self._init_workers = []
         self._shutdown_worker = None
+        self.config = dict(config if config is not None else ConfigManager.load())
+        self.local_desktop = os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1"
+        self.local_session = LocalChromeSession(self.config) if self.local_desktop else None
+        self.status_callback = None
+
+    def configure(self, config):
+        config = dict(config)
+        self.config.clear()
+        self.config.update(config)
+
+    def start_browser(self, url=None, *, headless=False):
+        if not self.local_session:
+            return False, "远程服务模式请在服务端启动 Chrome"
+        try:
+            self.port = self.local_session.start(url, headless=headless)
+            return True, "已启动 AI-Bridge 专用 Chrome（仅本机调试连接）"
+        except (BrowserSetupError, OSError) as error:
+            return False, str(error)
 
     def is_port_open(self) -> bool:
         """
@@ -44,7 +70,8 @@ class ConnectionManager:
         try:
             if self._closed:
                 return False
-            return s.connect_ex((LOCAL_SERVER_HOST, self.port)) == 0
+            host = "127.0.0.1" if self.local_desktop else LOCAL_SERVER_HOST
+            return s.connect_ex((host, self.port)) == 0
         except Exception:
             return False
         finally:
@@ -58,16 +85,20 @@ class ConnectionManager:
         try:
             if self._closed:
                 return
-            socket.setdefaulttimeout(15)
+            if not self.local_desktop:
+                socket.setdefaulttimeout(15)
             print(f"🔧 [Selenium] ChromeDriver Service Path: {service.path}")
             container["driver"] = webdriver.Chrome(service=service, options=options)
+            if self.local_desktop:
+                container["driver"].command_executor._client_config.timeout = 5
             print("✅ [Selenium] WebDriver 创建成功！")
         except Exception as e:
             print(f"❌ [Selenium] WebDriver 创建崩溃: {e}")
             traceback.print_exc(file=sys.stderr)
             container["error"] = e
         finally:
-            socket.setdefaulttimeout(None)
+            if not self.local_desktop:
+                socket.setdefaulttimeout(None)
             if self._closed:
                 # This Service was created by this connection manager. Do not
                 # call driver.quit(): the attached Chrome belongs to the user.
@@ -98,6 +129,8 @@ class ConnectionManager:
             if thread and thread is not threading.current_thread():
                 thread.join(timeout=max(0.0, deadline - time.monotonic()))
         stopped = not any(thread and thread.is_alive() for thread in threads)
+        if self.local_session:
+            stopped = self.local_session.shutdown(max(0.0, deadline - time.monotonic())) and stopped
         if stopped:
             self.driver = None
         return stopped
@@ -112,6 +145,11 @@ class ConnectionManager:
         """
         cfg = ConfigManager.load()
         configured = str(cfg.get("chromedriver_path", "") or "").strip()
+
+        if self.local_desktop:
+            from app.core.local_paths import resource_path
+            name = "chromedriver.exe" if sys.platform == "win32" else "chromedriver"
+            return ([configured] if configured else []) + [str(resource_path("runtime", "chromedriver", name))]
 
         candidates = []
         if configured:
@@ -159,6 +197,15 @@ class ConnectionManager:
         2. 本地没有时，尝试 webdriver_manager 联网获取
         3. 联网失败时返回可读错误，而不是直接抛异常打爆线程
         """
+        if self.local_session:
+            try:
+                if self.status_callback:
+                    self.status_callback("正在准备匹配的官方 ChromeDriver…" if self.config.get("browser_allow_driver_download") is True
+                                         else "正在检查本地 ChromeDriver（不会下载）…")
+                driver = self.local_session.resolve_driver()
+                return True, TrustedDriverService(driver, env=python_subprocess_environment()), "本地匹配 ChromeDriver 已就绪"
+            except (BrowserSetupError, OSError) as error:
+                return False, None, str(error)
         local_driver = self._resolve_local_driver_path()
         if local_driver:
             return True, Service(local_driver), f"使用本地 ChromeDriver: {local_driver}"
@@ -184,6 +231,16 @@ class ConnectionManager:
         """
         if self._closed:
             return False, "浏览器连接正在关闭"
+        if self.driver is not None:
+            try:
+                self.driver.window_handles
+                return True, "Chrome 调试连接已就绪"
+            except Exception:
+                self.driver = None
+        if self.local_session:
+            ok, message = self.start_browser(headless=self.config.get("browser_headless") is True)
+            if not ok:
+                return False, message
         print(f"🔌 [ConnectionManager] 正在尝试连接 Chrome 远程调试端口 {self.port}...")
 
         if not self.is_port_open():
@@ -193,7 +250,11 @@ class ConnectionManager:
         print(f"✅ [ConnectionManager] 端口 {self.port} 是通的，正在初始化 WebDriver...")
 
         options = webdriver.ChromeOptions()
-        options.add_experimental_option("debuggerAddress", f"{LOCAL_SERVER_HOST}:{self.port}")
+        host = "127.0.0.1" if self.local_session else LOCAL_SERVER_HOST
+        options.add_experimental_option("debuggerAddress", f"{host}:{self.port}")
+        if self.local_session:
+            options.binary_location = self.local_session.binary
+            options.ignore_local_proxy_environment_variables()
 
         ok, service, service_msg = self._build_service()
         if not ok or service is None:
@@ -231,6 +292,7 @@ class ConnectionManager:
             return False, f"WebDriver 初始化失败: {err}"
 
         self.driver = container["driver"]
-        socket.setdefaulttimeout(None)
+        if not self.local_desktop:
+            socket.setdefaulttimeout(None)
         print("✅ [ConnectionManager] WebDriver 已成功连接到 Chrome！")
         return True, f"已连接 (端口 {self.port})"

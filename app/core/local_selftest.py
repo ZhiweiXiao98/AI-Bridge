@@ -207,3 +207,130 @@ def run_resume_selftest(app, window, worker, home: Path):
         raise RuntimeError("恢复自检结束后仍有任务运行")
     return {"mode": "local-worker", "conversation_id": conversation,
             "checks": ["应用重启后原会话可见", "应用重启后历史和Pi会话一致", "模拟模型配置已清除", "恢复自检退出完成"]}
+
+
+def prepare_browser_selftest(home: Path):
+    """仅在显式浏览器自检且新的隔离 HOME 内调用，测试路径不用于正常启动。"""
+    import os
+    from app.core.browser_fixture import BrowserFixture
+    from app.core.config import ConfigManager
+    paths = {}
+    for key, name in (("chrome_binary", "AI_BRIDGE_TEST_CHROME"),
+                      ("chromedriver_path", "AI_BRIDGE_TEST_CHROMEDRIVER")):
+        path = Path(os.environ.get(name, ""))
+        if not path.is_absolute() or not path.is_file():
+            raise RuntimeError("浏览器自检需要显式、已核验来源的程序路径：" + name)
+        paths[key] = str(path)
+    fixture = BrowserFixture(chunk_delay=0.15, initial_delay=0.6, chunk_size=3).start()
+    try:
+        config = ConfigManager.load()
+        config.update(paths, browser_start_url=fixture.url, browser_source="external_chrome",
+                      browser_headless=True, browser_allow_driver_download=False, startup_mode="browser")
+        ConfigManager.save(config)
+        return fixture
+    except Exception:
+        fixture.close()
+        raise
+
+
+def run_browser_selftest(app, window, worker, home: Path, fixture):
+    """真实 Chrome/ChromeDriver + Worker + Qt 发送、流式同步、停止及进程恢复。"""
+    from PySide6.QtCore import qVersion
+    page = window.chat_page
+    checks = []
+    browser_processes = []
+    ui_stream_samples = set()
+
+    def ui_text():
+        value = json.dumps(page._browser_all_messages, ensure_ascii=False)
+        if fixture.response_count == 0 and "本地浏览器测试回复" in value:
+            ui_stream_samples.add(value)
+        return value
+
+    def session():
+        return getattr(worker.connector.conn, "local_session", None)
+
+    def ready():
+        return worker.browser_command_bridge.ready and session() is not None and session().process is not None
+
+    def send(text):
+        wait_for(app, lambda: page.browser_input_area.send_btn.isEnabled() and not page.browser_input_area.is_ai_busy,
+                 "等待浏览器输入恢复可发送")
+        page.browser_input_area.input_box.setPlainText(text)
+        page.browser_input_area.send_btn.click()
+
+    wait_for(app, ready, "真实浏览器、匹配驱动和输入页面就绪", timeout=50)
+    if worker.mode != "browser" or page.current_mode != "browser" or page.session_tabs.currentIndex() != 0:
+        raise RuntimeError("浏览器 Worker 与界面模式不一致")
+    browser_processes.append(session().process)
+    capabilities = worker.connector.driver.capabilities
+    browser_version = capabilities["browserVersion"]
+    driver_version = capabilities["chrome"]["chromedriverVersion"].split()[0]
+    if browser_version.split(".")[0] != driver_version.split(".")[0]:
+        raise RuntimeError("实际 Chrome 与驱动主版本不匹配")
+    checks += ["真实Chrome与匹配驱动连接", "本地浏览器Worker与UI模式一致"]
+
+    first = "界面真实发送第一条中文消息"
+    send(first)
+    wait_for(app, lambda: fixture.request_count == 1, "网页收到真实 UI 输入")
+    wait_for(app, lambda: "分块输出已完成" in ui_text() and fixture.response_count == 1, "网页流式最终回复同步界面")
+    if len(ui_stream_samples) < 2:
+        raise RuntimeError("界面没有观察到至少两个真实浏览器流式快照")
+    if first not in ui_text() or page.browser_input_area.input_box.toPlainText():
+        raise RuntimeError("网页回执或成功发送后的草稿状态不正确")
+    checks += ["真实浏览器发送与回执", "浏览器流式文本读取", "浏览器最终文本读取"]
+
+    send("停止生成路径，保留当前部分回复并阻止排队消息自动发送")
+    wait_for(app, lambda: fixture.request_count == 2 and page.browser_input_area.is_ai_busy,
+             "浏览器第二轮生成中")
+    page.browser_input_area.input_box.setPlainText("这条待发消息不能发给网页")
+    page.browser_input_area.on_send()
+    if page.browser_input_area.queued_payload is None:
+        raise RuntimeError("没有建立真实 UI 待发队列")
+    page.browser_stop_btn.click()
+    wait_for(app, lambda: fixture.cancel_count == 1 and not worker.browser_command_bridge.cancel_pending,
+             "真实网页停止按钮确认")
+    deadline = time.monotonic() + 3.4
+    while time.monotonic() < deadline:
+        app.processEvents()
+        time.sleep(0.02)
+    if fixture.request_count != 2 or page.browser_input_area.queued_payload is not None:
+        raise RuntimeError("停止后仍自动发送了已取消的队列")
+    checks.append("浏览器停止生成")
+
+    # 模拟用户关闭应用拥有的专用 Chrome，不能终止普通用户的其他浏览器。
+    before_page_loads = fixture.page_ready_count
+    old_process = session().process
+    page._browser_all_messages = []
+    page.browser_msg_area.render_messages([], "")
+    old_process.terminate()
+    old_process.wait(timeout=10)
+    page.browser_reconnect_btn.click()
+    wait_for(app, lambda: ready() and session().process.pid != old_process.pid,
+             "浏览器窗口关闭后真实新进程重连", timeout=60)
+    browser_processes.append(session().process)
+    wait_for(app, lambda: fixture.page_ready_count > before_page_loads,
+             "新浏览器进程实际重新加载网页")
+    if fixture.page_ready_events[-1]["restored_message_count"] < 4:
+        raise RuntimeError("新浏览器进程没有从同一资料目录恢复前两轮消息")
+    wait_for(app, lambda: first in ui_text(), "专用资料目录中的网页历史恢复")
+    checks += ["浏览器断开后重连", "浏览器重启后重新连接"]
+    page.browser_input_area.clear_inputs()
+    send("重连后还能正常发送")
+    wait_for(app, lambda: fixture.request_count == 3, "重连后的真实发送")
+    wait_for(app, lambda: fixture.response_count == 2 and "重连后还能正常发送" in ui_text(), "重连后的真实回复")
+
+    send("生成尚未完成时关闭客户端窗口")
+    wait_for(app, lambda: fixture.request_count == 4 and page.browser_input_area.is_ai_busy,
+             "窗口关闭前确实存在活动浏览器生成")
+    window.close()
+    wait_for(app, lambda: not worker.isRunning() and all(process.poll() is not None for process in browser_processes),
+             "活动生成时关闭窗口并清理应用拥有的浏览器", timeout=25)
+    checks.append("浏览器活动生成时关闭窗口")
+    checks.append("浏览器与驱动所有权清理")
+    return {"mode": "local-browser", "fixture": "loopback-html", "browser_version": browser_version,
+            "chromedriver_version": driver_version, "real_site_visited": False, "qt": qVersion(),
+            "checks": checks, "stream_snapshot_count": len(ui_stream_samples),
+            "browser_process_restart": True, "application_process_restart": False,
+            "same_profile_history_restored": True, "cancelled_queue_sent": False,
+            "request_count": fixture.request_count, "response_count": fixture.response_count}

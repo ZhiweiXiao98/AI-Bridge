@@ -1,5 +1,6 @@
 # filename: app/ui/pages/chat/page.py
 import time
+import os
 import json
 
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QSplitter, QMessageBox, QApplication, QStackedWidget, QPushButton, QHBoxLayout, QFrame, QTabWidget, QGraphicsOpacityEffect, QLabel, QSizePolicy)
@@ -99,6 +100,21 @@ class ChatPage(QWidget):
         self.browser_page.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         browser_layout = QVBoxLayout(self.browser_page)
         browser_layout.setContentsMargins(0, 0, 0, 0)
+        self.browser_controls = QFrame()
+        browser_controls_layout = QHBoxLayout(self.browser_controls)
+        browser_controls_layout.setContentsMargins(8, 6, 8, 6)
+        self.browser_settings_btn = QPushButton("连接设置")
+        self.browser_reconnect_btn = QPushButton("重新连接")
+        self.browser_stop_btn = QPushButton("停止生成")
+        for button in (self.browser_settings_btn, self.browser_reconnect_btn, self.browser_stop_btn):
+            browser_controls_layout.addWidget(button)
+        browser_controls_layout.addStretch()
+        local_browser = os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1"
+        self.browser_controls.setVisible(local_browser)
+        self.browser_settings_btn.clicked.connect(self._configure_local_browser)
+        self.browser_reconnect_btn.clicked.connect(self._reconnect_local_browser)
+        self.browser_stop_btn.clicked.connect(self._stop_browser_request)
+        browser_layout.addWidget(self.browser_controls)
         self.browser_msg_area = MessageArea()
         self.browser_input_area = InputArea()
         self.browser_msg_area.setMinimumWidth(0)
@@ -341,6 +357,11 @@ class ChatPage(QWidget):
         if hasattr(self.worker, "subagent_suggestion_signal"):
             self.worker.subagent_suggestion_signal.connect(self._on_subagent_suggestion)
 
+        if os.environ.get("AI_BRIDGE_LOCAL_MODE") == "1":
+            self.browser_input_area.local_browser_submit = self._submit_local_browser
+            browser_results = getattr(self.worker, "browser_send_result_signal", None)
+            if browser_results is not None:
+                browser_results.connect(self.browser_input_area.on_browser_send_result)
         self.browser_input_area.request_send_text.connect(lambda t: self._send_text_in_mode("browser", t))
         self.api_input_area.request_send_text.connect(lambda t: self._send_text_in_mode("api", t))
         self.browser_input_area.request_send_compound.connect(lambda text, files: self._send_compound_in_mode("browser", text, files))
@@ -782,6 +803,33 @@ class ChatPage(QWidget):
         self.api_msg_area.render_messages(visible, local_msg.get("id", ""))
         self.api_msg_area.flush_render()  # 确保本地气泡立刻同步渲染完毕，防止与后续的流式气泡产生顺序竞态
         self.api_msg_area.set_load_more_visible(has_more)
+
+    def _submit_local_browser(self, text, attachments, request_id):
+        if self.current_mode != "browser":
+            return False
+        if attachments:
+            return bool(self.worker.send_compound(text, attachments, browser_request_id=request_id))
+        return bool(self.worker.send_text("div.aa-chat-input textarea", text, browser_request_id=request_id))
+
+    def _configure_local_browser(self):
+        from app.ui.components.local_browser_settings import LocalBrowserSettingsDialog
+        dialog = LocalBrowserSettingsDialog(self)
+        if dialog.exec():
+            self.header.set_status("浏览器设置已保存，请点重新连接")
+
+    def _reconnect_local_browser(self):
+        request = getattr(self.worker, "request_browser_reconnect", None)
+        if callable(request):
+            request()
+            self.header.set_status("正在重新连接浏览器…")
+
+    def _stop_browser_request(self):
+        self.browser_input_area.cancel_queue()
+        self.browser_input_area.cancel_local_browser_submission()
+        cancel = getattr(self.worker, "browser_cancel", None)
+        if callable(cancel):
+            cancel()
+            self.header.set_status("已请求网页停止生成，等待确认…")
 
     def on_mode_switch(self, mode):
         if self._api_runtime_busy():

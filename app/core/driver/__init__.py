@@ -5,6 +5,8 @@ import logging
 import time
 import hashlib
 import re
+import threading
+from app.core.driver.local_chrome import browser_url, origin, BrowserSetupError
 from bs4 import BeautifulSoup
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -21,12 +23,42 @@ logger = get_logger("app.core.driver", side="worker")
 
 
 class ChromeConnector:
-    def __init__(self, port=CHROME_PORT):
-        self.conn = ConnectionManager(port)
+    def __init__(self, port=CHROME_PORT, config=None):
+        self.conn = ConnectionManager(port, config=config)
         self.parser = DOMParser()  # 复用 UI 的解析核心
         self.interact = None
         self.last_chat_id = None
         self._incremental = IncrementalExtractor(self.parser)
+        self._dom_lock = threading.RLock()
+        self._connected_target = None
+
+    def configure(self, config):
+        if self.conn.local_desktop and self.conn.config.get("chrome_binary") != config.get("chrome_binary"):
+            if not self.conn.shutdown(timeout=3):
+                return False, "正在关闭此前的专用 Chrome，请稍后重新连接"
+            self.conn = ConnectionManager(CHROME_PORT, config=config)
+            self.interact = None
+            self._connected_target = None
+        else:
+            self.conn.configure(config)
+        return True, "浏览器配置已更新"
+
+    def set_status_callback(self, callback):
+        self.conn.status_callback = callback
+
+    def start_browser(self, url=None, *, headless=False):
+        return self.conn.start_browser(url, headless=headless)
+
+    def _serialize_driver(self):
+        driver = self.driver
+        if not driver or getattr(driver, "_ai_bridge_serialized", False):
+            return
+        execute = driver.execute
+        def serialized_execute(*args, **kwargs):
+            with self._dom_lock:
+                return execute(*args, **kwargs)
+        driver.execute = serialized_execute
+        driver._ai_bridge_serialized = True
 
     @property
     def driver(self):
@@ -35,6 +67,8 @@ class ChromeConnector:
     def _ensure_live_window(self):
         if not self.driver:
             return False
+        if self.conn.local_desktop and self.interact:
+            return self.interact.switch_to_chat_tab() is True
         try:
             handles = list(self.driver.window_handles or [])
         except Exception as e:
@@ -61,9 +95,54 @@ class ChromeConnector:
     def connect(self):
         ok, msg = self.conn.connect()
         if ok:
-            self.interact = InteractionManager(self.conn.driver)
+            self._serialize_driver()
+            target = browser_url(self.conn.config) if self.conn.local_desktop else None
+            if self.conn.local_desktop and self._connected_target is not None and target != self._connected_target:
+                with self._dom_lock:
+                    self.driver.get(target)
+            self._connected_target = target
+            self.interact = InteractionManager(self.conn.driver, allowed_origin=origin(target),
+                                               strict_origin=self.conn.local_desktop)
+            if self.conn.local_desktop:
+                return self.ready_for_input(require_idle=False)
             self.interact.switch_to_chat_tab()
         return ok, msg
+
+    def ready_for_input(self, require_idle=True):
+        if not self.driver or not self.interact:
+            return False, "Chrome 尚未连接，请点击“重新连接”"
+        try:
+            with self._dom_lock:
+                if self.conn.local_desktop:
+                    expected = origin(browser_url(self.conn.config))
+                    if expected is None:
+                        return False, "专用 Chrome 已启动。请在“连接设置”中填写实际聊天网站地址，然后重新连接"
+                    self.interact.allowed_origin = expected
+                    if self.interact.switch_to_chat_tab() is not True:
+                        return False, "没有找到配置网站的聊天页面。请在专用 Chrome 中打开该网站并完成登录；其他网站不会接收消息"
+                    if origin(self.driver.current_url) != expected:
+                        return False, "当前网页与配置的网站不一致，已阻止发送"
+                inputs = self.driver.find_elements(By.CSS_SELECTOR, SELECTORS["input_area"])
+                if not any(element.is_displayed() for element in inputs):
+                    if not require_idle and self.interact.is_busy():
+                        return True, "目标网页正在生成，可以停止"
+                    return False, "Chrome 已连接，但网页没有受支持的聊天输入框。请完成登录；当前适配器仅支持 WebAI（aa-chat）页面结构"
+                if require_idle and self.interact.is_busy():
+                    return False, "网页仍在生成回复，请等待完成或点击“停止生成”"
+                if require_idle and not any(element.is_displayed() and element.is_enabled() for element in inputs):
+                    return False, "聊天输入框暂不可用，请检查网页状态后重试"
+                return True, "目标聊天网页已连接，可以发送消息"
+        except Exception:
+            return False, "Chrome 连接已中断或网页已关闭，请点击“重新连接”"
+
+    def cancel_generation(self):
+        if not self.interact:
+            return False, "Chrome 尚未连接"
+        with self._dom_lock:
+            ready, message = self.ready_for_input(require_idle=False)
+            if not ready:
+                return False, message
+            return self.interact.cancel_generation()
 
     def shutdown(self, timeout=3.0):
         stopped = self.conn.shutdown(timeout=timeout)
@@ -76,9 +155,14 @@ class ChromeConnector:
             return self.interact.is_busy()
         return False
 
-    def send_message(self, selector, text):
+    def send_message(self, selector, text, cancel_check=None):
         logger.info("[Driver] send_message requested | selector=%s text_len=%d", selector, len(text or ""))
-        return self.interact.send_message(text) if self.interact else (False, "未连接")
+        with self._dom_lock:
+            if self.conn.local_desktop:
+                ready, message = self.ready_for_input()
+                if not ready:
+                    return False, message
+            return self.interact.send_message(text, cancel_check=cancel_check) if self.interact else (False, "未连接")
 
     def open_conversation_url(self, conversation_url, timeout=20):
         if not self.interact or not self.driver or not self._ensure_live_window():
@@ -259,7 +343,12 @@ class ChromeConnector:
     def new_chat(self):
         if not self.driver or not self._ensure_live_window():
             return False, "未连接"
-        return False, "功能迁移中"
+        with self._dom_lock:
+            if self.conn.local_desktop:
+                ready, message = self.ready_for_input()
+                if not ready:
+                    return False, message
+            return self.interact.new_chat() if self.interact else (False, "未连接")
 
     def force_scroll(self, interrupt_callback=None):
         if self.interact:
