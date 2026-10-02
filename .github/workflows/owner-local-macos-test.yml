@@ -1,0 +1,1371 @@
+name: 本人本地Mac测试包（限定加密交付）
+
+# 仅发布负责人审查后的独立一次性分支；不得合入默认分支或绕过材料审批。
+on:
+  push:
+    branches: ['feature/owner-local-macos-test-20261002']
+    paths: ['.github/workflows/owner-local-macos-test.yml', 'tools/owner-local-test/**']
+permissions:
+  contents: read
+concurrency:
+  group: owner-local-macos-test-20261002
+  cancel-in-progress: false
+jobs:
+  owner-test:
+    # 发布负责人先在精确源码创建独立分支，再只前进一次到经审查的配方提交。
+    # 重跑或后续 push 的 before 不再匹配；不得强推回滚来重复交付。
+    if: >-
+      github.event_name == 'push' &&
+      github.repository == 'ZhiweiXiao98/AI-Bridge' &&
+      github.actor == 'ZhiweiXiao98' &&
+      github.ref == 'refs/heads/feature/owner-local-macos-test-20261002' &&
+      github.event.before == '887594cacc6de1c6baa204e8157de000d31f4506' &&
+      github.run_attempt == '1' &&
+      github.event.forced == false && github.event.deleted == false &&
+      github.event.after == github.sha
+    runs-on: macos-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: source
+        shell: bash
+    env:
+      PYTHONUTF8: '1'
+      HF_HUB_OFFLINE: '1'
+      TRANSFORMERS_OFFLINE: '1'
+      ANONYMIZED_TELEMETRY: 'False'
+    steps:
+      - name: 检出经审查的精确应用源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 887594cacc6de1c6baa204e8157de000d31f4506
+          path: source
+          persist-credentials: false
+      - name: 检出本次独立配方和新公钥（不含私钥）
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          path: recipe
+          persist-credentials: false
+      - name: 配置固定ARM64 Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12.10'
+          architecture: arm64
+      - name: 创建一次性构建环境
+        run: |
+          test "$(uname -m)" = arm64
+          python -m venv .owner-local-venv
+          echo "$PWD/.owner-local-venv/bin" >> "$GITHUB_PATH"
+          mkdir -p build/local-desktop
+      - name: 安装固定构建依赖并核验范围
+        run: |
+          python -m pip install --only-binary=:all: --report build/local-desktop/install-report.json -r requirements-desktop-local-build.txt
+          python -m pip check
+          python tools/check_public_tree.py
+          python -m unittest discover -s tests/public_ci -p 'test_local_desktop*.py' -v
+      - name: 重建并核验精确批准的源码与许可材料
+        run: |
+          BASE="$(pwd -P)"
+          RECIPE="$(cd ../recipe && pwd -P)"
+          python "$RECIPE/tools/owner-local-test/rehydrate_owner_materials.py" --manifest "$RECIPE/tools/owner-local-test/materials-inputs/index.json" --output "$BASE/build/owner-approved-materials"
+          python -c "import sys; from pathlib import Path; sys.path.insert(0, '../recipe/tools/owner-local-test'); from package_local import require_materials, SOURCE_COMMIT; require_materials(Path('build/owner-approved-materials/materials-review.json'), SOURCE_COMMIT)"
+      - name: 固定测试浏览器（不随包）与完整应用构建
+        run: |
+          python tools/desktop/local_browser_fixture.py --output build/local-desktop/browser-test
+          env GITHUB_SHA=887594cacc6de1c6baa204e8157de000d31f4506 python tools/desktop/local_build.py
+          python tools/desktop/local_smoke.py --browser-fixture build/local-desktop/browser-test/runtime.json
+      - name: 材料审批门槛和只读最终DMG完整验收
+        run: python ../recipe/tools/owner-local-test/package_local.py --materials build/owner-approved-materials/materials-review.json
+      - name: 建立独立加密工具环境（不加入应用）
+        run: |
+          python -m venv .delivery-venv
+          .delivery-venv/bin/python -m pip install --index-url https://pypi.org/simple --only-binary=:all: cryptography==50.0.0 cffi==2.1.1 pycparser==3.0
+      - name: 固定新公钥与完整验证摘要的流式加密
+        id: seal
+        run: |
+          BASE="$(pwd -P)"
+          RECIPE="$(cd ../recipe && pwd -P)"
+          .delivery-venv/bin/python "$RECIPE/tools/owner-local-test/seal_local.py" --archive "$BASE/build/owner-local-test/AI-Bridge-Local-macOS-ARM64-owner-test.dmg" --public-key "$RECIPE/tools/owner-local-test/recipient-public.pub" --validation "$BASE/build/owner-local-test/owner-package-validation.json" --output "$BASE/build/owner-local-test/sealed" --workflow-commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
+          .delivery-venv/bin/python "$RECIPE/tools/owner-local-test/verify_upload_list.py" --sealed "$BASE/build/owner-local-test/sealed" --validation "$BASE/build/owner-local-test/owner-package-validation.json" --workflow-commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
+      - name: 仅上传加密分片 001
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 1 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-001-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part001.aesgcm
+            source/build/owner-local-test/sealed/owner-test-envelope.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 002
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 2 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-002-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part002.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 003
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 3 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-003-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part003.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 004
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 4 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-004-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part004.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 005
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 5 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-005-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part005.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 006
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 6 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-006-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part006.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 007
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 7 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-007-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part007.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 008
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 8 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-008-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part008.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 009
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 9 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-009-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part009.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 010
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 10 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-010-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part010.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 011
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 11 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-011-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part011.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 012
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 12 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-012-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part012.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 013
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 13 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-013-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part013.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 014
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 14 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-014-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part014.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 015
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 15 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-015-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part015.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 016
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 16 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-016-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part016.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 017
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 17 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-017-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part017.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 018
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 18 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-018-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part018.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 019
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 19 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-019-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part019.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 020
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 20 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-020-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part020.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 021
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 21 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-021-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part021.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 022
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 22 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-022-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part022.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 023
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 23 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-023-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part023.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 024
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 24 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-024-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part024.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 025
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 25 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-025-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part025.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 026
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 26 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-026-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part026.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 027
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 27 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-027-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part027.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 028
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 28 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-028-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part028.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 029
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 29 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-029-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part029.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 030
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 30 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-030-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part030.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 031
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 31 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-031-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part031.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 032
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 32 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-032-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part032.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 033
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 33 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-033-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part033.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 034
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 34 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-034-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part034.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 035
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 35 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-035-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part035.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 036
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 36 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-036-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part036.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 037
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 37 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-037-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part037.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 038
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 38 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-038-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part038.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 039
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 39 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-039-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part039.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 040
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 40 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-040-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part040.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 041
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 41 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-041-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part041.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 042
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 42 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-042-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part042.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 043
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 43 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-043-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part043.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 044
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 44 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-044-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part044.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 045
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 45 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-045-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part045.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 046
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 46 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-046-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part046.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 047
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 47 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-047-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part047.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 048
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 48 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-048-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part048.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 049
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 49 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-049-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part049.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 050
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 50 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-050-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part050.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 051
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 51 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-051-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part051.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 052
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 52 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-052-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part052.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 053
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 53 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-053-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part053.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 054
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 54 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-054-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part054.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 055
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 55 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-055-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part055.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 056
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 56 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-056-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part056.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 057
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 57 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-057-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part057.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 058
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 58 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-058-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part058.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 059
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 59 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-059-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part059.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 060
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 60 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-060-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part060.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 061
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 61 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-061-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part061.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 062
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 62 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-062-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part062.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 063
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 63 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-063-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part063.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 064
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 64 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-064-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part064.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 065
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 65 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-065-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part065.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 066
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 66 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-066-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part066.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 067
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 67 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-067-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part067.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 068
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 68 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-068-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part068.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 069
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 69 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-069-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part069.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 070
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 70 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-070-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part070.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 071
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 71 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-071-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part071.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 072
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 72 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-072-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part072.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 073
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 73 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-073-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part073.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 074
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 74 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-074-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part074.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 075
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 75 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-075-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part075.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 076
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 76 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-076-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part076.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 077
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 77 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-077-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part077.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 078
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 78 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-078-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part078.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 079
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 79 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-079-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part079.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 080
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 80 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-080-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part080.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 081
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 81 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-081-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part081.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 082
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 82 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-082-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part082.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 083
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 83 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-083-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part083.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 084
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 84 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-084-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part084.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 085
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 85 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-085-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part085.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 086
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 86 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-086-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part086.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 087
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 87 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-087-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part087.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 088
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 88 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-088-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part088.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 089
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 89 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-089-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part089.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 090
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 90 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-090-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part090.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 091
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 91 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-091-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part091.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 092
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 92 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-092-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part092.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 093
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 93 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-093-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part093.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 094
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 94 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-094-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part094.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 095
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 95 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-095-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part095.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 096
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 96 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-096-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part096.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 097
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 97 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-097-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part097.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 098
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 98 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-098-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part098.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 099
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 99 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-099-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part099.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 100
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 100 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-100-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part100.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 101
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 101 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-101-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part101.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 102
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 102 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-102-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part102.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 103
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 103 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-103-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part103.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 104
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 104 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-104-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part104.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 105
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 105 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-105-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part105.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 106
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 106 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-106-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part106.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 107
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 107 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-107-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part107.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 108
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 108 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-108-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part108.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 109
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 109 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-109-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part109.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 110
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 110 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-110-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part110.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 111
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 111 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-111-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part111.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 112
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 112 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-112-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part112.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 113
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 113 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-113-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part113.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 114
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 114 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-114-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part114.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 115
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 115 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-115-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part115.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 116
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 116 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-116-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part116.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 117
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 117 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-117-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part117.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 118
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 118 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-118-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part118.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 119
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 119 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-119-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part119.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 120
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 120 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-120-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part120.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 121
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 121 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-121-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part121.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 122
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 122 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-122-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part122.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 123
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 123 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-123-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part123.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 124
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 124 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-124-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part124.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 125
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 125 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-125-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part125.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 126
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 126 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-126-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part126.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 127
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 127 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-127-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part127.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: 仅上传加密分片 128
+        if: ${{ success() && fromJSON(steps.seal.outputs.part_count) >= 128 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-local-cipher-128-${{ github.sha }}
+          path: |
+            source/build/owner-local-test/sealed/owner-test.part128.aesgcm
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
