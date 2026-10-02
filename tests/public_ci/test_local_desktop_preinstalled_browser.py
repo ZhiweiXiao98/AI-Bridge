@@ -32,7 +32,7 @@ class PreinstalledBrowserTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             metadata = self.metadata(Path(directory))
             chrome, public = installed.validate_chrome_metadata(metadata)
-            self.assertEqual(chrome, Path(metadata['chrome']))
+            self.assertEqual(chrome, Path(metadata['chrome']).resolve())
             self.assertNotIn(directory, json.dumps(public))
             self.assertEqual(public['version'], '154.0.8037.58')
 
@@ -81,7 +81,8 @@ class PreinstalledBrowserTests(unittest.TestCase):
             output = root / 'output'
             with patch.object(installed, 'ROOT', root), patch.object(installed, 'read_preinstalled_chrome', return_value=(chrome, public)), \
                     patch.object(installed, 'urlopen', side_effect=AssertionError('离线测试不能联网')), \
-                    patch.object(installed.subprocess, 'check_output', return_value='ChromeDriver 154.0.8037.57') as execute:
+                    patch.object(installed.subprocess, 'check_output', return_value='ChromeDriver 154.0.8037.57') as execute, \
+                    patch('builtins.print'):
                 result = installed.prepare(output, archive_cache=cache)
             self.assertEqual([x['kind'] for x in result['archives']], ['chromedriver'])
             self.assertFalse((output / 'runtime/chrome-win64').exists())
