@@ -78,6 +78,10 @@ class NativeGuiEvidenceTests(unittest.TestCase):
                 report['stage'] = stage
                 (state / 'local-native-smoke.json').write_text(json.dumps(report), encoding='utf-8')
                 self.assertEqual(local_smoke.native_failure_probe(state)['stage'], 'unknown')
+            for stage in ('pdf_decode', 'webengine_preview', 'webengine_cleanup'):
+                report['stage'] = stage
+                (state / 'local-native-smoke.json').write_text(json.dumps(report), encoding='utf-8')
+                self.assertEqual(local_smoke.native_failure_probe(state)['stage'], stage)
 
     def test_native_failure_probe_preserves_bounded_actual_diagnostics(self):
         with tempfile.TemporaryDirectory() as directory:

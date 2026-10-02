@@ -304,6 +304,7 @@ def command(output: Path) -> list[str]:
               "--windowed", "--noupx", "--name", NAME, "--distpath", str(output / "dist"),
               "--workpath", str(output / "work"), "--specpath", str(output),
               "--runtime-hook", str(ROOT / "tools/desktop/local_runtime_hook.py"),
+              "--additional-hooks-dir", str(ROOT / "tools/desktop/local_hooks"),
               "--collect-submodules", "app", "--recursive-copy-metadata", "chromadb",
               "--recursive-copy-metadata", "fastembed", "--recursive-copy-metadata", "google-genai",
               "--recursive-copy-metadata", "selenium", "--recursive-copy-metadata", "docker",
@@ -337,6 +338,7 @@ def main() -> None:
     node = prepare_node(output)
     pi = prepare_pi(output)
     from local_compliance import prepare_notices, collect_inventory
+    from local_qt_policy import require_qt_inventory
     candidates = prepare_notices(ROOT, output, node, pi)
     write_json(output / "review/local-build-inputs.json", {
         "schema_version": 1, "binary_distribution_approved": False,
@@ -346,7 +348,10 @@ def main() -> None:
         return
     subprocess.run(command(output), cwd=ROOT, check=True)
     inventory = collect_inventory(ROOT, output, candidates, resources, node, pi)
-    write_json(output / "review/local-desktop-inventory.json", inventory)
+    try:
+        require_qt_inventory(inventory, CORE_MODULES)
+    finally:
+        write_json(output / "review/local-desktop-inventory.json", inventory)
     print("本地完整客户端已构建；二进制发布仍被关闭，须完成独立许可和安全审查")
 
 

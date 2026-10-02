@@ -24,7 +24,12 @@ class CompleteBuildTests(unittest.TestCase):
         for module in local_build.CORE_MODULES:
             self.assertIn(module, command)
             self.assertNotIn(["--exclude-module", module], [command[i:i + 2] for i in range(len(command))])
-        self.assertNotIn("--additional-hooks-dir", command)
+        self.assertIn("--additional-hooks-dir", command)
+        hook_index = command.index("--additional-hooks-dir")
+        self.assertEqual(command[hook_index + 1], str(ROOT / "tools/desktop/local_hooks"))
+        self.assertNotIn(str(ROOT / "tools/desktop/hooks"), command)
+        excluded = {command[i + 1] for i, part in enumerate(command[:-1]) if part == "--exclude-module"}
+        self.assertEqual(excluded, {"PyQt5", "PyQt6", "PySide2"})
         self.assertIn("--collect-submodules", command)
         self.assertIn("app", command)
 

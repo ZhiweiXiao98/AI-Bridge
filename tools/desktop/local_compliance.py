@@ -318,6 +318,8 @@ def collect_inventory(root: Path, output: Path, prepared: dict, resources: list,
                "tools/desktop/local_compliance.py", "tools/desktop/local_runtime_hook.py", "tools/desktop/local_smoke.py",
                ".github/workflows/local-desktop-build.yml", "runtime/pi/package-lock.json",
                "licenses/local/node-sources.json", "licenses/local/npm-integrity.json"]
+    recipes += ["tools/desktop/local_qt_policy.py", "tools/desktop/local_hooks/hook-PySide6.QtGui.py",
+                "tools/desktop/local_hooks/hook-PySide6.QtQml.py"]
     return {"schema_version": 1, "name": NAME, "entry_point": "boot_local.py",
             "source_commit": sha if re.fullmatch(r"[0-9a-f]{40}", sha) else None,
             "platform": sys.platform, "architecture": platform.machine(), "binary_distribution_approved": False,

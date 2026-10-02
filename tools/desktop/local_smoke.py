@@ -243,11 +243,14 @@ def validate_browser_report(report: dict, fixture: dict) -> dict:
 REQUIRED_NATIVE_CHECKS = {
     "隔离空数据目录", "原生Qt平台插件", "真实主窗口显示与曝光",
     "主窗口非空渲染捕获", "主窗口正常关闭", "本地Worker与运行时停止",
+    "QImage解码本地单页PDF", "内置WebEngine加载本地HTML", "内置WebEngine页面与配置清理",
 }
 NATIVE_BOOLEAN_FIELDS = (
     "frozen", "window_visible", "window_exposed", "window_enabled", "window_nonzero_size",
     "native_window_id_valid", "api_mode_ready", "window_capture_nonempty", "screenshot_saved",
     "normal_close", "window_closed", "worker_stopped", "runtime_stopped", "passed",
+    "pdf_qimage_decoded", "pdf_fixture_pixels_verified", "webengine_local_preview_loaded",
+    "webengine_marker_verified", "webengine_preview_disposed",
 )
 
 
@@ -276,7 +279,7 @@ def native_failure_probe(state: Path) -> dict:
     if not isinstance(report, dict):
         return {"stage": "unknown"}
     stages = {"qt_startup", "native_platform", "window_ready", "window_capture",
-              "screenshot_save", "normal_close", "complete"}
+              "screenshot_save", "normal_close", "complete", "pdf_decode", "webengine_preview", "webengine_cleanup"}
     plugins = {"cocoa", "windows", "offscreen", "minimal", "xcb", "wayland"}
     stage = report.get("stage")
     result = {"stage": stage if isinstance(stage, str) and stage in stages else "unknown"}
@@ -308,10 +311,27 @@ def safe_failure_report(stage: str, error: Exception, output: Path) -> dict:
             "verification_limit": "失败或未完成的自检；不得解释为应用已可运行，不包含原始日志或用户状态"}
 
 
-def run_checks(output: Path, args, progress: dict) -> None:
+def smoke_executable(output: Path, inventory: dict, override: Path | None = None) -> Path:
+    """挂载检查仅更换启动位置，绑定本轮精确启动器；完整应用树由 owner recipe 先验。"""
+    expected = executable_path(output)
+    if override is None:
+        return expected
+    relative = expected.relative_to(output / "dist")
+    target = Path(override)
+    expected_record = next((entry for entry in inventory["files"] if entry["path"] == relative.as_posix()), None)
+    if (not target.is_absolute() or not target.is_file()
+            or tuple(target.parts[-len(relative.parts):]) != relative.parts
+            or any(path.is_symlink() for path in (target, *tuple(target.parents)[:len(relative.parts) - 1]))
+            or not expected_record or digest(target) != expected_record["sha256"]):
+        raise RuntimeError("挂载应用启动器的路径结构或字节与本轮精确库存不符")
+    return target.resolve()
+
+
+def run_checks(output: Path, args, progress: dict, *, executable_override: Path | None = None) -> None:
     progress["stage"] = "读取冻结库存"
     inventory_path = output / "review/local-desktop-inventory.json"
     inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    executable = smoke_executable(output, inventory, executable_override)
     browser_fixture = browser_provenance = None
     if not args.api_only:
         progress["stage"] = "核验固定浏览器测试来源"
@@ -324,11 +344,11 @@ def run_checks(output: Path, args, progress: dict) -> None:
         env = smoke_environment(state)
         # 详细诊断仅留构建机；工作流不上传日志，避免路径/fixture 内容扩散。
         progress["stage"] = "API首次完整运行"
-        process_probe = run_application(executable_path(output), "--local-smoke-test", state, env, output / "local-smoke.log")
+        process_probe = run_application(executable, "--local-smoke-test", state, env, output / "local-smoke.log")
         report = json.loads((state / "local-smoke.json").read_text(encoding="utf-8"))
         safe = validate_report(report, inventory["runtime_build_environment"])
         progress["stage"] = "API应用重启恢复"
-        resume_process_probe = run_application(executable_path(output), "--local-resume-smoke-test", state, env, output / "local-resume-smoke.log")
+        resume_process_probe = run_application(executable, "--local-resume-smoke-test", state, env, output / "local-resume-smoke.log")
         resumed = json.loads((state / "local-resume-smoke.json").read_text(encoding="utf-8"))
         if (resumed.get("mode") != "local-worker" or not REQUIRED_RESUME_CHECKS.issubset(resumed.get("checks", []))
                 or resumed.get("conversation_id") != report.get("selftest_conversation_id")):
@@ -344,7 +364,7 @@ def run_checks(output: Path, args, progress: dict) -> None:
             env = smoke_environment(state)
             env.update(AI_BRIDGE_TEST_CHROME=browser_fixture["chrome"], AI_BRIDGE_TEST_CHROMEDRIVER=browser_fixture["chromedriver"])
             progress["stage"] = "真实浏览器流程"
-            process_probe = run_application(executable_path(output), "--local-browser-smoke-test", state, env,
+            process_probe = run_application(executable, "--local-browser-smoke-test", state, env,
                                             output / "local-browser-smoke.log")
             report = json.loads((state / "local-browser-smoke.json").read_text(encoding="utf-8"))
             if report.get("qt") != inventory["runtime_build_environment"]["qt"]:
@@ -361,7 +381,7 @@ def run_checks(output: Path, args, progress: dict) -> None:
             env["QT_QPA_PLATFORM"] = "cocoa" if sys.platform == "darwin" else "windows"
             progress["stage"] = "原生平台窗口启动"
             try:
-                process_probe = run_application(executable_path(output), "--local-native-smoke-test", state, env,
+                process_probe = run_application(executable, "--local-native-smoke-test", state, env,
                                                 output / "local-native-smoke.log", timeout_seconds=60)
             except Exception as error:
                 probe = json.dumps(native_failure_probe(state), ensure_ascii=False, sort_keys=True)
